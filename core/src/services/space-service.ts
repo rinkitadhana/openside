@@ -1,4 +1,4 @@
-import { prisma } from "@repo/database";
+import { prisma } from "../db/index.ts";
 
 interface CreateSpaceData {
   title: string;
