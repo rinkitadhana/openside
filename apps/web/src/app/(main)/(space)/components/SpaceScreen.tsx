@@ -19,15 +19,24 @@
  *    b. Receive their stream
  * 6. Both users now have bidirectional audio/video
  *
+ * RECORDING FLOW:
+ * 1. Host clicks "Start Recording" → API call → Socket broadcast
+ * 2. All participants receive "recording-started" event
+ * 3. Each participant starts local MediaRecorder
+ * 4. Chunks (5 seconds each) are uploaded as they're generated
+ * 5. Host clicks "Stop Recording" → Socket broadcast → All stop
+ * 6. Final chunks uploaded → Mark complete
+ *
  * STATE MANAGEMENT:
  * - players: Map of all participants and their streams
  * - users: Map of active peer connections (for cleanup)
  * - currentPage: Pagination for participant grid
  * - fullScreen states: Object-fit mode for videos
+ * - recording state: Managed by useRecordingManager
  */
 
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSocket } from "@/shared/context/socket";
 import usePeer from "@/shared/hooks/usePeer";
 import useMediaStream from "@/shared/hooks/useMediaStream";
@@ -47,6 +56,10 @@ import { useGetMe } from "@/shared/hooks/useUserQuery";
 import { useEndSpace, useGetSpaceByJoinCode } from "@/shared/hooks/useSpace";
 import { useLeaveSpace } from "@/shared/hooks/useParticipant";
 import { getOrCreateSessionId } from "@/shared/utils/ParticipantSessionId";
+import useRecordingManager, {
+  type RecordingState,
+  type ChunkData,
+} from "@/shared/hooks/useRecordingManager";
 
 type SidebarType = "info" | "users" | "chat" | null;
 
@@ -54,12 +67,19 @@ interface SpaceScreenProps {
   toggleSidebar: (sidebarType: SidebarType) => void;
   activeSidebar: SidebarType;
   preJoinSettings: PreJoinSettings | null;
+  onRecordingStateChange?: (state: RecordingState) => void;
+  onRecordingDurationChange?: (durationMs: number) => void;
+  // Callback when a chunk is ready - implement your upload logic here
+  onChunkReady?: (data: ChunkData) => void;
 }
 
 const SpaceScreen = ({
   toggleSidebar,
   activeSidebar,
   preJoinSettings,
+  onRecordingStateChange,
+  onRecordingDurationChange,
+  onChunkReady,
 }: SpaceScreenProps) => {
   // ============================================================================
   // SETUP & HOOKS
@@ -103,6 +123,68 @@ const SpaceScreen = ({
 
   // Check if current user is the host
   const isHost = user && spaceData && user.id === spaceData.host?.id;
+
+  // ============================================================================
+  // RECORDING MANAGER
+  // ============================================================================
+
+  const recordingManager = useRecordingManager({
+    spaceId: spaceData?.id || "",
+    participantSessionId,
+    isHost: !!isHost,
+    roomId,
+    onChunkReady: (data) => {
+      // Pass chunk to parent for upload handling
+      onChunkReady?.(data);
+      console.log("[SpaceScreen] Chunk ready:", {
+        sequenceNumber: data.chunk.sequenceNumber,
+        size: (data.chunk.blob.size / 1024).toFixed(2) + " KB",
+        duration: data.chunk.durationMs + "ms",
+      });
+    },
+  });
+
+  // Notify parent of recording state changes
+  useEffect(() => {
+    onRecordingStateChange?.(recordingManager.recordingState);
+  }, [recordingManager.recordingState, onRecordingStateChange]);
+
+  useEffect(() => {
+    onRecordingDurationChange?.(recordingManager.recordingDurationMs);
+  }, [recordingManager.recordingDurationMs, onRecordingDurationChange]);
+
+  // Set the stream for recording when available
+  useEffect(() => {
+    if (stream && "setStream" in recordingManager) {
+      (
+        recordingManager as ReturnType<typeof useRecordingManager> & {
+          setStream: (s: MediaStream | null) => void;
+        }
+      ).setStream(stream);
+    }
+  }, [stream, recordingManager]);
+
+  // Handle start recording (for host)
+  const handleStartRecording = useCallback(async () => {
+    if (!stream) {
+      console.error("[SpaceScreen] No stream available for recording");
+      return;
+    }
+    try {
+      await recordingManager.startRecording(stream);
+    } catch (error) {
+      console.error("[SpaceScreen] Failed to start recording:", error);
+    }
+  }, [stream, recordingManager]);
+
+  // Handle stop recording (for host)
+  const handleStopRecording = useCallback(async () => {
+    try {
+      await recordingManager.stopRecording();
+    } catch (error) {
+      console.error("[SpaceScreen] Failed to stop recording:", error);
+    }
+  }, [recordingManager]);
 
   // ============================================================================
   // HANDLE LEAVE ROOM - END SPACE IF HOST
@@ -467,6 +549,11 @@ const SpaceScreen = ({
           toggleSpeaker={toggleSpeaker}
           toggleSidebar={toggleSidebar}
           activeSidebar={activeSidebar}
+          // Recording props
+          isHost={!!isHost}
+          recordingState={recordingManager.recordingState}
+          onStartRecording={handleStartRecording}
+          onStopRecording={handleStopRecording}
         />
       </div>
     </div>

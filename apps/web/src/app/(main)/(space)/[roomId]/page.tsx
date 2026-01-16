@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import SpaceWrapper from "../components/SpaceWrapper";
 import PreJoinScreen from "../components/PreJoinScreen";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -9,6 +9,10 @@ import { useCreateSpace } from "@/shared/hooks/useSpace";
 import { useJoinSpace } from "@/shared/hooks/useParticipant";
 import usePeer from "@/shared/hooks/usePeer";
 import { getOrCreateSessionId } from "@/shared/utils/ParticipantSessionId";
+import type {
+  RecordingState,
+  ChunkData,
+} from "@/shared/hooks/useRecordingManager";
 
 type SidebarType = "info" | "users" | "chat" | null;
 
@@ -37,7 +41,47 @@ const Room = () => {
   const [spaceCreated, setSpaceCreated] = useState(false);
   const [isCreatingSpace, setIsCreatingSpace] = useState(false);
 
+  // Recording state (lifted up from SpaceScreen for SpaceWrapper)
+  const [recordingState, setRecordingState] = useState<RecordingState>("idle");
+  const [recordingDurationMs, setRecordingDurationMs] = useState(0);
+
   const participantSessionId = getOrCreateSessionId(roomId);
+
+  // Callbacks for SpaceScreen
+  const handleRecordingStateChange = useCallback((state: RecordingState) => {
+    setRecordingState(state);
+  }, []);
+
+  const handleRecordingDurationChange = useCallback((durationMs: number) => {
+    setRecordingDurationMs(durationMs);
+  }, []);
+
+  // Handle chunk ready - implement your upload logic here
+  const handleChunkReady = useCallback((data: ChunkData) => {
+    // TODO: Implement your upload service here
+    // data.streamType: 'video' | 'audio' | 'combined'
+    // data.chunk.blob contains the blob
+    // data.chunk.sequenceNumber is the chunk index
+    // data.spaceRecordingSessionId identifies the recording session
+    // data.participantRecordingId identifies which recording (video/audio/combined)
+
+    console.log(`[Room] ${data.streamType.toUpperCase()} chunk ready:`, {
+      streamType: data.streamType,
+      sequenceNumber: data.chunk.sequenceNumber,
+      size: (data.chunk.blob.size / 1024).toFixed(2) + " KB",
+      recordingId: data.participantRecordingId,
+      sessionId: data.spaceRecordingSessionId,
+    });
+
+    // Example: Upload to different endpoints based on stream type
+    // if (data.streamType === 'video') {
+    //   uploadToService(data.chunk.blob, 'video', data.participantRecordingId);
+    // } else if (data.streamType === 'audio') {
+    //   uploadToService(data.chunk.blob, 'audio', data.participantRecordingId);
+    // } else if (data.streamType === 'combined') {
+    //   uploadToService(data.chunk.blob, 'combined', data.participantRecordingId);
+    // }
+  }, []);
 
   const toggleSidebar = (sidebarType: SidebarType) => {
     if (activeSidebar === sidebarType) {
@@ -61,7 +105,6 @@ const Room = () => {
     if (isHost && user && myId && !spaceCreated && !isCreatingSpace) {
       setIsCreatingSpace(true);
 
-      // Create the space first
       createSpace.mutate(
         {
           joinCode: roomId,
@@ -73,7 +116,6 @@ const Room = () => {
             setSpaceCreated(true);
             setCreatedSpaceId(spaceData.id);
 
-            // Auto-join with default settings (both camera and mic enabled)
             const defaultSettings: PreJoinSettings = {
               videoEnabled: true,
               audioEnabled: true,
@@ -81,7 +123,6 @@ const Room = () => {
               avatar: user.avatar,
             };
 
-            // Call join space API for the host
             joinSpace.mutate(
               {
                 displayName: defaultSettings.name,
@@ -92,14 +133,11 @@ const Room = () => {
                   console.log("Host joined space successfully");
                   setIsCreatingSpace(false);
                   handleJoinCall(defaultSettings);
-
-                  // Clean up the URL by removing the host parameter
                   router.replace(`/${roomId}`);
                 },
                 onError: (error) => {
                   console.error("Failed to join space as host:", error);
                   setIsCreatingSpace(false);
-                  // Even if join fails, let them into the space since they created it
                   handleJoinCall(defaultSettings);
                   router.replace(`/${roomId}`);
                 },
@@ -109,7 +147,6 @@ const Room = () => {
           onError: (error) => {
             console.error("Failed to create space:", error);
             setIsCreatingSpace(false);
-            // Redirect to dashboard on error
             router.push("/dashboard/home");
           },
         }
@@ -126,10 +163,8 @@ const Room = () => {
     spaceCreated,
     isCreatingSpace,
     participantSessionId,
-    // joinSpace is intentionally omitted as it's only used in callback
   ]);
 
-  // Show loading screen for host while creating space
   if (isHost && isCreatingSpace) {
     return (
       <div className="bg-call-background h-screen flex items-center justify-center">
@@ -138,25 +173,30 @@ const Room = () => {
     );
   }
 
-  // Show pre-join screen for non-hosts
   if (!hasJoined && !isHost) {
     return <PreJoinScreen onJoinCall={handleJoinCall} roomId={roomId} />;
   }
 
-  // Show space screen after joining
   if (hasJoined) {
     return (
-      <SpaceWrapper activeSidebar={activeSidebar} closeSidebar={closeSidebar}>
+      <SpaceWrapper
+        activeSidebar={activeSidebar}
+        closeSidebar={closeSidebar}
+        recordingState={recordingState}
+        recordingDurationMs={recordingDurationMs}
+      >
         <SpaceScreen
           toggleSidebar={toggleSidebar}
           activeSidebar={activeSidebar}
           preJoinSettings={preJoinSettings}
+          onRecordingStateChange={handleRecordingStateChange}
+          onRecordingDurationChange={handleRecordingDurationChange}
+          onChunkReady={handleChunkReady}
         />
       </SpaceWrapper>
     );
   }
 
-  // Fallback loading state
   return (
     <div className="bg-call-background h-screen flex items-center justify-center">
       <div className="animate-pulse">Loading...</div>
