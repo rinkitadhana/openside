@@ -1,4 +1,4 @@
-import { prisma } from "@repo/database";
+import { prisma } from "../db/index.ts";
 import type { SupabaseUser } from "../lib/verifySupabaseToken.ts";
 
 export async function findOrCreateUser(supabaseUser: SupabaseUser) {

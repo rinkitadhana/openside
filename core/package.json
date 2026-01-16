@@ -1,0 +1,48 @@
+{
+  "name": "core",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "build": "tsup src/index.ts --format esm --minify",
+    "test": "vitest",
+    "lint": "pnpm exec biome check src/",
+    "format": "pnpm exec biome format src/ --write",
+    "db:generate": "pnpm exec prisma generate",
+    "db:push": "pnpm exec prisma db push",
+    "db:migrate": "pnpm exec prisma migrate dev",
+    "db:studio": "pnpm exec prisma studio",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:status": "pnpm exec prisma migrate status",
+    "db:reset": "pnpm exec prisma migrate reset --force"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.15.3",
+    "@types/pg": "^8.15.6",
+    "prisma": "^7.1.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.2",
+    "vitest": "^2.0.0"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.1.0",
+    "@prisma/client": "^7.1.0",
+    "@supabase/supabase-js": "^2.76.1",
+    "@workos-inc/node": "^7.71.0",
+    "axios": "^1.12.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "peer": "^1.0.2",
+    "peerjs": "^1.5.5",
+    "pg": "^8.16.3",
+    "socket.io": "^4.8.1"
+  }
+}

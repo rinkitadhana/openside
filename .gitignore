@@ -4,8 +4,8 @@
 # Dependencies & Package Managers
 # ===========================
 node_modules/
-apps/*/node_modules/
-packages/*/node_modules/
+core/node_modules/
+web/node_modules/
 .pnp
 .pnp.*
 .yarn/*
@@ -14,14 +14,12 @@ packages/*/node_modules/
 !.yarn/releases
 !.yarn/versions
 .npm
-apps/*/.npm/
-packages/*/.npm/
 .eslintcache
-apps/*/.eslintcache
-packages/*/.eslintcache
+core/.eslintcache
+web/.eslintcache
 .cache
-apps/*/.cache/
-packages/*/.cache/
+core/.cache/
+web/.cache/
 *.tgz
 
 # ===========================
@@ -40,64 +38,67 @@ out/
 build/
 dist/
 
-# Monorepo app builds
-apps/*/.next/
-apps/*/out/
-apps/*/build/
-apps/*/dist/
-packages/*/.next/
-packages/*/out/
-packages/*/build/
-packages/*/dist/
+# App builds
+core/.next/
+core/out/
+core/build/
+core/dist/
+web/.next/
+web/out/
+web/build/
+web/dist/
 
 # TypeScript builds
 *.tsbuildinfo
 **/tsconfig.tsbuildinfo
-apps/*/tsconfig.tsbuildinfo
-packages/*/tsconfig.tsbuildinfo
+core/tsconfig.tsbuildinfo
+web/tsconfig.tsbuildinfo
 next-env.d.ts
-apps/*/next-env.d.ts
+web/next-env.d.ts
 
 # Bun specific outputs
 *.bun
-apps/*/bun.lockb
-packages/*/bun.lockb
+core/bun.lockb
+web/bun.lockb
 
 # Other build artifacts
-apps/*/storybook-static/
-packages/*/storybook-static/
-apps/*/.docusaurus/
-packages/*/.docusaurus/
+core/storybook-static/
+web/storybook-static/
+
+# ===========================
+# Prisma
+# ===========================
+core/prisma/generated/
 
 # ===========================
 # Testing & Coverage
 # ===========================
 coverage/
-apps/*/coverage/
-packages/*/coverage/
+core/coverage/
+web/coverage/
 *.lcov
 .nyc_output
-apps/*/.nyc_output
-packages/*/.nyc_output
+core/.nyc_output
+web/.nyc_output
 .jest
-apps/*/.jest
-packages/*/.jest
+core/.jest
+web/.jest
 junit.xml
-apps/*/junit.xml
-packages/*/junit.xml
+core/junit.xml
+web/junit.xml
 test-results/
-apps/*/test-results/
-packages/*/test-results/
+core/test-results/
+web/test-results/
 
 # ===========================
 # Logs & Debug
 # ===========================
 logs/
-apps/*/logs/
-packages/*/logs/
+core/logs/
+web/logs/
 *.log
-apps/*/*.log
-packages/*/*.log
+core/*.log
+web/*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -115,17 +116,17 @@ pids
 .tmp/
 tmp/
 temp/
-apps/*/.tmp/
-apps/*/tmp/
-apps/*/temp/
-packages/*/.tmp/
-packages/*/tmp/
-packages/*/temp/
+core/.tmp/
+core/tmp/
+core/temp/
+web/.tmp/
+web/tmp/
+web/temp/
 *.tmp
 *.temp
 .sass-cache/
-apps/*/.sass-cache/
-packages/*/.sass-cache/
+core/.sass-cache/
+web/.sass-cache/
 
 # ===========================
 # Operating System
@@ -207,16 +208,16 @@ tramp
 *.sublime-project
 
 # ===========================
-# Monorepo Tools & Caches
+# Build Tools & Caches
 # ===========================
 .turbo/
-apps/*/.turbo/
-packages/*/.turbo/
+core/.turbo/
+web/.turbo/
 .rush/
 .changeset/
 .nx/
-apps/*/.nx/
-packages/*/.nx/
+core/.nx/
+web/.nx/
 
 # Package manager cache & lock files
 .pnpm-store/
@@ -225,35 +226,35 @@ packages/*/.nx/
 .yarn/build-state.yml
 .yarn/install-state.gz
 .swc/
-apps/*/.swc/
-packages/*/.swc/
+core/.swc/
+web/.swc/
 
 # Development servers
 .vite/
-apps/*/.vite/
-packages/*/.vite/
+core/.vite/
+web/.vite/
 .parcel-cache/
-apps/*/.parcel-cache/
-packages/*/.parcel-cache/
+core/.parcel-cache/
+web/.parcel-cache/
 
 # ===========================
 # Cloud & Deployment
 # ===========================
 .vercel/
-apps/*/.vercel/
-packages/*/.vercel/
+core/.vercel/
+web/.vercel/
 .netlify/
-apps/*/.netlify/
-packages/*/.netlify/
+core/.netlify/
+web/.netlify/
 .serverless/
-apps/*/.serverless/
-packages/*/.serverless/
+core/.serverless/
+web/.serverless/
 .firebase/
-apps/*/.firebase/
-packages/*/.firebase/
+core/.firebase/
+web/.firebase/
 .amplify/
-apps/*/.amplify/
-packages/*/.amplify/
+core/.amplify/
+web/.amplify/
 
 # ===========================
 # Database

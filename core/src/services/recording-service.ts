@@ -1,5 +1,4 @@
-import { prisma } from "@repo/database";
-import type { RecordingType } from "@repo/database";
+import { prisma, type RecordingType } from "../db/index.ts";
 
 interface StartSessionData {
   spaceId: string;

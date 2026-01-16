@@ -3,32 +3,25 @@
   "private": true,
   "scripts": {
     "dev": "pnpm -r --parallel dev",
-    "dev:web": "pnpm --filter=web dev",
-    "dev:core": "pnpm --filter=core dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:core": "pnpm --filter core dev",
 
-    "build": "turbo run build",
-    "build:web": "turbo run build --filter=web",
-    "build:core": "turbo run build --filter=core",
+    "build": "pnpm -r build",
+    "build:web": "pnpm --filter web build",
+    "build:core": "pnpm --filter core build",
 
-    "lint": "turbo run lint",
- 
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types",
+    "lint": "pnpm -r lint",
 
-    "db:generate": "cd packages/database && npm run db:generate",
-    "db:push": "cd packages/database && npm run db:push",
-    "db:migrate": "cd packages/database && npm run db:migrate",
-    "db:studio": "cd packages/database && npm run db:studio",
-    "db:seed": "cd packages/database && npm run db:seed",
-    "prisma:format": "cd packages/database && npx prisma format"
+    "db:generate": "pnpm --filter core db:generate",
+    "db:push": "pnpm --filter core db:push",
+    "db:migrate": "pnpm --filter core db:migrate",
+    "db:studio": "pnpm --filter core db:studio",
+    "db:seed": "pnpm --filter core db:seed",
+    "db:status": "pnpm --filter core db:status",
+    "db:reset": "pnpm --filter core db:reset"
   },
-  "devDependencies": {
-    "prettier": "^3.6.2",
-    "turbo": "^2.5.6",
-    "typescript": "5.9.2"
-  },
-  "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=18"
-  }
+  },
+  "packageManager": "pnpm@9.0.0"
 }
