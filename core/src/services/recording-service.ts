@@ -510,25 +510,33 @@ export async function createSegment(data: CreateSegmentData) {
     throw new Error("RECORDING_NOT_FOUND");
   }
 
-  // Create segment and increment uploadedSegments counter
-  const [segment] = await prisma.$transaction([
-    prisma.recordingSegment.create({
-      data: {
-        participantRecordingId,
-        ...segmentData,
-        status: "UPLOADED",
-      },
-    }),
-    prisma.participantRecording.update({
-      where: { id: participantRecordingId },
-      data: {
-        uploadedSegments: { increment: 1 },
-        lastChunkAt: new Date(),
-      },
-    }),
-  ]);
+  try {
+    // Create segment and increment uploadedSegments counter
+    const [segment] = await prisma.$transaction([
+      prisma.recordingSegment.create({
+        data: {
+          participantRecordingId,
+          ...segmentData,
+          status: "UPLOADED",
+        },
+      }),
+      prisma.participantRecording.update({
+        where: { id: participantRecordingId },
+        data: {
+          uploadedSegments: { increment: 1 },
+          lastChunkAt: new Date(),
+        },
+      }),
+    ]);
 
-  return segment;
+    return segment;
+  } catch (error) {
+    // Handle unique constraint violation (duplicate sequence number)
+    if (error instanceof Error && error.message.includes("Unique constraint")) {
+      throw new Error("DUPLICATE_SEQUENCE_NUMBER");
+    }
+    throw error;
+  }
 }
 
 export async function getSegmentsByRecordingId(recordingId: string) {

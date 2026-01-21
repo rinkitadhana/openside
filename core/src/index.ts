@@ -6,27 +6,18 @@ import authRouter from "./routes/auth-route.ts";
 import recordingRouter from "./routes/recording-route.ts";
 import spaceRouter from "./routes/space-route.ts";
 import participantRouter from "./routes/participant-route.ts";
+import finalOutputRouter from "./routes/final-output-route.ts";
 import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-const corsOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(",")
-  : []
-
 //middlewares
 app.use(express.json())
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (corsOrigins.length === 0 || corsOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      callback(new Error(`Origin not allowed by CORS: ${origin}`));
-    },
+    origin: [process.env.APP_URL || "", process.env.LANDING_URL || ""].filter(Boolean) as string[],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -42,6 +33,7 @@ app.use("/api/auth", authRouter)
 app.use("/api/recording", recordingRouter)
 app.use("/api/space", spaceRouter)
 app.use("/api/participant", participantRouter)
+app.use("/api/output", finalOutputRouter)
 
 
 const httpServer = createServer(app);

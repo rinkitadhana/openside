@@ -20,6 +20,7 @@ import {
 } from "../services/recording-service";
 import { findOrCreateUser } from "../services/auth-service";
 import { isUserHost } from "../services/participant-service";
+import { serializeBigInt } from "../utils/serialize";
 
 // RecordingSession Controllers
 
@@ -334,7 +335,7 @@ export async function createParticipantRecordingController(
 
     res.status(201).json({
       success: true,
-      data: recording,
+      data: serializeBigInt(recording),
       message: "Participant recording created successfully!",
     });
   } catch (error: unknown) {
@@ -391,16 +392,37 @@ export async function updateParticipantRecordingController(
       return;
     }
 
-    // Verify ownership if participantSessionId provided
-    if (participantSessionId && spaceId) {
-      const participant = await getParticipantBySessionId(spaceId, participantSessionId);
-      if (participant) {
-        const ownerParticipantId = await getRecordingOwnerParticipantId(recordingId);
-        if (ownerParticipantId !== participant.id) {
-          res.status(403).json({ success: false, data: null, message: "You can only update your own recordings!" });
-          return;
-        }
-      }
+    // Require participantSessionId and spaceId for ownership verification
+    if (!participantSessionId || !spaceId) {
+      res.status(400).json({ success: false, data: null, message: "Participant session ID and space ID are required!" });
+      return;
+    }
+
+    // Verify ownership
+    const participant = await getParticipantBySessionId(spaceId, participantSessionId);
+    if (!participant) {
+      res.status(403).json({ success: false, data: null, message: "You are not an active participant in this space!" });
+      return;
+    }
+
+    const ownerParticipantId = await getRecordingOwnerParticipantId(recordingId);
+    if (ownerParticipantId !== participant.id) {
+      res.status(403).json({ success: false, data: null, message: "You can only update your own recordings!" });
+      return;
+    }
+
+    // Validate enum values if provided
+    const validVideoQualities = ["P360", "P480", "P720", "P1080", "P1440", "P2160"];
+    const validAudioQualities = ["SR_22050", "SR_44100", "SR_48000", "SR_96000"];
+
+    if (videoQuality && !validVideoQualities.includes(videoQuality)) {
+      res.status(400).json({ success: false, data: null, message: "Invalid video quality value!" });
+      return;
+    }
+
+    if (audioQuality && !validAudioQualities.includes(audioQuality)) {
+      res.status(400).json({ success: false, data: null, message: "Invalid audio quality value!" });
+      return;
     }
 
     const updateData: Record<string, unknown> = {};
@@ -431,7 +453,7 @@ export async function updateParticipantRecordingController(
 
     res.status(200).json({
       success: true,
-      data: recording,
+      data: serializeBigInt(recording),
       message: "Participant recording updated successfully!",
     });
   } catch (error: unknown) {
@@ -479,7 +501,7 @@ export async function getParticipantRecordingByIdController(
 
     res.status(200).json({
       success: true,
-      data: recording,
+      data: serializeBigInt(recording),
       message: "Recording retrieved successfully!",
     });
   } catch (error: unknown) {
@@ -519,7 +541,7 @@ export async function getRecordingsBySessionIdController(
     res.status(200).json({
       success: true,
       data: {
-        recordings,
+        recordings: serializeBigInt(recordings),
         count: recordings.length,
       },
       message: "Recordings retrieved successfully!",
@@ -553,23 +575,30 @@ export async function markRecordingCompleteController(
       return;
     }
 
-    // Verify ownership if participantSessionId provided
-    if (participantSessionId && spaceId) {
-      const participant = await getParticipantBySessionId(spaceId, participantSessionId);
-      if (participant) {
-        const ownerParticipantId = await getRecordingOwnerParticipantId(recordingId);
-        if (ownerParticipantId !== participant.id) {
-          res.status(403).json({ success: false, data: null, message: "You can only complete your own recordings!" });
-          return;
-        }
-      }
+    // Require participantSessionId and spaceId for ownership verification
+    if (!participantSessionId || !spaceId) {
+      res.status(400).json({ success: false, data: null, message: "Participant session ID and space ID are required!" });
+      return;
+    }
+
+    // Verify ownership
+    const participant = await getParticipantBySessionId(spaceId, participantSessionId);
+    if (!participant) {
+      res.status(403).json({ success: false, data: null, message: "You are not an active participant in this space!" });
+      return;
+    }
+
+    const ownerParticipantId = await getRecordingOwnerParticipantId(recordingId);
+    if (ownerParticipantId !== participant.id) {
+      res.status(403).json({ success: false, data: null, message: "You can only complete your own recordings!" });
+      return;
     }
 
     const recording = await markRecordingComplete(recordingId, expectedSegments);
 
     res.status(200).json({
       success: true,
-      data: recording,
+      data: serializeBigInt(recording),
       message: recording.isComplete
         ? "Recording marked as complete!"
         : "Recording completion tracked, still uploading segments!",
@@ -688,16 +717,19 @@ export async function createSegmentController(
 
     res.status(201).json({
       success: true,
-      data: {
-        ...segment,
-        sizeBytes: segment.sizeBytes.toString(), // Convert BigInt to string for JSON
-      },
+      data: serializeBigInt(segment),
       message: "Segment created successfully!",
     });
   } catch (error: unknown) {
-    if (error instanceof Error && error.message === "RECORDING_NOT_FOUND") {
-      res.status(404).json({ success: false, data: null, message: "Recording not found!" });
-      return;
+    if (error instanceof Error) {
+      if (error.message === "RECORDING_NOT_FOUND") {
+        res.status(404).json({ success: false, data: null, message: "Recording not found!" });
+        return;
+      }
+      if (error.message === "DUPLICATE_SEQUENCE_NUMBER") {
+        res.status(409).json({ success: false, data: null, message: "Segment with this sequence number already exists!" });
+        return;
+      }
     }
 
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -742,10 +774,7 @@ export async function getSegmentsByRecordingIdController(
     res.status(200).json({
       success: true,
       data: {
-        segments: segments.map((s) => ({
-          ...s,
-          sizeBytes: s.sizeBytes.toString(), // Convert BigInt to string for JSON
-        })),
+        segments: serializeBigInt(segments),
         count: segments.length,
       },
       message: "Segments retrieved successfully!",

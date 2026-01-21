@@ -8,6 +8,7 @@ import {
   getSpaceByJoinCode,
   verifySpaceHost,
   isUserParticipant,
+  getUserSpaces,
 } from "../services/space-service";
 import { findOrCreateUser } from "../services/auth-service";
 
@@ -65,7 +66,7 @@ export async function createSpaceController(
     res.status(500).json({
       success: false,
       data: null,
-      message: `Failed to create space: ${errorMessage}`,
+      message: `Failed to create space: ${errorMessage}!`,
     });
   }
 }
@@ -159,36 +160,25 @@ export async function endSpaceController(
       return;
     }
 
-    try {
-      const space = await endSpace(spaceId);
+    const space = await endSpace(spaceId);
 
-      res.status(200).json({
-        success: true,
-        data: space,
-        message: "Space ended successfully!",
-      });
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        if (error.message === "SPACE_NOT_FOUND") {
-          res.status(404).json({
-            success: false,
-            data: null,
-            message: "Space not found!",
-          });
-          return;
-        }
-        if (error.message === "SPACE_NOT_LIVE") {
-          res.status(400).json({
-            success: false,
-            data: null,
-            message: "Space is not currently live!",
-          });
-          return;
-        }
-      }
-      throw error;
-    }
+    res.status(200).json({
+      success: true,
+      data: space,
+      message: "Space ended successfully!",
+    });
   } catch (error: unknown) {
+    if (error instanceof Error) {
+      if (error.message === "SPACE_NOT_FOUND") {
+        res.status(404).json({ success: false, data: null, message: "Space not found!" });
+        return;
+      }
+      if (error.message === "SPACE_NOT_LIVE") {
+        res.status(400).json({ success: false, data: null, message: "Space is not currently live!" });
+        return;
+      }
+    }
+
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     res.status(500).json({
       success: false,
@@ -293,6 +283,51 @@ export async function getSpaceByJoinCodeController(
       success: false,
       data: null,
       message: `Failed to get space: ${errorMessage}!`,
+    });
+  }
+}
+
+export async function getUserSpacesController(
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, data: null, message: "No user context!" });
+      return;
+    }
+
+    const { filter } = req.query;
+
+    // Validate filter if provided
+    const validFilters = ["hosted", "participated", "all"];
+    if (filter && !validFilters.includes(filter as string)) {
+      res.status(400).json({
+        success: false,
+        data: null,
+        message: "Filter must be 'hosted', 'participated', or 'all'!",
+      });
+      return;
+    }
+
+    const user = await findOrCreateUser(req.user);
+
+    const spaces = await getUserSpaces(user.id, filter as "hosted" | "participated" | "all" | undefined);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        spaces,
+        count: spaces.length,
+      },
+      message: "User spaces retrieved successfully!",
+    });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({
+      success: false,
+      data: null,
+      message: `Failed to get user spaces: ${errorMessage}!`,
     });
   }
 }

@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.post("/:spaceId/join", optionalAuthMiddleware, joinSpaceController);
 router.post("/:spaceId/leave", optionalAuthMiddleware, leaveSpaceController);
-router.get("/:spaceId/list", getParticipantsController);
+router.get("/:spaceId/list", optionalAuthMiddleware, getParticipantsController);
 router.patch("/:spaceId/participant/:participantId/role", authMiddleware, updateRoleController);
 router.post("/:spaceId/participant/:participantId/kick", authMiddleware, kickParticipantController);
 

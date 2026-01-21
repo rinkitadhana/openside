@@ -33,7 +33,7 @@ interface RecordingSessionData {
 export function initSocket(httpServer: HTTPServer) {
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: "http://localhost:3000",
+      origin: process.env.APP_URL || "http://localhost:3000",
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
       allowedHeaders: ["Content-Type", "Authorization"],
       credentials: true,
@@ -41,7 +41,6 @@ export function initSocket(httpServer: HTTPServer) {
   });
 
   io.on("connection", (socket) => {
-    console.log(`[Socket] User connected: ${socket.id}`);
 
     /**
      * EVENT: join-room
@@ -55,11 +54,6 @@ export function initSocket(httpServer: HTTPServer) {
      */
     socket.on("join-room", (roomId, userId) => {
       socket.join(roomId);
-      
-      const room = io.sockets.adapter.rooms.get(roomId);
-      const usersInRoom = room ? room.size : 0;
-      
-      console.log(`[Socket] User ${userId} joined room ${roomId} (${usersInRoom} total users)`);
 
       // Notify all OTHER users in the room about the new user
       // This triggers them to initiate a WebRTC call to the new user
@@ -103,7 +97,6 @@ export function initSocket(httpServer: HTTPServer) {
      * 3. Remove the user's video from their UI
      */
     socket.on("user-leave", (userId, roomId) => {
-      console.log(`[Socket] User ${userId} left room ${roomId}`);
       socket.broadcast.to(roomId).emit("user-leave", userId);
     });
 
@@ -123,7 +116,6 @@ export function initSocket(httpServer: HTTPServer) {
      * 5. Chunks are uploaded as they're generated
      */
     socket.on("recording-start", (roomId: string, data: RecordingSessionData) => {
-      console.log(`[Socket] Recording started in room ${roomId}, session: ${data.sessionId}`);
       // Broadcast to ALL users in the room including sender
       io.to(roomId).emit("recording-started", data);
     });
@@ -141,7 +133,6 @@ export function initSocket(httpServer: HTTPServer) {
      * 6. Each participant marks their recording as complete
      */
     socket.on("recording-stop", (roomId: string, sessionId: string) => {
-      console.log(`[Socket] Recording stopped in room ${roomId}, session: ${sessionId}`);
       // Broadcast to ALL users in the room including sender
       io.to(roomId).emit("recording-stopped", sessionId);
     });
@@ -168,7 +159,6 @@ export function initSocket(httpServer: HTTPServer) {
       participantId: string;
       totalSegments: number;
     }) => {
-      console.log(`[Socket] Participant ${data.participantId} completed upload in room ${roomId}`);
       socket.broadcast.to(roomId).emit("participant-recording-complete", data);
     });
   });

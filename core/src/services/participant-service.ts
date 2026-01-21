@@ -88,7 +88,7 @@ export async function joinSpace(data: JoinSpaceData) {
       data: {
         isActive: true,
         leftAt: null,
-        joinedAt: new Date(),
+        // Don't overwrite original joinedAt - preserve when user first joined
         participantSessionId,
         displayName,
       },

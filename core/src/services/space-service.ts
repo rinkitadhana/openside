@@ -224,3 +224,141 @@ export async function isUserParticipant(spaceId: string, userId: string): Promis
   return !!participant;
 }
 
+export async function getUserSpaces(userId: string, filter?: "hosted" | "participated" | "all") {
+  const filterType = filter || "all";
+
+  if (filterType === "hosted") {
+    // Spaces where user is the host
+    return await prisma.space.findMany({
+      where: { hostId: userId },
+      include: {
+        host: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+        participants: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            displayName: true,
+            role: true,
+          },
+        },
+        _count: {
+          select: {
+            participants: true,
+            recordingSessions: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  if (filterType === "participated") {
+    // Spaces where user participated (not as host)
+    const participations = await prisma.spaceParticipant.findMany({
+      where: {
+        userId,
+        space: {
+          hostId: { not: userId },
+        },
+      },
+      include: {
+        space: {
+          include: {
+            host: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+              },
+            },
+            _count: {
+              select: {
+                participants: true,
+                recordingSessions: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { joinedAt: "desc" },
+    });
+
+    return participations.map((p) => ({
+      ...p.space,
+      participantRole: p.role,
+      participantJoinedAt: p.joinedAt,
+    }));
+  }
+
+  // All spaces (hosted + participated)
+  const [hostedSpaces, participatedSpaces] = await Promise.all([
+    prisma.space.findMany({
+      where: { hostId: userId },
+      include: {
+        host: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+        _count: {
+          select: {
+            participants: true,
+            recordingSessions: true,
+          },
+        },
+      },
+    }),
+    prisma.spaceParticipant.findMany({
+      where: {
+        userId,
+        space: {
+          hostId: { not: userId },
+        },
+      },
+      include: {
+        space: {
+          include: {
+            host: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+              },
+            },
+            _count: {
+              select: {
+                participants: true,
+                recordingSessions: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+  ]);
+
+  const hosted = hostedSpaces.map((s) => ({
+    ...s,
+    userRole: "HOST" as const,
+  }));
+
+  const participated = participatedSpaces.map((p) => ({
+    ...p.space,
+    userRole: p.role,
+    participantJoinedAt: p.joinedAt,
+  }));
+
+  // Combine and sort by createdAt
+  return [...hosted, ...participated].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
