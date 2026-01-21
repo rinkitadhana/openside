@@ -29,9 +29,8 @@
     "exactOptionalPropertyTypes": false,
     "noImplicitReturns": true,
     "noImplicitOverride": true,
-    "outDir": "./dist",
-    "rootDir": "./src"
+    "outDir": "./dist"
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "prisma/generated"]
+  "exclude": ["node_modules", "dist"]
 }

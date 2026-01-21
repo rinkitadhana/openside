@@ -80,8 +80,8 @@ export async function updateSpaceController(
       return;
     }
 
-    const { spaceId } = req.params;
-    
+    const spaceId = req.params.spaceId as string | undefined;
+
     if (!spaceId) {
       res.status(400).json({ success: false, data: null, message: "Space ID is required!" });
       return;
@@ -140,8 +140,8 @@ export async function endSpaceController(
       return;
     }
 
-    const { spaceId } = req.params;
-    
+    const spaceId = req.params.spaceId as string | undefined;
+
     if (!spaceId) {
       res.status(400).json({ success: false, data: null, message: "Space ID is required!" });
       return;
@@ -208,8 +208,8 @@ export async function getSpaceByIdController(
       return;
     }
 
-    const { spaceId } = req.params;
-    
+    const spaceId = req.params.spaceId as string | undefined;
+
     if (!spaceId) {
       res.status(400).json({ success: false, data: null, message: "Space ID is required!" });
       return;
@@ -260,7 +260,7 @@ export async function getSpaceByJoinCodeController(
   res: Response
 ): Promise<void> {
   try {
-    const { joinCode } = req.params;
+    const joinCode = req.params.joinCode as string | undefined;
 
     if (!joinCode) {
       res.status(400).json({

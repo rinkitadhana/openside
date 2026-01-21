@@ -16,7 +16,7 @@ export async function joinSpaceController(
   res: Response
 ): Promise<void> {
   try {
-    const { spaceId } = req.params;
+    const spaceId = req.params.spaceId as string | undefined;
     const { displayName, participantSessionId } = req.body;
 
     if (!spaceId) {
@@ -86,7 +86,7 @@ export async function leaveSpaceController(
   res: Response
 ): Promise<void> {
   try {
-    const { spaceId } = req.params;
+    const spaceId = req.params.spaceId as string | undefined;
     const { participantSessionId } = req.body;
 
     if (!spaceId) {
@@ -140,7 +140,7 @@ export async function getParticipantsController(
   res: Response
 ): Promise<void> {
   try {
-    const { spaceId } = req.params;
+    const spaceId = req.params.spaceId as string | undefined;
     const { active } = req.query;
 
     if (!spaceId) {
@@ -182,7 +182,8 @@ export async function updateRoleController(
       return;
     }
 
-    const { spaceId, participantId } = req.params;
+    const spaceId = req.params.spaceId as string | undefined;
+    const participantId = req.params.participantId as string | undefined;
     const { role } = req.body;
 
     if (!spaceId) {
@@ -250,7 +251,8 @@ export async function kickParticipantController(
       return;
     }
 
-    const { spaceId, participantId } = req.params;
+    const spaceId = req.params.spaceId as string | undefined;
+    const participantId = req.params.participantId as string | undefined;
 
     if (!spaceId) {
       res.status(400).json({ success: false, data: null, message: "Space ID is required!" });

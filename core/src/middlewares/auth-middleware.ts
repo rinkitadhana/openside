@@ -10,7 +10,7 @@ export async function authMiddleware(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const authHeader = req.headers.authorization;
+  const authHeader = req.headers.authorization as string | undefined;
 
   if (!authHeader) {
     res.status(401).json({ success: false, data: null, message: "Missing Authorization header" });
@@ -38,7 +38,7 @@ export async function optionalAuthMiddleware(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const authHeader = req.headers.authorization;
+  const authHeader = req.headers.authorization as string | undefined;
 
   if (!authHeader) {
     next();

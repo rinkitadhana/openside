@@ -104,7 +104,7 @@ export async function stopSessionController(
       return;
     }
 
-    const { sessionId } = req.params;
+    const sessionId = req.params.sessionId as string | undefined;
     const { spaceId, participantSessionId } = req.body;
 
     if (!sessionId) {
@@ -169,7 +169,7 @@ export async function getSessionByIdController(
       return;
     }
 
-    const { sessionId } = req.params;
+    const sessionId = req.params.sessionId as string | undefined;
 
     if (!sessionId) {
       res.status(400).json({ success: false, data: null, message: "Session ID is required!" });
@@ -213,7 +213,7 @@ export async function getSessionsBySpaceIdController(
       return;
     }
 
-    const { spaceId } = req.params;
+    const spaceId = req.params.spaceId as string | undefined;
 
     if (!spaceId) {
       res.status(400).json({ success: false, data: null, message: "Space ID is required!" });
@@ -363,7 +363,7 @@ export async function updateParticipantRecordingController(
   res: Response
 ): Promise<void> {
   try {
-    const { recordingId } = req.params;
+    const recordingId = req.params.recordingId as string | undefined;
     const {
       participantSessionId,
       spaceId,
@@ -455,7 +455,7 @@ export async function getParticipantRecordingByIdController(
       return;
     }
 
-    const { recordingId } = req.params;
+    const recordingId = req.params.recordingId as string | undefined;
 
     if (!recordingId) {
       res.status(400).json({ success: false, data: null, message: "Recording ID is required!" });
@@ -498,7 +498,7 @@ export async function getRecordingsBySessionIdController(
       return;
     }
 
-    const { sessionId } = req.params;
+    const sessionId = req.params.sessionId as string | undefined;
 
     if (!sessionId) {
       res.status(400).json({ success: false, data: null, message: "Session ID is required!" });
@@ -540,7 +540,7 @@ export async function markRecordingCompleteController(
   res: Response
 ): Promise<void> {
   try {
-    const { recordingId } = req.params;
+    const recordingId = req.params.recordingId as string | undefined;
     const { expectedSegments, participantSessionId, spaceId } = req.body;
 
     if (!recordingId) {
@@ -715,7 +715,7 @@ export async function getSegmentsByRecordingIdController(
       return;
     }
 
-    const { recordingId } = req.params;
+    const recordingId = req.params.recordingId as string | undefined;
 
     if (!recordingId) {
       res.status(400).json({ success: false, data: null, message: "Recording ID is required!" });
