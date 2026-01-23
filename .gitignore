@@ -4,8 +4,9 @@
 # Dependencies & Package Managers
 # ===========================
 node_modules/
-core/node_modules/
+landing/node_modules/
 web/node_modules/
+core/node_modules/
 .pnp
 .pnp.*
 .yarn/*
@@ -15,11 +16,13 @@ web/node_modules/
 !.yarn/versions
 .npm
 .eslintcache
-core/.eslintcache
+landing/.eslintcache
 web/.eslintcache
+core/.eslintcache
 .cache
-core/.cache/
+landing/.cache/
 web/.cache/
+core/.cache/
 *.tgz
 
 # ===========================
@@ -39,31 +42,39 @@ build/
 dist/
 
 # App builds
-core/.next/
-core/out/
-core/build/
-core/dist/
+landing/.next/
+landing/out/
+landing/build/
+landing/dist/
 web/.next/
 web/out/
 web/build/
 web/dist/
+core/.next/
+core/out/
+core/build/
+core/dist/
 
 # TypeScript builds
 *.tsbuildinfo
 **/tsconfig.tsbuildinfo
-core/tsconfig.tsbuildinfo
+landing/tsconfig.tsbuildinfo
 web/tsconfig.tsbuildinfo
+core/tsconfig.tsbuildinfo
 next-env.d.ts
+landing/next-env.d.ts
 web/next-env.d.ts
 
 # Bun specific outputs
 *.bun
-core/bun.lockb
+landing/bun.lockb
 web/bun.lockb
+core/bun.lockb
 
 # Other build artifacts
-core/storybook-static/
+landing/storybook-static/
 web/storybook-static/
+core/storybook-static/
 
 # ===========================
 # Prisma
@@ -74,31 +85,38 @@ core/prisma/generated/
 # Testing & Coverage
 # ===========================
 coverage/
-core/coverage/
+landing/coverage/
 web/coverage/
+core/coverage/
 *.lcov
 .nyc_output
-core/.nyc_output
+landing/.nyc_output
 web/.nyc_output
+core/.nyc_output
 .jest
-core/.jest
+landing/.jest
 web/.jest
+core/.jest
 junit.xml
-core/junit.xml
+landing/junit.xml
 web/junit.xml
+core/junit.xml
 test-results/
-core/test-results/
+landing/test-results/
 web/test-results/
+core/test-results/
 
 # ===========================
 # Logs & Debug
 # ===========================
 logs/
-core/logs/
+landing/logs/
 web/logs/
+core/logs/
 *.log
-core/*.log
+landing/*.log
 web/*.log
+core/*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -116,17 +134,21 @@ pids
 .tmp/
 tmp/
 temp/
-core/.tmp/
-core/tmp/
-core/temp/
+landing/.tmp/
+landing/tmp/
+landing/temp/
 web/.tmp/
 web/tmp/
 web/temp/
+core/.tmp/
+core/tmp/
+core/temp/
 *.tmp
 *.temp
 .sass-cache/
-core/.sass-cache/
+landing/.sass-cache/
 web/.sass-cache/
+core/.sass-cache/
 
 # ===========================
 # Operating System
@@ -211,13 +233,15 @@ tramp
 # Build Tools & Caches
 # ===========================
 .turbo/
-core/.turbo/
+landing/.turbo/
 web/.turbo/
+core/.turbo/
 .rush/
 .changeset/
 .nx/
-core/.nx/
+landing/.nx/
 web/.nx/
+core/.nx/
 
 # Package manager cache & lock files
 .pnpm-store/
@@ -226,35 +250,43 @@ web/.nx/
 .yarn/build-state.yml
 .yarn/install-state.gz
 .swc/
-core/.swc/
+landing/.swc/
 web/.swc/
+core/.swc/
 
 # Development servers
 .vite/
-core/.vite/
+landing/.vite/
 web/.vite/
+core/.vite/
 .parcel-cache/
-core/.parcel-cache/
+landing/.parcel-cache/
 web/.parcel-cache/
+core/.parcel-cache/
 
 # ===========================
 # Cloud & Deployment
 # ===========================
 .vercel/
-core/.vercel/
+landing/.vercel/
 web/.vercel/
+core/.vercel/
 .netlify/
-core/.netlify/
+landing/.netlify/
 web/.netlify/
+core/.netlify/
 .serverless/
-core/.serverless/
+landing/.serverless/
 web/.serverless/
+core/.serverless/
 .firebase/
-core/.firebase/
+landing/.firebase/
 web/.firebase/
+core/.firebase/
 .amplify/
-core/.amplify/
+landing/.amplify/
 web/.amplify/
+core/.amplify/
 
 # ===========================
 # Database
@@ -284,6 +316,11 @@ secrets/
 Dockerfile*
 docker-compose*.yml
 .docker/
+
+# ===========================
+# Backup & Archives
+# ===========================
+backup/
 
 # ===========================
 # Miscellaneous

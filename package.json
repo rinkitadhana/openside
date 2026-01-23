@@ -3,14 +3,20 @@
   "private": true,
   "scripts": {
     "dev": "pnpm -r --parallel dev",
+    "dev:landing": "pnpm --filter landing dev",
     "dev:web": "pnpm --filter web dev",
     "dev:core": "pnpm --filter core dev",
 
     "build": "pnpm -r build",
+    "build:landing": "pnpm --filter landing build",
     "build:web": "pnpm --filter web build",
     "build:core": "pnpm --filter core build",
 
     "lint": "pnpm -r lint",
+    "format": "pnpm -r format",
+
+    "clean": "pnpm -r exec rm -rf node_modules .next dist build",
+    "clean:install": "pnpm clean && pnpm install",
 
     "db:generate": "pnpm --filter core db:generate",
     "db:push": "pnpm --filter core db:push",

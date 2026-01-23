@@ -1,35 +1,56 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "@/components/shared/ThemeProvider";
+import { QueryProvider } from "@/utils/QueryProvider";
+import { SocketProvider } from "@/context/socket";
+import ProtectedRoute from "@/components/shared/ProtectedRoute";
+import DashboardPage from "@/pages/Dashboard/DashboardPage";
+import SpacePage from "@/pages/Space/SpacePage";
+import DashboardWrapper from "@/components/Dashboard/DashboardWrapper";
 
 function App() {
-  const [count, setCount] = useState(0)
+  console.log('[App] Rendering...');
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="light"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <QueryProvider>
+        <SocketProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Redirect root to dashboard */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+              {/* Dashboard routes */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardWrapper>
+                      <DashboardPage />
+                    </DashboardWrapper>
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Space/Video call routes */}
+              <Route
+                path="/space/:roomId"
+                element={
+                  <ProtectedRoute>
+                    <SpacePage />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </SocketProvider>
+      </QueryProvider>
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;
