@@ -50,32 +50,111 @@ const Room = () => {
     setRecordingDurationMs(durationMs);
   }, []);
 
-  // Handle chunk ready - implement your upload logic here
-  const handleChunkReady = useCallback((data: ChunkData) => {
-    // TODO: Implement your upload service here
-    // data.streamType: 'video' | 'audio' | 'combined'
-    // data.chunk.blob contains the blob
-    // data.chunk.sequenceNumber is the chunk index
-    // data.spaceRecordingSessionId identifies the recording session
-    // data.participantRecordingId identifies which recording (video/audio/combined)
+  // Chunk upload queue to handle retry logic
+  const chunkQueueRef = React.useRef<ChunkData[]>([]);
+  const isUploadingRef = React.useRef(false);
 
-    console.log(`[Room] ${data.streamType.toUpperCase()} chunk ready:`, {
-      streamType: data.streamType,
-      sequenceNumber: data.chunk.sequenceNumber,
-      size: (data.chunk.blob.size / 1024).toFixed(2) + " KB",
-      recordingId: data.participantRecordingId,
-      sessionId: data.spaceRecordingSessionId,
-    });
+  // Process chunk upload queue with retry logic
+  const processChunkQueue = useCallback(async () => {
+    if (isUploadingRef.current || chunkQueueRef.current.length === 0) {
+      return;
+    }
 
-    // Example: Upload to different endpoints based on stream type
-    // if (data.streamType === 'video') {
-    //   uploadToService(data.chunk.blob, 'video', data.participantRecordingId);
-    // } else if (data.streamType === 'audio') {
-    //   uploadToService(data.chunk.blob, 'audio', data.participantRecordingId);
-    // } else if (data.streamType === 'combined') {
-    //   uploadToService(data.chunk.blob, 'combined', data.participantRecordingId);
-    // }
+    isUploadingRef.current = true;
+
+    while (chunkQueueRef.current.length > 0) {
+      const chunkData = chunkQueueRef.current[0];
+      
+      try {
+        // Skip if no recording ID yet (shouldn't happen with fixed implementation)
+        if (!chunkData.participantRecordingId) {
+          console.warn(`[Room] No recording ID for ${chunkData.streamType} chunk, skipping`);
+          chunkQueueRef.current.shift();
+          continue;
+        }
+
+        console.log(`[Room] Processing ${chunkData.streamType} chunk #${chunkData.chunk.sequenceNumber}`);
+
+        // TODO: Replace this with actual upload service implementation
+        // Example implementation:
+        //
+        // 1. Upload blob to storage service (S3, Cloudflare R2, etc.)
+        // const uploadResult = await uploadService.uploadChunk({
+        //   blob: chunkData.chunk.blob,
+        //   fileName: `${chunkData.participantRecordingId}_${chunkData.chunk.sequenceNumber}.webm`,
+        //   contentType: chunkData.metadata?.mimeType || 'video/webm',
+        // });
+        //
+        // 2. Create segment entry in database
+        // await createSegmentMutation.mutateAsync({
+        //   participantRecordingId: chunkData.participantRecordingId,
+        //   spaceRecordingSessionId: chunkData.spaceRecordingSessionId,
+        //   spaceId: createdSpaceId || '',
+        //   participantSessionId: participantSessionId,
+        //   sequenceNumber: chunkData.chunk.sequenceNumber,
+        //   assetKey: uploadResult.key,
+        //   startMs: chunkData.chunk.startMs,
+        //   durationMs: chunkData.chunk.durationMs,
+        //   sizeBytes: chunkData.chunk.blob.size,
+        //   checksum: await calculateChecksum(chunkData.chunk.blob), // optional
+        // });
+
+        // For now, just log the chunk info
+        console.log(`[Room] ${chunkData.streamType.toUpperCase()} chunk ready:`, {
+          streamType: chunkData.streamType,
+          sequenceNumber: chunkData.chunk.sequenceNumber,
+          size: (chunkData.chunk.blob.size / 1024).toFixed(2) + " KB",
+          recordingId: chunkData.participantRecordingId,
+          sessionId: chunkData.spaceRecordingSessionId,
+          startMs: chunkData.chunk.startMs,
+          durationMs: chunkData.chunk.durationMs,
+        });
+
+        // Simulate successful upload (remove this when implementing real upload)
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Successfully processed, remove from queue
+        chunkQueueRef.current.shift();
+        
+      } catch (error) {
+        console.error(`[Room] Failed to upload ${chunkData.streamType} chunk:`, error);
+        
+        // For now, remove failed chunk from queue to prevent blocking
+        // In production, you might want to implement retry logic:
+        // - Keep track of retry count
+        // - Exponential backoff
+        // - Move to failed queue after max retries
+        chunkQueueRef.current.shift();
+        
+        // TODO: Implement proper retry logic
+        // if (!chunkData.retryCount) chunkData.retryCount = 0;
+        // chunkData.retryCount++;
+        // if (chunkData.retryCount < 3) {
+        //   // Re-add to end of queue for retry
+        //   chunkQueueRef.current.push(chunkData);
+        // } else {
+        //   console.error(`[Room] Max retries exceeded for chunk #${chunkData.chunk.sequenceNumber}`);
+        //   chunkQueueRef.current.shift();
+        // }
+      }
+    }
+
+    isUploadingRef.current = false;
   }, []);
+
+  // Handle chunk ready - add to queue and process
+  const handleChunkReady = useCallback((data: ChunkData) => {
+    if (!data.participantRecordingId) {
+      console.warn(`[Room] Received ${data.streamType} chunk without recording ID, skipping`);
+      return;
+    }
+
+    // Add to queue
+    chunkQueueRef.current.push(data);
+
+    // Process queue
+    processChunkQueue();
+  }, [processChunkQueue]);
 
   const toggleSidebar = (sidebarType: SidebarType) => {
     if (activeSidebar === sidebarType) {

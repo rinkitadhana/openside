@@ -409,7 +409,41 @@ export default function useLocalRecording(
         onRecordingStart?.(videoMeta, audioMeta, combinedMeta);
       } catch (error) {
         const err =
-          error instanceof Error ? error : new Error("Failed to start");
+          error instanceof Error ? error : new Error("Failed to start recording");
+        
+        console.error("[Recording] Error starting recording:", err);
+        
+        // Cleanup: Stop any recorders that might have been started
+        try {
+          if (videoRecorderRef.current?.state === "recording") {
+            videoRecorderRef.current.stop();
+          }
+        } catch (cleanupErr) {
+          console.error("Error stopping video recorder during cleanup:", cleanupErr);
+        }
+
+        try {
+          if (audioRecorderRef.current?.state === "recording") {
+            audioRecorderRef.current.stop();
+          }
+        } catch (cleanupErr) {
+          console.error("Error stopping audio recorder during cleanup:", cleanupErr);
+        }
+
+        try {
+          if (combinedRecorderRef.current?.state === "recording") {
+            combinedRecorderRef.current.stop();
+          }
+        } catch (cleanupErr) {
+          console.error("Error stopping combined recorder during cleanup:", cleanupErr);
+        }
+
+        // Clear refs
+        videoRecorderRef.current = null;
+        audioRecorderRef.current = null;
+        combinedRecorderRef.current = null;
+
+        // Notify error
         onError?.(err, "combined");
         throw err;
       }
@@ -470,12 +504,38 @@ export default function useLocalRecording(
     });
   }, [isRecording, onRecordingStop]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount or when recording state changes unexpectedly
   useEffect(() => {
     return () => {
-      videoRecorderRef.current?.stop();
-      audioRecorderRef.current?.stop();
-      combinedRecorderRef.current?.stop();
+      // Stop all recorders safely
+      try {
+        if (videoRecorderRef.current?.state !== "inactive") {
+          videoRecorderRef.current?.stop();
+        }
+      } catch (err) {
+        console.error("Error stopping video recorder on cleanup:", err);
+      }
+
+      try {
+        if (audioRecorderRef.current?.state !== "inactive") {
+          audioRecorderRef.current?.stop();
+        }
+      } catch (err) {
+        console.error("Error stopping audio recorder on cleanup:", err);
+      }
+
+      try {
+        if (combinedRecorderRef.current?.state !== "inactive") {
+          combinedRecorderRef.current?.stop();
+        }
+      } catch (err) {
+        console.error("Error stopping combined recorder on cleanup:", err);
+      }
+
+      // Clear duration interval
+      if (durationIntervalRef.current) {
+        clearInterval(durationIntervalRef.current);
+      }
     };
   }, []);
 

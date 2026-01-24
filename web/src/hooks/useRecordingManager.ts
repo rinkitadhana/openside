@@ -264,6 +264,32 @@ export default function useRecordingManager(
     roomId,
   ]);
 
+  // Cleanup function for failed recording attempts
+  const cleanupFailedRecording = useCallback(
+    async (createdRecordingIds: {
+      video?: string;
+      audio?: string;
+      combined?: string;
+    }) => {
+      console.log("[RecordingManager] Cleaning up failed recording...");
+
+      // Stop local recording if it's running
+      if (isLocalRecording) {
+        try {
+          await stopLocalRecording();
+        } catch (err) {
+          console.error("Error stopping local recording during cleanup:", err);
+        }
+      }
+
+      // Clear recording IDs
+      if (createdRecordingIds.video) setVideoRecordingId(null);
+      if (createdRecordingIds.audio) setAudioRecordingId(null);
+      if (createdRecordingIds.combined) setCombinedRecordingId(null);
+    },
+    [isLocalRecording, stopLocalRecording]
+  );
+
   // Handle "recording-started" socket event
   const handleRecordingStarted = useCallback(
     async (data: RecordingStartedData) => {
@@ -278,87 +304,107 @@ export default function useRecordingManager(
         return;
       }
 
+      const createdRecordings: {
+        video?: string;
+        audio?: string;
+        combined?: string;
+      } = {};
+
       try {
         // Start local recording (all 3 streams)
         await startLocalRecording(stream);
+
+        // Wait for metadata to be available (with timeout)
+        const maxWaitTime = 3000; // 3 seconds
+        const startWait = Date.now();
+        
+        while ((!videoMetadata || !audioMetadata || !combinedMetadata) && 
+               (Date.now() - startWait < maxWaitTime)) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+        // Check if we have all metadata
+        if (!videoMetadata || !audioMetadata || !combinedMetadata) {
+          throw new Error("Recording metadata not available after timeout");
+        }
+
+        // Create all 3 ParticipantRecording entries in parallel
+        const [videoRecording, audioRecording, combinedRecording] =
+          await Promise.all([
+            // 1. Video only recording
+            createParticipantRecordingMutation.mutateAsync({
+              recordingSessionId: data.sessionId,
+              spaceId,
+              participantSessionId,
+              type: "VIDEO",
+              container: videoMetadata.container,
+              codec: videoMetadata.codec,
+              width: videoMetadata.width,
+              height: videoMetadata.height,
+              fps: videoMetadata.fps,
+              bitrate: videoMetadata.bitrate,
+              hasAudio: false,
+              hasVideo: true,
+            }),
+            // 2. Audio only recording
+            createParticipantRecordingMutation.mutateAsync({
+              recordingSessionId: data.sessionId,
+              spaceId,
+              participantSessionId,
+              type: "AUDIO",
+              container: audioMetadata.container,
+              codec: audioMetadata.codec,
+              sampleRate: audioMetadata.sampleRate,
+              channels: audioMetadata.channels,
+              bitrate: audioMetadata.bitrate,
+              hasAudio: true,
+              hasVideo: false,
+            }),
+            // 3. Combined (video + audio) recording
+            createParticipantRecordingMutation.mutateAsync({
+              recordingSessionId: data.sessionId,
+              spaceId,
+              participantSessionId,
+              type: "VIDEO",
+              container: combinedMetadata.container,
+              codec: combinedMetadata.codec,
+              width: combinedMetadata.width,
+              height: combinedMetadata.height,
+              fps: combinedMetadata.fps,
+              bitrate: combinedMetadata.bitrate,
+              sampleRate: combinedMetadata.sampleRate,
+              channels: combinedMetadata.channels,
+              hasAudio: true,
+              hasVideo: true,
+            }),
+          ]);
+
+        // Store recording IDs
+        setVideoRecordingId(videoRecording.id);
+        setAudioRecordingId(audioRecording.id);
+        setCombinedRecordingId(combinedRecording.id);
+
+        createdRecordings.video = videoRecording.id;
+        createdRecordings.audio = audioRecording.id;
+        createdRecordings.combined = combinedRecording.id;
+
+        // Only set to recording state after everything is successful
         setRecordingState("recording");
 
-        // Create 3 ParticipantRecording entries in DB
-        setTimeout(async () => {
-          const videoMeta = videoMetadata;
-          const audioMeta = audioMetadata;
-          const combinedMeta = combinedMetadata;
-
-          if (!videoMeta || !audioMeta || !combinedMeta) return;
-
-          try {
-            // 1. Video only recording
-            const videoRecording =
-              await createParticipantRecordingMutation.mutateAsync({
-                recordingSessionId: data.sessionId,
-                spaceId,
-                participantSessionId,
-                type: "VIDEO",
-                container: videoMeta.container,
-                codec: videoMeta.codec,
-                width: videoMeta.width,
-                height: videoMeta.height,
-                fps: videoMeta.fps,
-                bitrate: videoMeta.bitrate,
-                hasAudio: false,
-                hasVideo: true,
-              });
-            setVideoRecordingId(videoRecording.id);
-
-            // 2. Audio only recording
-            const audioRecording =
-              await createParticipantRecordingMutation.mutateAsync({
-                recordingSessionId: data.sessionId,
-                spaceId,
-                participantSessionId,
-                type: "AUDIO",
-                container: audioMeta.container,
-                codec: audioMeta.codec,
-                sampleRate: audioMeta.sampleRate,
-                channels: audioMeta.channels,
-                bitrate: audioMeta.bitrate,
-                hasAudio: true,
-                hasVideo: false,
-              });
-            setAudioRecordingId(audioRecording.id);
-
-            // 3. Combined (video + audio) recording
-            const combinedRecording =
-              await createParticipantRecordingMutation.mutateAsync({
-                recordingSessionId: data.sessionId,
-                spaceId,
-                participantSessionId,
-                type: "VIDEO",
-                container: combinedMeta.container,
-                codec: combinedMeta.codec,
-                width: combinedMeta.width,
-                height: combinedMeta.height,
-                fps: combinedMeta.fps,
-                bitrate: combinedMeta.bitrate,
-                sampleRate: combinedMeta.sampleRate,
-                channels: combinedMeta.channels,
-                hasAudio: true,
-                hasVideo: true,
-              });
-            setCombinedRecordingId(combinedRecording.id);
-
-            console.log("[RecordingManager] Created 3 recordings:", {
-              video: videoRecording.id,
-              audio: audioRecording.id,
-              combined: combinedRecording.id,
-            });
-          } catch (err) {
-            console.error("Failed to create participant recordings:", err);
-          }
-        }, 200);
+        console.log("[RecordingManager] Successfully started recording with 3 streams:", {
+          video: videoRecording.id,
+          audio: audioRecording.id,
+          combined: combinedRecording.id,
+        });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to start");
+        const errorMessage = err instanceof Error ? err.message : "Failed to start recording";
+        console.error("[RecordingManager] Error starting recording:", err);
+        
+        setError(errorMessage);
         setRecordingState("error");
+
+        // Cleanup any partially created recordings
+        await cleanupFailedRecording(createdRecordings);
       }
     },
     [
@@ -369,6 +415,7 @@ export default function useRecordingManager(
       videoMetadata,
       audioMetadata,
       combinedMetadata,
+      cleanupFailedRecording,
     ]
   );
 
@@ -379,24 +426,88 @@ export default function useRecordingManager(
     try {
       await stopLocalRecording();
       setRecordingState("complete");
+      
+      console.log("[RecordingManager] Recording stopped successfully");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to stop");
+      const errorMessage = err instanceof Error ? err.message : "Failed to stop recording";
+      console.error("[RecordingManager] Error stopping recording:", err);
+      
+      setError(errorMessage);
       setRecordingState("error");
+      
+      // Attempt cleanup even on error
+      try {
+        // Clear recording IDs
+        setVideoRecordingId(null);
+        setAudioRecordingId(null);
+        setCombinedRecordingId(null);
+      } catch (cleanupErr) {
+        console.error("Error during cleanup:", cleanupErr);
+      }
     }
   }, [isLocalRecording, stopLocalRecording]);
 
-  // Listen for socket events
+  // Listen for socket events and handle disconnections
   useEffect(() => {
     if (!socket) return;
 
+    let disconnectTimeoutId: NodeJS.Timeout | null = null;
+
+    // Handle socket disconnect during recording
+    const handleDisconnect = (reason: string) => {
+      console.warn("[RecordingManager] Socket disconnected:", reason);
+      
+      // If we're recording, wait 10 seconds for reconnection
+      if (isLocalRecording) {
+        console.log("[RecordingManager] Recording in progress, waiting for reconnection...");
+        
+        disconnectTimeoutId = setTimeout(async () => {
+          console.error("[RecordingManager] Connection not restored, stopping recording");
+          setError("Connection lost during recording");
+          setRecordingState("error");
+          
+          try {
+            await stopLocalRecording();
+          } catch (err) {
+            console.error("Error stopping recording after disconnect:", err);
+          }
+        }, 10000); // 10 seconds
+      }
+    };
+
+    // Handle socket reconnection
+    const handleConnect = () => {
+      console.log("[RecordingManager] Socket reconnected");
+      
+      // Clear disconnect timeout if it exists
+      if (disconnectTimeoutId) {
+        clearTimeout(disconnectTimeoutId);
+        disconnectTimeoutId = null;
+      }
+
+      // If we were recording before disconnect, continue
+      if (isLocalRecording) {
+        console.log("[RecordingManager] Continuing recording after reconnection");
+      }
+    };
+
     socket.on("recording-started", handleRecordingStarted);
     socket.on("recording-stopped", handleRecordingStopped);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("connect", handleConnect);
 
     return () => {
       socket.off("recording-started", handleRecordingStarted);
       socket.off("recording-stopped", handleRecordingStopped);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("connect", handleConnect);
+      
+      // Clear timeout on unmount
+      if (disconnectTimeoutId) {
+        clearTimeout(disconnectTimeoutId);
+      }
     };
-  }, [socket, handleRecordingStarted, handleRecordingStopped]);
+  }, [socket, handleRecordingStarted, handleRecordingStopped, isLocalRecording, stopLocalRecording]);
 
   return {
     recordingState,
