@@ -33,7 +33,7 @@ interface RecordingSessionData {
 export function initSocket(httpServer: HTTPServer) {
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: process.env.APP_URL || "http://localhost:3000",
+      origin: process.env.WEB_URL || "http://localhost:3000",
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
       allowedHeaders: ["Content-Type", "Authorization"],
       credentials: true,

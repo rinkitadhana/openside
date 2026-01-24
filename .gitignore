@@ -4,8 +4,8 @@
 # Dependencies & Package Managers
 # ===========================
 node_modules/
-core/node_modules/
 web/node_modules/
+core/node_modules/
 .pnp
 .pnp.*
 .yarn/*
@@ -15,11 +15,11 @@ web/node_modules/
 !.yarn/versions
 .npm
 .eslintcache
-core/.eslintcache
 web/.eslintcache
+core/.eslintcache
 .cache
-core/.cache/
 web/.cache/
+core/.cache/
 *.tgz
 
 # ===========================
@@ -39,31 +39,31 @@ build/
 dist/
 
 # App builds
-core/.next/
-core/out/
-core/build/
-core/dist/
 web/.next/
 web/out/
 web/build/
 web/dist/
+core/.next/
+core/out/
+core/build/
+core/dist/
 
 # TypeScript builds
 *.tsbuildinfo
 **/tsconfig.tsbuildinfo
-core/tsconfig.tsbuildinfo
 web/tsconfig.tsbuildinfo
+core/tsconfig.tsbuildinfo
 next-env.d.ts
 web/next-env.d.ts
 
 # Bun specific outputs
 *.bun
-core/bun.lockb
 web/bun.lockb
+core/bun.lockb
 
 # Other build artifacts
-core/storybook-static/
 web/storybook-static/
+core/storybook-static/
 
 # ===========================
 # Prisma
@@ -74,31 +74,31 @@ core/prisma/generated/
 # Testing & Coverage
 # ===========================
 coverage/
-core/coverage/
 web/coverage/
+core/coverage/
 *.lcov
 .nyc_output
-core/.nyc_output
 web/.nyc_output
+core/.nyc_output
 .jest
-core/.jest
 web/.jest
+core/.jest
 junit.xml
-core/junit.xml
 web/junit.xml
+core/junit.xml
 test-results/
-core/test-results/
 web/test-results/
+core/test-results/
 
 # ===========================
 # Logs & Debug
 # ===========================
 logs/
-core/logs/
 web/logs/
+core/logs/
 *.log
-core/*.log
 web/*.log
+core/*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -116,17 +116,17 @@ pids
 .tmp/
 tmp/
 temp/
-core/.tmp/
-core/tmp/
-core/temp/
 web/.tmp/
 web/tmp/
 web/temp/
+core/.tmp/
+core/tmp/
+core/temp/
 *.tmp
 *.temp
 .sass-cache/
-core/.sass-cache/
 web/.sass-cache/
+core/.sass-cache/
 
 # ===========================
 # Operating System
@@ -211,13 +211,13 @@ tramp
 # Build Tools & Caches
 # ===========================
 .turbo/
-core/.turbo/
 web/.turbo/
+core/.turbo/
 .rush/
 .changeset/
 .nx/
-core/.nx/
 web/.nx/
+core/.nx/
 
 # Package manager cache & lock files
 .pnpm-store/
@@ -226,35 +226,35 @@ web/.nx/
 .yarn/build-state.yml
 .yarn/install-state.gz
 .swc/
-core/.swc/
 web/.swc/
+core/.swc/
 
 # Development servers
 .vite/
-core/.vite/
 web/.vite/
+core/.vite/
 .parcel-cache/
-core/.parcel-cache/
 web/.parcel-cache/
+core/.parcel-cache/
 
 # ===========================
 # Cloud & Deployment
 # ===========================
 .vercel/
-core/.vercel/
 web/.vercel/
+core/.vercel/
 .netlify/
-core/.netlify/
 web/.netlify/
+core/.netlify/
 .serverless/
-core/.serverless/
 web/.serverless/
+core/.serverless/
 .firebase/
-core/.firebase/
 web/.firebase/
+core/.firebase/
 .amplify/
-core/.amplify/
 web/.amplify/
+core/.amplify/
 
 # ===========================
 # Database
@@ -284,6 +284,11 @@ secrets/
 Dockerfile*
 docker-compose*.yml
 .docker/
+
+# ===========================
+# Backup & Archives
+# ===========================
+backup/
 
 # ===========================
 # Miscellaneous
