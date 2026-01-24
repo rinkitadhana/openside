@@ -4,7 +4,6 @@
 # Dependencies & Package Managers
 # ===========================
 node_modules/
-landing/node_modules/
 web/node_modules/
 core/node_modules/
 .pnp
@@ -16,11 +15,9 @@ core/node_modules/
 !.yarn/versions
 .npm
 .eslintcache
-landing/.eslintcache
 web/.eslintcache
 core/.eslintcache
 .cache
-landing/.cache/
 web/.cache/
 core/.cache/
 *.tgz
@@ -42,10 +39,6 @@ build/
 dist/
 
 # App builds
-landing/.next/
-landing/out/
-landing/build/
-landing/dist/
 web/.next/
 web/out/
 web/build/
@@ -58,21 +51,17 @@ core/dist/
 # TypeScript builds
 *.tsbuildinfo
 **/tsconfig.tsbuildinfo
-landing/tsconfig.tsbuildinfo
 web/tsconfig.tsbuildinfo
 core/tsconfig.tsbuildinfo
 next-env.d.ts
-landing/next-env.d.ts
 web/next-env.d.ts
 
 # Bun specific outputs
 *.bun
-landing/bun.lockb
 web/bun.lockb
 core/bun.lockb
 
 # Other build artifacts
-landing/storybook-static/
 web/storybook-static/
 core/storybook-static/
 
@@ -85,24 +74,19 @@ core/prisma/generated/
 # Testing & Coverage
 # ===========================
 coverage/
-landing/coverage/
 web/coverage/
 core/coverage/
 *.lcov
 .nyc_output
-landing/.nyc_output
 web/.nyc_output
 core/.nyc_output
 .jest
-landing/.jest
 web/.jest
 core/.jest
 junit.xml
-landing/junit.xml
 web/junit.xml
 core/junit.xml
 test-results/
-landing/test-results/
 web/test-results/
 core/test-results/
 
@@ -110,11 +94,9 @@ core/test-results/
 # Logs & Debug
 # ===========================
 logs/
-landing/logs/
 web/logs/
 core/logs/
 *.log
-landing/*.log
 web/*.log
 core/*.log
 npm-debug.log*
@@ -134,9 +116,6 @@ pids
 .tmp/
 tmp/
 temp/
-landing/.tmp/
-landing/tmp/
-landing/temp/
 web/.tmp/
 web/tmp/
 web/temp/
@@ -146,7 +125,6 @@ core/temp/
 *.tmp
 *.temp
 .sass-cache/
-landing/.sass-cache/
 web/.sass-cache/
 core/.sass-cache/
 
@@ -233,13 +211,11 @@ tramp
 # Build Tools & Caches
 # ===========================
 .turbo/
-landing/.turbo/
 web/.turbo/
 core/.turbo/
 .rush/
 .changeset/
 .nx/
-landing/.nx/
 web/.nx/
 core/.nx/
 
@@ -250,17 +226,14 @@ core/.nx/
 .yarn/build-state.yml
 .yarn/install-state.gz
 .swc/
-landing/.swc/
 web/.swc/
 core/.swc/
 
 # Development servers
 .vite/
-landing/.vite/
 web/.vite/
 core/.vite/
 .parcel-cache/
-landing/.parcel-cache/
 web/.parcel-cache/
 core/.parcel-cache/
 
@@ -268,23 +241,18 @@ core/.parcel-cache/
 # Cloud & Deployment
 # ===========================
 .vercel/
-landing/.vercel/
 web/.vercel/
 core/.vercel/
 .netlify/
-landing/.netlify/
 web/.netlify/
 core/.netlify/
 .serverless/
-landing/.serverless/
 web/.serverless/
 core/.serverless/
 .firebase/
-landing/.firebase/
 web/.firebase/
 core/.firebase/
 .amplify/
-landing/.amplify/
 web/.amplify/
 core/.amplify/
 

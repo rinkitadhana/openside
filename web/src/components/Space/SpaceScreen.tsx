@@ -35,12 +35,13 @@
  * - recording state: Managed by useRecordingManager
  */
 
+"use client";
 import React, { useEffect, useState, useCallback } from "react";
 import { useSocket } from "@/context/socket";
 import usePeer from "@/hooks/usePeer";
 import useMediaStream from "@/hooks/useMediaStream";
 import usePlayer from "@/hooks/usePlayer";
-import { useParams } from "react-router-dom";
+import { useParams } from "next/navigation";
 import { cloneDeep } from "lodash";
 import { MediaConnection } from "peerjs";
 import VideoCallControls from "./VideoCallControls";
@@ -50,7 +51,7 @@ import VideoContainer from "./layout/VideoContainer";
 import PaginationControls from "./ui/PaginationControls";
 import WaitingState from "./ui/WaitingState";
 import { RxEnterFullScreen, RxExitFullScreen } from "react-icons/rx";
-import { PreJoinSettings } from "@/pages/Space/SpacePage";
+import { PreJoinSettings } from "@/types/preJoinTypes";
 import { useGetMe } from "@/hooks/useUserQuery";
 import { useEndSpace, useGetSpaceByJoinCode } from "@/hooks/useSpace";
 import { useLeaveSpace } from "@/hooks/useParticipant";

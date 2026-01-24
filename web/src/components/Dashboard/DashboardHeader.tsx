@@ -1,10 +1,11 @@
+"use client";
 import { ThemeSwitcher } from "@/components/shared/ThemeSwitcher";
-import { useLocation } from "react-router-dom";
+import { usePathname } from "next/navigation";
 import React from "react";
 
 const DashboardHeader = () => {
-  const location = useLocation();
-  const route = location.pathname.split("/").pop();
+  const pathname = usePathname();
+  const route = pathname.split("/").pop();
 
   return (
     <div className="flex items-center gap-2 absolute top-2 right-2">

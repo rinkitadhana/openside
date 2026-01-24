@@ -3,12 +3,10 @@
   "private": true,
   "scripts": {
     "dev": "pnpm -r --parallel dev",
-    "dev:landing": "pnpm --filter landing dev",
     "dev:web": "pnpm --filter web dev",
     "dev:core": "pnpm --filter core dev",
 
     "build": "pnpm -r build",
-    "build:landing": "pnpm --filter landing build",
     "build:web": "pnpm --filter web build",
     "build:core": "pnpm --filter core build",
 

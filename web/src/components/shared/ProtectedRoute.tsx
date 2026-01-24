@@ -1,36 +1,30 @@
-import { useGetMe } from "@/hooks/useUserQuery";
-import { useEffect } from "react";
+"use client"
 
-const LANDING_URL = import.meta.env.VITE_LANDING_URL || "http://localhost:3000";
+import { useGetMe } from "@/hooks/useUserQuery"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { data: user, isLoading } = useGetMe();
-
-  console.log('[ProtectedRoute]', { user, isLoading });
+  const { data: user, isLoading } = useGetMe()
+  const router = useRouter()
 
   useEffect(() => {
     if (!isLoading && !user) {
-      console.log('[ProtectedRoute] Redirecting to login...');
-      // Redirect to landing page login
-      window.location.href = `${LANDING_URL}/login`;
+      router.replace("/login")
     }
-  }, [user, isLoading]);
+  }, [user, isLoading, router])
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p>Loading...</p>
       </div>
-    );
+    )
   }
 
   if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Redirecting to login...</p>
-      </div>
-    );
+    return null
   }
 
-  return <>{children}</>;
+  return <>{children}</>
 }

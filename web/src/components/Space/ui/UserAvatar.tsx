@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 
 interface UserAvatarProps {
   name?: string;
@@ -26,10 +27,11 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
           {avatar ? (
             <>
               <div className="absolute inset-0 w-full h-full z-0">
-                <img
+                <Image
                   src={avatar}
                   alt="background"
-                  className="absolute inset-0 w-full h-full object-cover blur-3xl scale-110"
+                  fill
+                  className="object-cover blur-3xl scale-110"
                 />
               </div>
               {/* Dark overlay for better contrast */}
@@ -49,10 +51,11 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
           </div>
         ) : avatar ? (
           <div className="relative w-[40%] z-10 min-w-[120px] aspect-square max-w-[120px] rounded-full">
-            <img
+            <Image
               src={avatar}
               alt={name ? `${name}'s profile` : "User Profile"}
-              className={`absolute inset-0 w-full h-full rounded-full object-cover ${className}`}
+              fill
+              className={`rounded-full object-cover ${className}`}
             />
           </div>
         ) : (

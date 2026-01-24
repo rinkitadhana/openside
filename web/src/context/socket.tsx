@@ -18,6 +18,7 @@
  * ```
  */
 
+"use client";
 import {
   createContext,
   useContext,
@@ -109,7 +110,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Connect to the backend socket server
     const connection: SocketType = io(
-      import.meta.env.VITE_API_SOCKET_URL || "http://localhost:4000",
+      process.env.NEXT_PUBLIC_API_SOCKET_URL || "http://localhost:4000",
       {
         transports: ["websocket", "polling"], // Try WebSocket first, fallback to polling
         autoConnect: true,

@@ -9,7 +9,7 @@ import MediaPermissionError from "./ui/MediaPermissionError";
 import { useGetMe } from "@/hooks/useUserQuery";
 import { useGetSpaceByJoinCode } from "@/hooks/useSpace";
 import { useJoinSpace } from "@/hooks/useParticipant";
-import { PreJoinSettings } from "@/pages/Space/SpacePage";
+import type { PreJoinSettings } from "@/types/preJoinTypes";
 import { getOrCreateSessionId } from "@/utils/ParticipantSessionId";
 
 interface PreJoinScreenProps {
