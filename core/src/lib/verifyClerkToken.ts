@@ -21,16 +21,23 @@ const getAuthorizedParties = (): string[] => {
 };
 
 export async function verifyClerkJWT(token: string): Promise<AuthUserClaims> {
-  const jwtKey = process.env.CLERK_JWT_KEY;
+  const jwtKeyRaw = process.env.CLERK_JWT_KEY;
   const secretKey = process.env.CLERK_SECRET_KEY;
   const authorizedParties = getAuthorizedParties();
 
-  if (!jwtKey && !secretKey) {
+  const normalizedJwtKey = jwtKeyRaw?.replace(/\\n/g, "\n").trim();
+  const hasValidJwtKey = Boolean(
+    normalizedJwtKey &&
+      normalizedJwtKey.includes("BEGIN PUBLIC KEY") &&
+      normalizedJwtKey.includes("END PUBLIC KEY")
+  );
+
+  if (!hasValidJwtKey && !secretKey) {
     throw new Error("Missing CLERK_JWT_KEY or CLERK_SECRET_KEY");
   }
 
   const payload = await verifyToken(token, {
-    ...(jwtKey ? { jwtKey } : {}),
+    ...(hasValidJwtKey && normalizedJwtKey ? { jwtKey: normalizedJwtKey } : {}),
     ...(secretKey ? { secretKey } : {}),
     ...(authorizedParties.length > 0 ? { authorizedParties } : {}),
   });
@@ -52,4 +59,3 @@ export async function verifyClerkJWT(token: string): Promise<AuthUserClaims> {
       typeof payload.image_url === "string" ? payload.image_url : undefined,
   } as AuthUserClaims;
 }
-

@@ -10,12 +10,20 @@ interface MeUser {
 }
 
 export const useGetMe = () => {
-  const { isLoaded, isSignedIn } = useClerkAuth();
+  const { isLoaded, isSignedIn, getToken } = useClerkAuth();
   const query = useQuery({
     queryKey: ["get-me", isSignedIn],
     queryFn: async () => {
       try {
-        const { data } = await api.get("/auth/me");
+        const template = import.meta.env.VITE_CLERK_JWT_TEMPLATE;
+        const token = await getToken(template ? { template } : undefined);
+        if (!token) return null;
+
+        const { data } = await api.get("/auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         return (data.data as MeUser) || null;
       } catch {
         return null;
