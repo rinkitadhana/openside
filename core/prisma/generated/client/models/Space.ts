@@ -252,7 +252,7 @@ export type SpaceGroupByOutputType = {
   _max: SpaceMaxAggregateOutputType | null
 }
 
-type GetSpaceGroupByPayload<T extends SpaceGroupByArgs> = Prisma.PrismaPromise<
+export type GetSpaceGroupByPayload<T extends SpaceGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<SpaceGroupByOutputType, T['by']> &
       {
@@ -1885,6 +1885,11 @@ export type SpaceFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Skip the first `n` Spaces.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Spaces.
+   */
   distinct?: Prisma.SpaceScalarFieldEnum | Prisma.SpaceScalarFieldEnum[]
 }
 

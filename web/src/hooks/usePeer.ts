@@ -30,7 +30,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Peer } from "peerjs";
 import { useVideoCall } from "@/context/socket";
-import { useParams } from "next/navigation";
+import { useParams } from "react-router-dom";
 
 const usePeer = () => {
   const { socket, joinRoom } = useVideoCall();
@@ -68,4 +68,3 @@ const usePeer = () => {
 };
 
 export default usePeer;
-

@@ -172,7 +172,7 @@ export type RecordingSessionGroupByOutputType = {
   _max: RecordingSessionMaxAggregateOutputType | null
 }
 
-type GetRecordingSessionGroupByPayload<T extends RecordingSessionGroupByArgs> = Prisma.PrismaPromise<
+export type GetRecordingSessionGroupByPayload<T extends RecordingSessionGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<RecordingSessionGroupByOutputType, T['by']> &
       {
@@ -1419,6 +1419,11 @@ export type RecordingSessionFindManyArgs<ExtArgs extends runtime.Types.Extension
    * Skip the first `n` RecordingSessions.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of RecordingSessions.
+   */
   distinct?: Prisma.RecordingSessionScalarFieldEnum | Prisma.RecordingSessionScalarFieldEnum[]
 }
 

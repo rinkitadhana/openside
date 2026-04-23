@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
-import { verifySupabaseJWT, type SupabaseUser } from "../lib/verifySupabaseToken";
+import { verifyClerkJWT, type AuthUserClaims } from "../lib/verifyClerkToken";
 
 export interface AuthenticatedRequest extends Request {
-  user?: SupabaseUser;
+  user?: AuthUserClaims;
 }
 
 export async function authMiddleware(
@@ -23,7 +23,7 @@ export async function authMiddleware(
       res.status(401).json({ success: false, data: null, message: "Invalid Authorization header format!" });
       return;
     }
-    const decoded = await verifySupabaseJWT(token);
+    const decoded = await verifyClerkJWT(token);
     req.user = decoded;
     next();
   } catch (err: unknown) {
@@ -48,7 +48,7 @@ export async function optionalAuthMiddleware(
   try {
     const token = authHeader.split(" ")[1];
     if (token) {
-      const decoded = await verifySupabaseJWT(token);
+      const decoded = await verifyClerkJWT(token);
       req.user = decoded;
     }
     next();

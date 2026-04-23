@@ -1,8 +1,8 @@
 import LayoutWrapper from "@/layout/LayoutWrapper";
 import React from "react";
 import { Disc2 } from "lucide-react";
-import Link from "next/link";
 import RecordingBadge from "./ui/RecordingBadge";
+import { Link } from "react-router-dom";
 
 const LandingHero = () => {
   return (
@@ -21,7 +21,7 @@ const LandingHero = () => {
             </p>
             <div className="flex flex-col gap-4 w-full my-4 pr-20 justify-start items-start">
               <Link
-                href="/login"
+                to="/auth"
                 className="btn w-full font-medium flex gap-2.5 items-center justify-center text-sm"
               >
                 <svg
@@ -50,7 +50,7 @@ const LandingHero = () => {
                 Sign Up with Google
               </Link>
               <Link
-                href="/dashboard/home"
+                to="/dashboard/home"
                 className="btn-secondary w-full font-medium flex gap-2.5 items-center justify-center text-sm"
               >
                 <Disc2 size={17} className="text-red-600" /> Start Recording

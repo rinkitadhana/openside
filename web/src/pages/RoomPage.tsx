@@ -1,9 +1,7 @@
-"use client";
 import React, { useEffect, useState, useCallback } from "react";
-import SpaceWrapper from "@/components/space/SpaceWrapper";
-import PreJoinScreen from "@/components/space/PreJoinScreen";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import SpaceScreen from "@/components/space/SpaceScreen";
+import SpaceWrapper from "@/components/Space/SpaceWrapper";
+import PreJoinScreen from "@/components/Space/PreJoinScreen";
+import SpaceScreen from "@/components/Space/SpaceScreen";
 import { useGetMe } from "@/hooks/useUserQuery";
 import { useCreateSpace } from "@/hooks/useSpace";
 import { useJoinSpace } from "@/hooks/useParticipant";
@@ -14,13 +12,14 @@ import type {
   ChunkData,
 } from "@/hooks/useRecordingManager";
 import type { PreJoinSettings } from "@/types/preJoinTypes";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 type SidebarType = "info" | "users" | "chat" | null;
 
-const Room = () => {
+const RoomPage = () => {
   const params = useParams();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { data: user } = useGetMe();
   const { myId } = usePeer();
   const createSpace = useCreateSpace();
@@ -35,13 +34,11 @@ const Room = () => {
   const [spaceCreated, setSpaceCreated] = useState(false);
   const [isCreatingSpace, setIsCreatingSpace] = useState(false);
 
-  // Recording state (lifted up from SpaceScreen for SpaceWrapper)
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const [recordingDurationMs, setRecordingDurationMs] = useState(0);
 
   const participantSessionId = getOrCreateSessionId(roomId);
 
-  // Callbacks for SpaceScreen
   const handleRecordingStateChange = useCallback((state: RecordingState) => {
     setRecordingState(state);
   }, []);
@@ -50,11 +47,9 @@ const Room = () => {
     setRecordingDurationMs(durationMs);
   }, []);
 
-  // Chunk upload queue to handle retry logic
   const chunkQueueRef = React.useRef<ChunkData[]>([]);
   const isUploadingRef = React.useRef(false);
 
-  // Process chunk upload queue with retry logic
   const processChunkQueue = useCallback(async () => {
     if (isUploadingRef.current || chunkQueueRef.current.length === 0) {
       return;
@@ -64,42 +59,20 @@ const Room = () => {
 
     while (chunkQueueRef.current.length > 0) {
       const chunkData = chunkQueueRef.current[0];
-      
+
       try {
-        // Skip if no recording ID yet (shouldn't happen with fixed implementation)
         if (!chunkData.participantRecordingId) {
-          console.warn(`[Room] No recording ID for ${chunkData.streamType} chunk, skipping`);
+          console.warn(
+            `[Room] No recording ID for ${chunkData.streamType} chunk, skipping`
+          );
           chunkQueueRef.current.shift();
           continue;
         }
 
-        console.log(`[Room] Processing ${chunkData.streamType} chunk #${chunkData.chunk.sequenceNumber}`);
+        console.log(
+          `[Room] Processing ${chunkData.streamType} chunk #${chunkData.chunk.sequenceNumber}`
+        );
 
-        // TODO: Replace this with actual upload service implementation
-        // Example implementation:
-        //
-        // 1. Upload blob to storage service (S3, Cloudflare R2, etc.)
-        // const uploadResult = await uploadService.uploadChunk({
-        //   blob: chunkData.chunk.blob,
-        //   fileName: `${chunkData.participantRecordingId}_${chunkData.chunk.sequenceNumber}.webm`,
-        //   contentType: chunkData.metadata?.mimeType || 'video/webm',
-        // });
-        //
-        // 2. Create segment entry in database
-        // await createSegmentMutation.mutateAsync({
-        //   participantRecordingId: chunkData.participantRecordingId,
-        //   spaceRecordingSessionId: chunkData.spaceRecordingSessionId,
-        //   spaceId: createdSpaceId || '',
-        //   participantSessionId: participantSessionId,
-        //   sequenceNumber: chunkData.chunk.sequenceNumber,
-        //   assetKey: uploadResult.key,
-        //   startMs: chunkData.chunk.startMs,
-        //   durationMs: chunkData.chunk.durationMs,
-        //   sizeBytes: chunkData.chunk.blob.size,
-        //   checksum: await calculateChecksum(chunkData.chunk.blob), // optional
-        // });
-
-        // For now, just log the chunk info
         console.log(`[Room] ${chunkData.streamType.toUpperCase()} chunk ready:`, {
           streamType: chunkData.streamType,
           sequenceNumber: chunkData.chunk.sequenceNumber,
@@ -110,51 +83,36 @@ const Room = () => {
           durationMs: chunkData.chunk.durationMs,
         });
 
-        // Simulate successful upload (remove this when implementing real upload)
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-        // Successfully processed, remove from queue
         chunkQueueRef.current.shift();
-        
       } catch (error) {
-        console.error(`[Room] Failed to upload ${chunkData.streamType} chunk:`, error);
-        
-        // For now, remove failed chunk from queue to prevent blocking
-        // In production, you might want to implement retry logic:
-        // - Keep track of retry count
-        // - Exponential backoff
-        // - Move to failed queue after max retries
+        console.error(
+          `[Room] Failed to upload ${chunkData.streamType} chunk:`,
+          error
+        );
+
         chunkQueueRef.current.shift();
-        
-        // TODO: Implement proper retry logic
-        // if (!chunkData.retryCount) chunkData.retryCount = 0;
-        // chunkData.retryCount++;
-        // if (chunkData.retryCount < 3) {
-        //   // Re-add to end of queue for retry
-        //   chunkQueueRef.current.push(chunkData);
-        // } else {
-        //   console.error(`[Room] Max retries exceeded for chunk #${chunkData.chunk.sequenceNumber}`);
-        //   chunkQueueRef.current.shift();
-        // }
       }
     }
 
     isUploadingRef.current = false;
   }, []);
 
-  // Handle chunk ready - add to queue and process
-  const handleChunkReady = useCallback((data: ChunkData) => {
-    if (!data.participantRecordingId) {
-      console.warn(`[Room] Received ${data.streamType} chunk without recording ID, skipping`);
-      return;
-    }
+  const handleChunkReady = useCallback(
+    (data: ChunkData) => {
+      if (!data.participantRecordingId) {
+        console.warn(
+          `[Room] Received ${data.streamType} chunk without recording ID, skipping`
+        );
+        return;
+      }
 
-    // Add to queue
-    chunkQueueRef.current.push(data);
-
-    // Process queue
-    processChunkQueue();
-  }, [processChunkQueue]);
+      chunkQueueRef.current.push(data);
+      processChunkQueue();
+    },
+    [processChunkQueue]
+  );
 
   const toggleSidebar = (sidebarType: SidebarType) => {
     if (activeSidebar === sidebarType) {
@@ -173,7 +131,6 @@ const Room = () => {
     setHasJoined(true);
   };
 
-  // Check if host parameter is present and create space
   useEffect(() => {
     if (isHost && user && myId && !spaceCreated && !isCreatingSpace) {
       setIsCreatingSpace(true);
@@ -181,7 +138,7 @@ const Room = () => {
       createSpace.mutate(
         {
           joinCode: roomId,
-          participantSessionId: participantSessionId,
+          participantSessionId,
         },
         {
           onSuccess: (spaceData) => {
@@ -199,20 +156,20 @@ const Room = () => {
             joinSpace.mutate(
               {
                 displayName: defaultSettings.name,
-                participantSessionId: participantSessionId,
+                participantSessionId,
               },
               {
                 onSuccess: () => {
                   console.log("Host joined space successfully");
                   setIsCreatingSpace(false);
                   handleJoinCall(defaultSettings);
-                  router.replace(`/${roomId}`);
+                  navigate(`/${roomId}`, { replace: true });
                 },
                 onError: (error) => {
                   console.error("Failed to join space as host:", error);
                   setIsCreatingSpace(false);
                   handleJoinCall(defaultSettings);
-                  router.replace(`/${roomId}`);
+                  navigate(`/${roomId}`, { replace: true });
                 },
               }
             );
@@ -220,7 +177,7 @@ const Room = () => {
           onError: (error) => {
             console.error("Failed to create space:", error);
             setIsCreatingSpace(false);
-            router.push("/dashboard/home");
+            navigate("/dashboard/home");
           },
         }
       );
@@ -231,7 +188,7 @@ const Room = () => {
     user,
     myId,
     roomId,
-    router,
+    navigate,
     createSpace,
     spaceCreated,
     isCreatingSpace,
@@ -277,4 +234,4 @@ const Room = () => {
   );
 };
 
-export default Room;
+export default RoomPage;

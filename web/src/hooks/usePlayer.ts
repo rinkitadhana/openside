@@ -32,8 +32,8 @@
 import { useState } from "react";
 import { cloneDeep } from "lodash";
 import { useVideoCall } from "@/context/socket";
-import { useRouter } from "next/navigation";
 import { Peer } from "peerjs";
+import { useNavigate } from "react-router-dom";
 
 interface Player {
   url: MediaStream | string;
@@ -55,7 +55,7 @@ const usePlayer = (myId: string, roomId: string, peer: Peer | null) => {
     toggleVideo: emitToggleVideo,
     toggleSpeaker: emitToggleSpeaker
   } = useVideoCall();
-  const router = useRouter();
+  const navigate = useNavigate();
   const [players, setPlayers] = useState<Players>({});
 
   // Separate your video from others for UI layout
@@ -78,7 +78,7 @@ const usePlayer = (myId: string, roomId: string, peer: Peer | null) => {
   const leaveRoom = () => {
     emitLeaveRoom(myId, roomId);
     peer?.disconnect();
-    router.push("/dashboard/home");
+    navigate("/dashboard/home");
   };
 
   /**
@@ -172,4 +172,3 @@ const usePlayer = (myId: string, roomId: string, peer: Peer | null) => {
 };
 
 export default usePlayer;
-

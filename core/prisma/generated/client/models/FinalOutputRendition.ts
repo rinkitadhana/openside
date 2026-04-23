@@ -253,7 +253,7 @@ export type FinalOutputRenditionGroupByOutputType = {
   _max: FinalOutputRenditionMaxAggregateOutputType | null
 }
 
-type GetFinalOutputRenditionGroupByPayload<T extends FinalOutputRenditionGroupByArgs> = Prisma.PrismaPromise<
+export type GetFinalOutputRenditionGroupByPayload<T extends FinalOutputRenditionGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<FinalOutputRenditionGroupByOutputType, T['by']> &
       {
@@ -1440,6 +1440,11 @@ export type FinalOutputRenditionFindManyArgs<ExtArgs extends runtime.Types.Exten
    * Skip the first `n` FinalOutputRenditions.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of FinalOutputRenditions.
+   */
   distinct?: Prisma.FinalOutputRenditionScalarFieldEnum | Prisma.FinalOutputRenditionScalarFieldEnum[]
 }
 

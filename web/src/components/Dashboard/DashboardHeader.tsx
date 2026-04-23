@@ -1,10 +1,10 @@
 "use client";
 import { ThemeSwitcher } from "@/components/shared/ThemeSwitcher";
-import { usePathname } from "next/navigation";
 import React from "react";
+import { useLocation } from "react-router-dom";
 
 const DashboardHeader = () => {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const route = pathname.split("/").pop();
 
   return (

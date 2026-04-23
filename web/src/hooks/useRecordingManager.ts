@@ -451,7 +451,7 @@ export default function useRecordingManager(
   useEffect(() => {
     if (!socket) return;
 
-    let disconnectTimeoutId: NodeJS.Timeout | null = null;
+    let disconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
     // Handle socket disconnect during recording
     const handleDisconnect = (reason: string) => {

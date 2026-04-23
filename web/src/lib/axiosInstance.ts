@@ -1,21 +1,17 @@
-import axios from "axios"
-import { supabase } from "@/lib/supabaseClient"
+import axios from "axios";
+import { getAuthToken } from "@/lib/authToken";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:4000/api",
   headers: { "Content-Type": "application/json" },
-})
+});
 
 api.interceptors.request.use(async (config) => {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  const token = session?.access_token
+  const token = await getAuthToken();
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+    config.headers.Authorization = `Bearer ${token}`;
   }
-  return config
-})
+  return config;
+});
 
-export default api
+export default api;

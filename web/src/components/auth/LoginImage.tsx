@@ -1,4 +1,3 @@
-import Image from "next/image";
 import React from "react";
 import { RiCustomerService2Line } from "react-icons/ri";
 
@@ -8,7 +7,7 @@ const LoginImage = () => {
       <div className="absolute -top-0.5 -left-0.5 w-8 h-8 border-l-2 border-t-2 border-foreground z-10" />
       <div className="absolute -bottom-0.5 -right-0.5 w-8 h-8 border-r-2 border-b-2 border-foreground z-10" />
       <div className="flex flex-col gap-4 relative h-full overflow-hidden">
-        <Image
+        <img
           className="select-none"
           src="/img/login/login-image.png"
           alt="login-image"

@@ -1,16 +1,16 @@
 "use client";
-import { useRouter } from "next/navigation";
 import React from "react";
 import generateRoomId from "@/utils/GenerateRoomId";
 import { FaCalendarAlt, FaPlus, FaUserPlus, FaVideo } from "react-icons/fa";
 import ActionCard from "./ActionCard";
+import { useNavigate } from "react-router-dom";
 
 const QuickActions = () => {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const handleJoinRoom = () => {
     const roomId = generateRoomId();
-    router.push(`/${roomId}?host=true`);
+    navigate(`/${roomId}?host=true`);
   };
 
   const actions = [

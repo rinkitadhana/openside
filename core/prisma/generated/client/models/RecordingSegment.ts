@@ -260,7 +260,7 @@ export type RecordingSegmentGroupByOutputType = {
   _max: RecordingSegmentMaxAggregateOutputType | null
 }
 
-type GetRecordingSegmentGroupByPayload<T extends RecordingSegmentGroupByArgs> = Prisma.PrismaPromise<
+export type GetRecordingSegmentGroupByPayload<T extends RecordingSegmentGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<RecordingSegmentGroupByOutputType, T['by']> &
       {
@@ -1482,6 +1482,11 @@ export type RecordingSegmentFindManyArgs<ExtArgs extends runtime.Types.Extension
    * Skip the first `n` RecordingSegments.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of RecordingSegments.
+   */
   distinct?: Prisma.RecordingSegmentScalarFieldEnum | Prisma.RecordingSegmentScalarFieldEnum[]
 }
 

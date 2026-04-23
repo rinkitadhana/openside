@@ -1,18 +1,18 @@
 "use client"
 
 import { useGetMe } from "@/hooks/useUserQuery"
-import { useRouter } from "next/navigation"
 import { useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { data: user, isLoading } = useGetMe()
-  const router = useRouter()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.replace("/login")
+      navigate("/auth", { replace: true })
     }
-  }, [user, isLoading, router])
+  }, [user, isLoading, navigate])
 
   if (isLoading) {
     return (

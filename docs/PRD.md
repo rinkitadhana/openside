@@ -361,7 +361,7 @@
 
 ### Authentication
 - Google OAuth only
-- Supabase Auth for token management
+- Clerk Auth for token management
 - JWT-based API authentication
 
 ### Room Security
@@ -479,7 +479,7 @@
 ### Current Implementation Status
 
 **Completed:**
-- Authentication system (Google OAuth via Supabase)
+- Authentication system (Google OAuth via Clerk)
 - Room creation and management
 - Participant management (join, leave, roles, kick)
 - WebRTC video calling (peer-to-peer)

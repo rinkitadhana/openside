@@ -1,9 +1,9 @@
 import LayoutWrapper from "@/layout/LayoutWrapper";
 import { FaSquareXTwitter, FaGithub } from "react-icons/fa6";
-import Link from "next/link";
 import React from "react";
 import { FaLinkedin } from "react-icons/fa";
 import AsapLogo from "@/components/shared/ui/AsapLogo";
+import { Link } from "react-router-dom";
 
 const LandingFooter = () => {
   return (
@@ -18,24 +18,30 @@ const LandingFooter = () => {
                 recording.
               </p>
               <div className="flex items-center gap-2 my-2">
-                <Link
+                <a
                   href="https://linkedin.com"
+                  target="_blank"
+                  rel="noreferrer"
                   className="hover:opacity-50 duration-200"
                 >
                   <FaLinkedin size={22} />
-                </Link>
-                <Link
+                </a>
+                <a
                   href="https://github.com"
+                  target="_blank"
+                  rel="noreferrer"
                   className="hover:opacity-50 duration-200"
                 >
                   <FaGithub size={22} />
-                </Link>
-                <Link
+                </a>
+                <a
                   href="https://twitter.com"
+                  target="_blank"
+                  rel="noreferrer"
                   className="hover:opacity-50 duration-200"
                 >
                   <FaSquareXTwitter size={22} />
-                </Link>
+                </a>
               </div>
               <div className="flex items-center gap-2 text-xs my-2">
                 Need Help?{" "}
@@ -45,13 +51,13 @@ const LandingFooter = () => {
             <div className="flex-1 flex flex-col gap-2">
               <h1 className="text-base font-semibold">Links</h1>
               <div className="flex flex-col gap-0.5 text-secondary-text text-sm">
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Home
                 </Link>
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   About
                 </Link>
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Contact
                 </Link>
               </div>
@@ -59,19 +65,19 @@ const LandingFooter = () => {
             <div className="flex-1 flex flex-col gap-2">
               <h1 className="text-base font-semibold">Solutions</h1>
               <div className="flex flex-col gap-0.5 text-secondary-text text-sm">
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Sample 1
                 </Link>
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Sample 2
                 </Link>
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Sample 3
                 </Link>
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Sample 4
                 </Link>
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Sample 5
                 </Link>
               </div>
@@ -79,22 +85,22 @@ const LandingFooter = () => {
             <div className="flex-1 flex flex-col gap-2">
               <h1 className="text-base font-semibold">Use Cases</h1>
               <div className="flex flex-col gap-0.5 text-secondary-text text-sm">
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Sample 1
                 </Link>
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Sample 2
                 </Link>
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Sample 3
                 </Link>
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Sample 4
                 </Link>
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Sample 5
                 </Link>
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Sample 6
                 </Link>
               </div>
@@ -102,16 +108,16 @@ const LandingFooter = () => {
             <div className="flex-1 flex flex-col gap-2">
               <h1 className="text-base font-semibold">Resources</h1>
               <div className="flex flex-col gap-0.5 text-secondary-text text-sm">
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Sample 1
                 </Link>
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Sample 2
                 </Link>
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Sample 3
                 </Link>
-                <Link href="/" className="hover:opacity-50 duration-200">
+                <Link to="/" className="hover:opacity-50 duration-200">
                   Sample 4
                 </Link>
               </div>
@@ -123,13 +129,13 @@ const LandingFooter = () => {
               © 2025 Asap. All rights reserved.
             </p>
             <div className="flex items-center gap-2 text-secondary-text text-xs">
-              <Link href="/" className="hover:opacity-50 duration-200">
+              <Link to="/" className="hover:opacity-50 duration-200">
                 Privacy Policy
               </Link>
-              <Link href="/" className="hover:opacity-50 duration-200">
+              <Link to="/" className="hover:opacity-50 duration-200">
                 Terms of Service
               </Link>
-              <Link href="/" className="hover:opacity-50 duration-200">
+              <Link to="/" className="hover:opacity-50 duration-200">
                 Cookie Settings
               </Link>
             </div>

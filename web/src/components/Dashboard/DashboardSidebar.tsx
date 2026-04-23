@@ -6,11 +6,8 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { BsLayoutSidebarInset } from "react-icons/bs";
-import Image from "next/image";
 import { useGetMe } from "@/hooks/useUserQuery";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -21,11 +18,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/ui/dropdown-menu";
 import AsapLogo from "@/components/shared/ui/AsapLogo";
+import { Link, useLocation } from "react-router-dom";
 
 const DashboardSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const { data: user, isLoading } = useGetMe();
   const { logout } = useAuth();
 
@@ -52,12 +50,12 @@ const DashboardSidebar = () => {
     {
       icon: <House size={22} />,
       name: "Home",
-      href: "/dashboard/home",
+      to: "/dashboard/home",
     },
     {
       icon: <FolderClosed size={22} />,
       name: "Project",
-      href: "/dashboard/project",
+      to: "/dashboard/project",
     },
   ];
 
@@ -86,11 +84,11 @@ const DashboardSidebar = () => {
         <nav className="flex flex-col items-center justify-center gap-2 w-full">
           {links.map((link) => (
             <Link
-              key={link.href}
-              href={link.href}
+              key={link.to}
+              to={link.to}
               title={link.name}
               className={`py-2 px-3 rounded-xl border select-none transition-all duration-200 w-full flex items-center gap-2 ${
-                pathname === link.href
+                pathname === link.to
                   ? "bg-call-primary border-call-border"
                   : "hover:bg-call-primary border-transparent hover:border-call-border"
               }`}
@@ -109,7 +107,7 @@ const DashboardSidebar = () => {
                 {isLoading ? (
                   <UserIcon size={22} />
                 ) : user?.avatar ? (
-                  <Image
+                  <img
                     src={user?.avatar}
                     alt={user?.name || "User"}
                     width={30}

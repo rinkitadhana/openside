@@ -1,18 +1,18 @@
 "use client"
 
 import { useGetMe } from "@/hooks/useUserQuery"
-import { useRouter } from "next/navigation"
 import { useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 
 export default function AuthRedirect({ children }: { children: React.ReactNode }) {
   const { data: user, isLoading } = useGetMe()
-  const router = useRouter()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.replace("/dashboard")
+      navigate("/dashboard/home", { replace: true })
     }
-  }, [user, isLoading, router])
+  }, [user, isLoading, navigate])
 
   if (isLoading) {
     return (
@@ -28,4 +28,3 @@ export default function AuthRedirect({ children }: { children: React.ReactNode }
 
   return <>{children}</>
 }
-

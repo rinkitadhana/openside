@@ -3,9 +3,9 @@ import { UserPlus } from "lucide-react";
 import React, { useMemo } from "react";
 import { BsPatchQuestion } from "react-icons/bs";
 import AsapLogo from "@/components/shared/ui/AsapLogo";
-import { useParams } from "next/navigation";
 import { useGetSpaceByJoinCode } from "@/hooks/useSpace";
 import type { RecordingState } from "@/hooks/useRecordingManager";
+import { useParams } from "react-router-dom";
 
 interface SpaceHeaderProps {
   prejoin?: boolean;

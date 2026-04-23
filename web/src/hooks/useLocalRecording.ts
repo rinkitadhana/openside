@@ -198,7 +198,9 @@ export default function useLocalRecording(
   const videoSequenceRef = useRef<number>(0);
   const audioSequenceRef = useRef<number>(0);
   const combinedSequenceRef = useRef<number>(0);
-  const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null
+  );
 
   // Update duration every 100ms
   useEffect(() => {

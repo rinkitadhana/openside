@@ -1,15 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import GithubButton from "./ui/GithubButton";
-import { useRouter } from "next/navigation";
 import { ThemeSwitcher } from "@/components/shared/ThemeSwitcher";
 import VersionBadge from "./ui/VersionBadge";
 import AsapLogo from "@/components/shared/ui/AsapLogo";
+import { useNavigate } from "react-router-dom";
 
 const LandingNavbar = () => {
   const [scrolled, setScrolled] = useState(false);
-  const router = useRouter();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onScroll = () => {
@@ -45,7 +44,7 @@ const LandingNavbar = () => {
         <div className="flex items-center gap-10">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => router.push("/")}
+              onClick={() => navigate("/")}
               className="text-2xl font-bold cursor-pointer flex items-center gap-3"
             >
               <AsapLogo name icon />
@@ -54,13 +53,13 @@ const LandingNavbar = () => {
           </div>
           <nav className="hidden md:flex gap-6">
             {links.map((link) => (
-              <Link
+              <a
                 key={link.href}
                 href={link.href}
                 className="text-sm opacity-80 hover:opacity-100 transition-opacity duration-200 font-medium"
               >
                 {link.label}
-              </Link>
+              </a>
             ))}
           </nav>
         </div>
@@ -72,7 +71,7 @@ const LandingNavbar = () => {
           </div>
           <div className="hidden md:flex gap-4">
             <button
-              onClick={() => router.push("/login")}
+              onClick={() => navigate("/auth")}
               className="btn text-sm font-semibold w-[105px] flex items-center justify-center"
             >
               Get Started

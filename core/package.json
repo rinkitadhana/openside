@@ -31,9 +31,9 @@
     "vitest": "^2.0.0"
   },
   "dependencies": {
+    "@clerk/backend": "^2.12.3",
     "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "^7.1.0",
-    "@supabase/supabase-js": "^2.76.1",
     "@workos-inc/node": "^7.71.0",
     "axios": "^1.12.2",
     "cors": "^2.8.5",

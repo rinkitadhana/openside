@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useLocation } from "react-router-dom";
 
 interface PageTitleProps {
   title: string;
@@ -9,7 +9,7 @@ interface PageTitleProps {
 }
 
 export default function PageTitle({ title, description }: PageTitleProps) {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
 
   useEffect(() => {
     document.title = title;

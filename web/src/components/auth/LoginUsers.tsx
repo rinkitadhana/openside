@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 
 const LoginUsers = () => {
   // Sample user avatars - you can replace these with actual user images
@@ -25,14 +24,10 @@ const LoginUsers = () => {
               zIndex: userAvatars.length - index,
             }}
           >
-            <Image
+            <img
               src={avatar}
               alt={`User ${index + 1}`}
-              fill
-              className="object-cover"
-              quality={100}
-              priority
-              sizes="40px"
+              className="w-full h-full object-cover"
             />
           </div>
         ))}

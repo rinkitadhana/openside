@@ -1,12 +1,12 @@
 "use client";
-import { useRouter } from "next/navigation";
 import React from "react";
 import { MdArrowBackIosNew } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 
 const LoginBack = () => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const handleBack = () => {
-    router.push("/");
+    navigate("/");
   };
   return (
     <div

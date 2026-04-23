@@ -41,7 +41,6 @@ import { useSocket } from "@/context/socket";
 import usePeer from "@/hooks/usePeer";
 import useMediaStream from "@/hooks/useMediaStream";
 import usePlayer from "@/hooks/usePlayer";
-import { useParams } from "next/navigation";
 import { cloneDeep } from "lodash";
 import { MediaConnection } from "peerjs";
 import VideoCallControls from "./VideoCallControls";
@@ -60,6 +59,7 @@ import useRecordingManager, {
   type RecordingState,
   type ChunkData,
 } from "@/hooks/useRecordingManager";
+import { useParams } from "react-router-dom";
 
 type SidebarType = "info" | "users" | "chat" | null;
 
