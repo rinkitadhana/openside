@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import ClerkTokenSync from "@/components/shared/ClerkTokenSync";
 import { QueryProvider } from "@/utils/QueryProvider";
+import { Toaster } from "react-hot-toast";
 
 const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -36,6 +37,14 @@ VITE_API_SOCKET_URL=http://localhost:4000`}
         <QueryProvider>
           <ClerkTokenSync />
           {children}
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              className:
+                "border border-call-border bg-background text-foreground shadow-lg",
+              duration: 4000,
+            }}
+          />
         </QueryProvider>
       </ThemeProvider>
     </ClerkProvider>

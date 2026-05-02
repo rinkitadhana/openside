@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import toast from "react-hot-toast";
 import {
   MdEmail,
   MdLockOutline,
@@ -8,27 +9,48 @@ import {
 } from "react-icons/md";
 
 const LoginEmail = () => {
-  const { loginWithEmailPassword } = useAuth();
+  const { loginWithEmailPassword, resendEmailVerification } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
+  const [verificationPending, setVerificationPending] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isSubmitting) return;
 
     setIsSubmitting(true);
-    setError(null);
+    setVerificationPending(false);
 
     const result = await loginWithEmailPassword(email.trim(), password);
 
-    if (!result.ok) {
-      setError(result.message || "Unable to sign in with email.");
+    if (result.ok && result.status === "verify_email") {
+      setVerificationPending(true);
+      toast.success("Check your email to verify your account, then log in.");
+    } else if (!result.ok) {
+      toast.error(result.message || "Unable to sign in with email.");
     }
 
     setIsSubmitting(false);
+  };
+
+  const handleResendVerification = async () => {
+    if (isResending) return;
+
+    setIsResending(true);
+
+    const result = await resendEmailVerification(email.trim(), password);
+
+    if (result.ok && result.status === "verify_email") {
+      setVerificationPending(true);
+      toast.success("Verification email sent again.");
+    } else if (!result.ok) {
+      toast.error(result.message || "Unable to resend verification email.");
+    }
+
+    setIsResending(false);
   };
 
   return (
@@ -67,10 +89,15 @@ const LoginEmail = () => {
           )}
         </button>
       </label>
-      {error && (
-        <div className="w-full rounded-[14px] border border-red-500/30 bg-red-500/10 px-3 py-2">
-          <p className="text-red-500 text-xs">{error}</p>
-        </div>
+      {verificationPending && (
+        <button
+          type="button"
+          onClick={handleResendVerification}
+          disabled={isResending}
+          className="self-start text-xs font-semibold text-foreground underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isResending ? "Sending..." : "Send verification email again"}
+        </button>
       )}
       <button
         type="submit"
