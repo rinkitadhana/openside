@@ -2,10 +2,10 @@ import React from "react";
 
 const LoginContent = () => {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2 text-5xl font-bold">
-        <h1>Your Studio Is Ready.</h1>
-        <h1>Let Every Call Tell a Story.</h1>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col text-4xl leading-[1.4] font-bold">
+        <h1>Your Studio Is Ready</h1>
+        <h1>Let Every Call Tell a Story</h1>
       </div>
       <p className="text-secondary-text">
         Log in to start your next great recording session, capture what matters,
