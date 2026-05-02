@@ -13,7 +13,7 @@ import PageTitle from "@/components/shared/PageTitle";
 const AuthPage = () => {
   return (
     <AuthRedirect>
-      <PageTitle title="Auth | Asap" />
+      <PageTitle title="Auth | Openside" />
       <LoginWrapper>
         <div className="flex flex-row p-8 gap-6 h-full">
           <div className="flex flex-1 flex-col justify-between">

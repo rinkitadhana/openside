@@ -2,7 +2,7 @@ import { ThemeSwitcher } from "@/components/shared/ThemeSwitcher";
 import { UserPlus } from "lucide-react";
 import React, { useMemo } from "react";
 import { BsPatchQuestion } from "react-icons/bs";
-import AsapLogo from "@/components/shared/ui/AsapLogo";
+import OpensideLogo from "@/components/shared/ui/OpensideLogo";
 import { useGetSpaceByJoinCode } from "@/hooks/useSpace";
 import type { RecordingState } from "@/hooks/useRecordingManager";
 import { useParams } from "react-router-dom";
@@ -58,7 +58,7 @@ const SpaceHeader = ({
     <header className="w-full px-2 select-none z-50">
       <div className="flex items-center justify-between py-2 w-full rounded-xl">
         <div className="flex items-center gap-2">
-          <AsapLogo icon name />
+          <OpensideLogo icon name />
           <div className="h-6 border-l border-primary-border mx-1" />
           <div className="text-secondary-text text-sm">
             {isLoading ? (

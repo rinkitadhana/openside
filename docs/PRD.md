@@ -2,11 +2,11 @@
 
 ## Product Overview
 
-**Product Name:** ASAP
+**Product Name:** Openside
 
-**Product Vision:** A simple, affordable video calling platform for recording high-quality podcast interviews and content creation sessions. ASAP provides separate recording tracks for each participant, giving creators the flexibility to edit and produce professional content without the complexity and cost of existing solutions.
+**Product Vision:** A simple, affordable video calling platform for recording high-quality podcast interviews and content creation sessions. Openside provides separate recording tracks for each participant, giving creators the flexibility to edit and produce professional content without the complexity and cost of existing solutions.
 
-**Core Problem:** Existing video recording platforms like Riverside.fm are expensive and overcomplicated for creators who simply need high-quality separate tracks for their content. ASAP solves this by providing essential recording features at a lower price point with a generous free tier.
+**Core Problem:** Existing video recording platforms like Riverside.fm are expensive and overcomplicated for creators who simply need high-quality separate tracks for their content. Openside solves this by providing essential recording features at a lower price point with a generous free tier.
 
 **Target Users:**
 - Content creators (podcasters, YouTubers)

@@ -15,7 +15,7 @@ const LandingHero = () => {
               From Video Call to Podcast in Minutes
             </h1>
             <p className="text-secondary-text">
-              Asap is an AI-native video calling app with built-in local
+              Openside is an AI-native video calling app with built-in local
               recording, perfect for podcasts, content creation, and more. Its
               smart AI tools make every call effortless and productive.
             </p>

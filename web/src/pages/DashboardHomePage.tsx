@@ -7,7 +7,7 @@ import PageTitle from "@/components/shared/PageTitle";
 const DashboardHomePage = () => {
   return (
     <>
-      <PageTitle title="Dashboard | Asap" />
+      <PageTitle title="Dashboard | Openside" />
       <div className="flex flex-col gap-8 p-2">
         <div className="flex gap-4">
           <div className="flex flex-col gap-4 w-[75%]">

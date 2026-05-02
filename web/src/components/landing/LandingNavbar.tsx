@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import GithubButton from "./ui/GithubButton";
 import { ThemeSwitcher } from "@/components/shared/ThemeSwitcher";
 import VersionBadge from "./ui/VersionBadge";
-import AsapLogo from "@/components/shared/ui/AsapLogo";
+import OpensideLogo from "@/components/shared/ui/OpensideLogo";
 import { useNavigate } from "react-router-dom";
 
 const LandingNavbar = () => {
@@ -47,7 +47,7 @@ const LandingNavbar = () => {
               onClick={() => navigate("/")}
               className="text-2xl font-bold cursor-pointer flex items-center gap-3"
             >
-              <AsapLogo name icon />
+              <OpensideLogo name icon />
             </button>
             <VersionBadge text="BETA 0.0.1" />
           </div>

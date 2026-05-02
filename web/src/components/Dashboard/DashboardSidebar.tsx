@@ -17,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/shared/ui/dropdown-menu";
-import AsapLogo from "@/components/shared/ui/AsapLogo";
+import OpensideLogo from "@/components/shared/ui/OpensideLogo";
 import { Link, useLocation } from "react-router-dom";
 
 const DashboardSidebar = () => {
@@ -71,7 +71,7 @@ const DashboardSidebar = () => {
             isOpen ? "justify-between" : "justify-center"
           }`}
         >
-          {isOpen && <AsapLogo name icon />}
+          {isOpen && <OpensideLogo name icon />}
           <button
             title={isOpen ? "Close sidebar" : "Open sidebar"}
             onClick={toggleSidebar}

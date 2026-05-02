@@ -27,7 +27,7 @@ app.use(
 
 //routes
 app.get("/", (req: Request, res: Response) => {
-  res.send("Asap is live :D")
+  res.send("Openside is live :D")
 })
 app.use("/api/auth", authRouter)
 app.use("/api/recording", recordingRouter)

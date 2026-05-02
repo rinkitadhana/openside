@@ -2,7 +2,7 @@ import LayoutWrapper from "@/layout/LayoutWrapper";
 import { FaSquareXTwitter, FaGithub } from "react-icons/fa6";
 import React from "react";
 import { FaLinkedin } from "react-icons/fa";
-import AsapLogo from "@/components/shared/ui/AsapLogo";
+import OpensideLogo from "@/components/shared/ui/OpensideLogo";
 import { Link } from "react-router-dom";
 
 const LandingFooter = () => {
@@ -12,9 +12,9 @@ const LandingFooter = () => {
         <div className="flex  flex-col min-h-[200px]  shadow-md shadow-primary-shadow justify-between w-full border border-primary-border rounded-xl p-8 bg-secondary">
           <div className="flex gap-8">
             <div className="flex flex-col gap-2 w-[28%]">
-              <AsapLogo icon name />
+              <OpensideLogo icon name />
               <p className=" text-sm text-secondary-text">
-                Asap is an AI-native video calling app with built-in local
+                Openside is an AI-native video calling app with built-in local
                 recording.
               </p>
               <div className="flex items-center gap-2 my-2">
@@ -126,7 +126,7 @@ const LandingFooter = () => {
           <div className="w-full h-[1px] bg-primary-border my-4" />
           <div className="flex items-center justify-between">
             <p className="text-secondary-text text-sm">
-              © 2025 Asap. All rights reserved.
+              © 2025 Openside. All rights reserved.
             </p>
             <div className="flex items-center gap-2 text-secondary-text text-xs">
               <Link to="/" className="hover:opacity-50 duration-200">
