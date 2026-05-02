@@ -8,15 +8,14 @@ const LoginGoogle = () => {
     await loginWithGoogle();
   };
   return (
-    <div
+    <button
+      type="button"
       onClick={handleLogin}
-      className="select-none flex flex-row items-center gap-2 border w-fit py-2 px-3 hover:bg-primary-hover transition duration-200 cursor-pointer shineButton"
+      className="select-none flex h-11 w-full items-center justify-center gap-2 rounded-[14px] border border-call-border bg-call-primary px-3.5 text-sm font-semibold hover:bg-primary-hover transition duration-200 cursor-pointer shineButton"
     >
       <FcGoogle size={22} />
-      <div>
-        <p>Continue with Google</p>
-      </div>
-    </div>
+      <span>Continue with Google</span>
+    </button>
   );
 };
 

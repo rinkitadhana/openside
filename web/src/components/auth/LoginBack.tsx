@@ -9,13 +9,14 @@ const LoginBack = () => {
     navigate("/");
   };
   return (
-    <div
+    <button
+      type="button"
+      aria-label="Back to home"
       onClick={handleBack}
-      className="flex flex-row items-center gap-2 border w-fit py-2 px-3 hover:bg-primary-hover transition duration-200 cursor-pointer select-none"
+      className="flex size-10 items-center justify-center rounded-xl border border-call-border bg-call-primary hover:bg-primary-hover transition duration-200 cursor-pointer select-none"
     >
       <MdArrowBackIosNew size={16} />
-      <p>Back</p>
-    </div>
+    </button>
   );
 };
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { MdEmail, MdLockOutline } from "react-icons/md";
 
 const LoginEmail = () => {
   const { loginWithEmailPassword } = useAuth();
@@ -25,32 +26,38 @@ const LoginEmail = () => {
   };
 
   return (
-    <form className="flex flex-col gap-2 w-full max-w-[420px]" onSubmit={handleSubmit}>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="w-full px-3 py-2.5 bg-call-primary border border-call-border rounded-lg text-sm focus:outline-none"
-        required
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="w-full px-3 py-2.5 bg-call-primary border border-call-border rounded-lg text-sm focus:outline-none"
-        required
-      />
+    <form className="flex w-full flex-col gap-3" onSubmit={handleSubmit}>
+      <label className="flex h-11 items-center gap-3 rounded-[14px] border border-call-border bg-call-primary px-3.5 text-sm transition-all duration-200 focus-within:border-foreground/40 focus-within:bg-background focus-within:ring-2 focus-within:ring-foreground/10">
+        <MdEmail className="size-5 text-secondary-text" />
+        <input
+          type="email"
+          placeholder="Email address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="h-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-secondary-text"
+          required
+        />
+      </label>
+      <label className="flex h-11 items-center gap-3 rounded-[14px] border border-call-border bg-call-primary px-3.5 text-sm transition-all duration-200 focus-within:border-foreground/40 focus-within:bg-background focus-within:ring-2 focus-within:ring-foreground/10">
+        <MdLockOutline className="size-5 text-secondary-text" />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="h-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-secondary-text"
+          required
+        />
+      </label>
       {error && (
-        <div className="w-full p-2 bg-red-500/10 border border-red-500/30 rounded-lg">
+        <div className="w-full rounded-[14px] border border-red-500/30 bg-red-500/10 px-3 py-2">
           <p className="text-red-500 text-xs">{error}</p>
         </div>
       )}
       <button
         type="submit"
         disabled={isSubmitting}
-        className="btn w-full text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+        className="h-11 w-full rounded-[14px] bg-primary px-3.5 text-sm font-semibold text-primary-text transition-colors duration-200 hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSubmitting ? "Signing in..." : "Continue with Email"}
       </button>
@@ -59,4 +66,3 @@ const LoginEmail = () => {
 };
 
 export default LoginEmail;
-
