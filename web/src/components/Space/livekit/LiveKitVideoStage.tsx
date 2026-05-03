@@ -6,12 +6,48 @@ import {
   useTracks,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
-import WaitingState from "../ui/WaitingState";
+import { useState } from "react";
+import { useParams } from "react-router-dom";
+import { Copy, Check, Link } from "lucide-react";
 
 const getRoleLabel = (attributes?: Record<string, string>) => {
   if (attributes?.role === "HOST") return "Host";
   if (attributes?.isGuest === "true") return "Guest";
   return null;
+};
+
+const InvitePanel = () => {
+  const { roomId } = useParams<{ roomId: string }>();
+  const [copied, setCopied] = useState(false);
+  const inviteLink = `${window.location.origin}/${roomId}`;
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(inviteLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full rounded-xl border border-call-border bg-call-primary gap-6 p-8">
+      <div className="flex flex-col items-center gap-4 text-center">
+        <Link size={36} className="text-muted-foreground" />
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-base font-semibold text-foreground">Invite someone</p>
+          <p className="text-sm text-muted-foreground">Share this link to invite others to join</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 bg-call-background rounded-xl px-3 py-2.5 max-w-[420px] w-full">
+        <span className="flex-1 text-sm text-foreground/70 truncate font-mono">{inviteLink}</span>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-call-primary border border-call-border hover:bg-primary-hover transition-all duration-150 text-sm font-medium flex-shrink-0 cursor-pointer"
+        >
+          {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+          <span>{copied ? "Copied!" : "Copy"}</span>
+        </button>
+      </div>
+    </div>
+  );
 };
 
 const LiveKitVideoStage = () => {
@@ -43,6 +79,8 @@ const LiveKitVideoStage = () => {
       )
     : cameraTracks;
 
+  const isAlone = remoteParticipantCount === 0;
+
   return (
     <div className="h-full min-h-0 flex flex-col gap-2">
       <div className="flex-1 min-h-0">
@@ -58,21 +96,24 @@ const LiveKitVideoStage = () => {
               ))}
             </div>
           </div>
+        ) : isAlone ? (
+          <div className="grid h-full gap-2 grid-cols-2">
+            {visibleTracks.map((trackRef) => (
+              <ParticipantFrame
+                key={`${trackRef.participant.identity}-${trackRef.source}`}
+                trackRef={trackRef}
+              />
+            ))}
+            <InvitePanel />
+          </div>
         ) : (
-          <div className="h-full relative">
-            {remoteParticipantCount === 0 && (
-              <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center p-4">
-                <WaitingState isVisible onClose={() => undefined} />
-              </div>
-            )}
-            <div className="grid h-full gap-2 auto-rows-fr grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-              {visibleTracks.map((trackRef) => (
-                <ParticipantFrame
-                  key={`${trackRef.participant.identity}-${trackRef.source}`}
-                  trackRef={trackRef}
-                />
-              ))}
-            </div>
+          <div className="grid h-full gap-2 auto-rows-fr grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+            {visibleTracks.map((trackRef) => (
+              <ParticipantFrame
+                key={`${trackRef.participant.identity}-${trackRef.source}`}
+                trackRef={trackRef}
+              />
+            ))}
           </div>
         )}
       </div>

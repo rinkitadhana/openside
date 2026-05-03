@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import SpaceWrapper from "@/components/Space/SpaceWrapper";
 import PreJoinScreen from "@/components/Space/PreJoinScreen";
 import LiveKitSpaceScreen from "@/components/Space/LiveKitSpaceScreen";
+import AppLoader from "@/components/shared/AppLoader";
 import { useGetMe } from "@/hooks/useUserQuery";
 import { useCreateSpace } from "@/hooks/useSpace";
 import { getOrCreateSessionId } from "@/utils/ParticipantSessionId";
@@ -57,8 +58,6 @@ const RoomPage = () => {
     <SpaceWrapper
       activeSidebar={activeSidebar}
       closeSidebar={closeSidebar}
-      recordingState={recordingState}
-      recordingDurationMs={recordingDurationMs}
     >
       <LiveKitSpaceScreen
         toggleSidebar={toggleSidebar}
@@ -67,6 +66,13 @@ const RoomPage = () => {
       />
     </SpaceWrapper>
   );
+
+  useEffect(() => {
+    document.title = `Space - ${roomId}`;
+    return () => {
+      document.title = "Openside";
+    };
+  }, [roomId]);
 
   useEffect(() => {
     const cachedSettings = sessionStorage.getItem(hostJoinSettingsKey(roomId));
@@ -154,11 +160,7 @@ const RoomPage = () => {
   ]);
 
   if (isHost && isCreatingSpace) {
-    return (
-      <div className="bg-call-background h-screen flex items-center justify-center">
-        <div className="animate-pulse">Loading...</div>
-      </div>
-    );
+    return <AppLoader />;
   }
 
   if (hasJoinSettings) {

@@ -1,9 +1,7 @@
 import React from "react";
-import SpaceHeader from "./SpaceHeader";
 import InfoSidebar from "./sidebars/InfoSidebar";
 import UsersSidebar from "./sidebars/UsersSidebar";
 import ChatSidebar from "./sidebars/ChatSidebar";
-import type { RecordingState } from "@/hooks/useRecordingManager";
 
 type SidebarType = "info" | "users" | "chat" | null;
 
@@ -11,16 +9,12 @@ interface SpaceWrapperProps {
   children: React.ReactNode;
   activeSidebar: SidebarType;
   closeSidebar: () => void;
-  recordingState?: RecordingState;
-  recordingDurationMs?: number;
 }
 
 const SpaceWrapper = ({
   children,
   activeSidebar,
   closeSidebar,
-  recordingState,
-  recordingDurationMs,
 }: SpaceWrapperProps) => {
   const renderSidebarContent = () => {
     switch (activeSidebar) {
@@ -38,10 +32,6 @@ const SpaceWrapper = ({
   return (
     <section className="bg-call-background h-screen flex items-center p-2">
       <div className="relative flex-1 flex flex-col items-center justify-center h-full max-w-full overflow-hidden">
-        <SpaceHeader
-          recordingState={recordingState}
-          recordingDurationMs={recordingDurationMs}
-        />
         <div className="w-full flex-1 min-h-0 px-2 pt-2">{children}</div>
       </div>
       {activeSidebar && (

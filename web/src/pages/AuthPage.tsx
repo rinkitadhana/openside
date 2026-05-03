@@ -8,6 +8,7 @@ import LoginBack from "@/components/auth/LoginBack";
 import LoginUsers from "@/components/auth/LoginUsers";
 import LoginImage from "@/components/auth/LoginImage";
 import LoginEmail from "@/components/auth/LoginEmail";
+import AppLoader from "@/components/shared/AppLoader";
 import PageTitle from "@/components/shared/PageTitle";
 import { useGetMe } from "@/hooks/useUserQuery";
 
@@ -46,11 +47,7 @@ const AuthPage = () => {
   }, [user, isLoading, navigate]);
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p>Loading...</p>
-      </div>
-    );
+    return <AppLoader />;
   }
 
   if (user) {

@@ -6,6 +6,7 @@ import Header from "./SpaceHeader";
 import playClickSound from "@/utils/ClickSound";
 import UserMedia from "./UserMedia";
 import MediaPermissionError from "./ui/MediaPermissionError";
+import AppLoader from "@/components/shared/AppLoader";
 import { useGetMe } from "@/hooks/useUserQuery";
 import { useGetSpaceByJoinCode } from "@/hooks/useSpace";
 import { useJoinSpace } from "@/hooks/useParticipant";
@@ -173,12 +174,7 @@ const PreJoinScreen = ({ onJoinCall, roomId }: PreJoinScreenProps) => {
 
   return (
     <div className="relative bg-call-background h-screen flex flex-col p-2">
-      {/* Full-screen loader while joining */}
-      {joinSpace.isPending && (
-        <div className="absolute inset-0 bg-call-background/95 backdrop-blur-sm z-50 flex items-center justify-center">
-          <p className="text-foreground font-medium">Joining space...</p>
-        </div>
-      )}
+      {joinSpace.isPending && <AppLoader overlay />}
 
       <Header prejoin={true} />
       <div className=" absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full flex flex-col items-center justify-center max-w-[800px] mx-auto">

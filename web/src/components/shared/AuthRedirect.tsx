@@ -1,5 +1,6 @@
 "use client"
 
+import AppLoader from "@/components/shared/AppLoader"
 import { useGetMe } from "@/hooks/useUserQuery"
 import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
@@ -15,11 +16,7 @@ export default function AuthRedirect({ children }: { children: React.ReactNode }
   }, [user, isLoading, navigate])
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Loading...</p>
-      </div>
-    )
+    return <AppLoader />
   }
 
   if (user) {
