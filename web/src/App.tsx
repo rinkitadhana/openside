@@ -41,11 +41,9 @@ const App = () => {
       <Route
         path="/:roomId"
         element={
-          <ProtectedRoute>
-            <SocketProvider>
-              <RoomPage />
-            </SocketProvider>
-          </ProtectedRoute>
+          <SocketProvider>
+            <RoomPage />
+          </SocketProvider>
         }
       />
       <Route path="*" element={<Navigate to="/auth" replace />} />
