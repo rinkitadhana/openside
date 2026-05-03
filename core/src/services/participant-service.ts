@@ -1,4 +1,10 @@
 import { prisma } from "../db/index.ts";
+import {
+  generateLiveKitToken,
+  getLiveKitIdentity,
+  getLiveKitRoomName,
+  removeLiveKitParticipant,
+} from "./livekit-service.ts";
 
 interface JoinSpaceData {
   spaceId: string;
@@ -23,6 +29,8 @@ export async function getSpaceIfLive(spaceId: string) {
       title: true,
       description: true,
       joinCode: true,
+      livekitRoomName: true,
+      expiresAt: true,
       host: {
         select: {
           id: true,
@@ -76,6 +84,18 @@ export async function joinSpace(data: JoinSpaceData) {
     throw new Error("SPACE_NOT_LIVE");
   }
 
+  if (space.expiresAt && space.expiresAt.getTime() <= Date.now()) {
+    throw new Error("SPACE_EXPIRED");
+  }
+
+  const livekitRoomName = space.livekitRoomName || getLiveKitRoomName(spaceId);
+  const livekitIdentity = getLiveKitIdentity({
+    spaceId,
+    participantSessionId,
+    userId,
+    isGuest,
+  });
+
   const existingParticipant = await findExistingParticipant(
     spaceId,
     userId,
@@ -90,7 +110,10 @@ export async function joinSpace(data: JoinSpaceData) {
         leftAt: null,
         // Don't overwrite original joinedAt - preserve when user first joined
         participantSessionId,
+        livekitIdentity,
         displayName,
+        lastConnectedAt: new Date(),
+        connectionState: "connected",
       },
       include: {
         user: {
@@ -103,7 +126,12 @@ export async function joinSpace(data: JoinSpaceData) {
       },
     });
 
-    return { participant: updatedParticipant, space, isRejoin: true };
+    const livekit = await generateLiveKitToken({
+      space: { ...space, livekitRoomName },
+      participant: updatedParticipant,
+    });
+
+    return { participant: updatedParticipant, space: { ...space, livekitRoomName }, livekit, isRejoin: true };
   }
 
   // Create new participant
@@ -111,11 +139,14 @@ export async function joinSpace(data: JoinSpaceData) {
     data: {
       spaceId,
       participantSessionId,
+      livekitIdentity,
       displayName,
       userId: userId || null,
       isGuest,
       isActive: true,
       role: "GUEST",
+      lastConnectedAt: new Date(),
+      connectionState: "connected",
     },
     include: {
       user: {
@@ -128,7 +159,12 @@ export async function joinSpace(data: JoinSpaceData) {
     },
   });
 
-  return { participant, space, isRejoin: false };
+  const livekit = await generateLiveKitToken({
+    space: { ...space, livekitRoomName },
+    participant,
+  });
+
+  return { participant, space: { ...space, livekitRoomName }, livekit, isRejoin: false };
 }
 
 
@@ -156,6 +192,7 @@ export async function leaveSpace(data: LeaveSpaceData) {
     data: {
       isActive: false,
       leftAt: new Date(),
+      connectionState: "disconnected",
     },
   });
 
@@ -190,6 +227,8 @@ export async function getSpaceParticipants(
       joinedAt: true,
       leftAt: true,
       participantSessionId: true,
+      livekitIdentity: true,
+      connectionState: true,
       user: {
         select: {
           id: true,
@@ -263,7 +302,24 @@ export async function kickParticipant(participantId: string) {
     data: {
       isActive: false,
       leftAt: new Date(),
+      connectionState: "removed",
     },
+  });
+
+  const fullParticipant = await prisma.spaceParticipant.findUnique({
+    where: { id: participantId },
+    include: {
+      space: {
+        select: {
+          livekitRoomName: true,
+        },
+      },
+    },
+  });
+
+  await removeLiveKitParticipant({
+    roomName: fullParticipant?.space.livekitRoomName,
+    identity: fullParticipant?.livekitIdentity,
   });
 
   return kickedParticipant;
@@ -294,4 +350,3 @@ export async function getParticipantById(participantId: string) {
 
   return participant;
 }
-

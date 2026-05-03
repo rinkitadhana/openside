@@ -1,4 +1,11 @@
 import { prisma } from "../db/index.ts";
+import {
+  createLiveKitRoom,
+  deleteLiveKitRoom,
+  generateLiveKitToken,
+  getLiveKitIdentity,
+  getLiveKitRoomName,
+} from "./livekit-service.ts";
 
 interface CreateSpaceData {
   title: string;
@@ -39,7 +46,8 @@ export async function createSpace(data: CreateSpaceData) {
     throw new Error("JOIN_CODE_EXISTS");
   }
 
-  const space = await prisma.space.create({
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const createdSpace = await prisma.space.create({
     data: {
       title,
       description,
@@ -47,6 +55,7 @@ export async function createSpace(data: CreateSpaceData) {
       hostId,
       status: "LIVE",
       startTime: new Date(),
+      expiresAt,
       participants: {
         create: {
           userId: hostId,
@@ -82,7 +91,76 @@ export async function createSpace(data: CreateSpaceData) {
     },
   });
 
-  return space;
+  const livekitRoomName = getLiveKitRoomName(createdSpace.id);
+  const hostLiveKitIdentity = getLiveKitIdentity({
+    spaceId: createdSpace.id,
+    participantSessionId: hostParticipantSessionId,
+    userId: hostId,
+    isGuest: false,
+  });
+
+  await prisma.spaceParticipant.updateMany({
+    where: {
+      spaceId: createdSpace.id,
+      role: "HOST",
+    },
+    data: {
+      livekitIdentity: hostLiveKitIdentity,
+      lastConnectedAt: new Date(),
+      connectionState: "connected",
+    },
+  });
+
+  const space = await prisma.space.update({
+    where: { id: createdSpace.id },
+    data: { livekitRoomName },
+    include: {
+      host: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+        },
+      },
+      participants: {
+        where: { isActive: true },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  await createLiveKitRoom({
+    name: livekitRoomName,
+    metadata: {
+      spaceId: space.id,
+      joinCode: space.joinCode,
+      hostId: space.hostId,
+    },
+  });
+
+  const hostParticipant = space.participants.find(
+    (participant) => participant.role === "HOST"
+  );
+
+  if (!hostParticipant) {
+    return space;
+  }
+
+  const livekit = await generateLiveKitToken({
+    space,
+    participant: hostParticipant,
+  });
+
+  return { ...space, livekit };
 }
 
 export async function updateSpace(spaceId: string, data: UpdateSpaceData) {
@@ -100,7 +178,7 @@ export async function updateSpace(spaceId: string, data: UpdateSpaceData) {
 export async function endSpace(spaceId: string) {
   const space = await prisma.space.findUnique({
     where: { id: spaceId },
-    select: { startTime: true, status: true },
+    select: { startTime: true, status: true, livekitRoomName: true },
   });
 
   if (!space) {
@@ -123,6 +201,7 @@ export async function endSpace(spaceId: string) {
         endTime,
         duration,
         status: "ENDED",
+        endedReason: "HOST_ENDED",
       },
       include: {
         host: {
@@ -157,6 +236,8 @@ export async function endSpace(spaceId: string) {
       },
     }),
   ]);
+
+  await deleteLiveKitRoom(space.livekitRoomName);
 
   return updatedSpace;
 }
@@ -361,4 +442,3 @@ export async function getUserSpaces(userId: string, filter?: "hosted" | "partici
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 }
-

@@ -45,7 +45,7 @@
 - Profile management (name, email, avatar, preferences)
 
 #### 2. Video Calling
-- Peer-to-peer WebRTC video calls
+- LiveKit-backed WebRTC video calls
 - Real-time audio/video streaming
 - Automatic bandwidth-based quality adjustment
 - Pre-join screen with camera/mic preview and device selection
@@ -196,21 +196,22 @@
 - React 19
 - TypeScript
 - Tailwind CSS
-- WebRTC (PeerJS)
-- Socket.IO client
+- LiveKit React/client SDK
+- Socket.IO client for recording coordination
 - MediaRecorder API for local recording
 
 ### Backend
 - Node.js with Express
 - TypeScript
-- Socket.IO for real-time signaling
+- LiveKit server SDK for room and token management
+- Socket.IO for recording coordination and upload progress
 - Prisma ORM
 - PostgreSQL database
 
 ### Infrastructure
 - Cloud-hosted only (no self-hosting option)
+- LiveKit SFU for media transport
 - S3-compatible storage for recordings
-- WebRTC peer-to-peer (no media server)
 
 ### Recording Flow
 1. Host starts recording via UI
@@ -403,7 +404,7 @@
 ## Technical Constraints
 
 ### Performance
-- WebRTC peer-to-peer (scales to 10 participants max)
+- LiveKit SFU-based media transport
 - Bandwidth auto-adjustment for call quality
 - Client-side recording with server processing
 
@@ -429,8 +430,8 @@
 
 ### Technical Risks
 
-**Risk:** WebRTC peer-to-peer may fail with poor connections
-**Mitigation:** Auto quality adjustment, connection quality test pre-join, clear error messages
+**Risk:** LiveKit media connection may fail on restricted networks
+**Mitigation:** LiveKit reconnect handling, connection quality UI, clear error messages, TURN/ICE configuration
 
 **Risk:** Client-side recording may fail or produce corrupted files
 **Mitigation:** Chunked uploads with retry logic, segment tracking, checksum validation
@@ -482,8 +483,8 @@
 - Authentication system (Google OAuth via Clerk)
 - Room creation and management
 - Participant management (join, leave, roles, kick)
-- WebRTC video calling (peer-to-peer)
-- Socket.IO real-time signaling
+- LiveKit video calling foundation
+- Socket.IO recording event coordination
 - Pre-join screen with camera/mic preview
 - In-call basic controls (mute, camera, leave)
 - Recording system infrastructure (database models, API endpoints)

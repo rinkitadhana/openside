@@ -29,12 +29,15 @@ export type SpaceParticipantMinAggregateOutputType = {
   spaceId: string | null
   userId: string | null
   participantSessionId: string | null
+  livekitIdentity: string | null
   displayName: string | null
   isGuest: boolean | null
   isActive: boolean | null
   role: $Enums.ParticipantRole | null
   joinedAt: Date | null
   leftAt: Date | null
+  lastConnectedAt: Date | null
+  connectionState: string | null
   hasRecording: boolean | null
 }
 
@@ -43,12 +46,15 @@ export type SpaceParticipantMaxAggregateOutputType = {
   spaceId: string | null
   userId: string | null
   participantSessionId: string | null
+  livekitIdentity: string | null
   displayName: string | null
   isGuest: boolean | null
   isActive: boolean | null
   role: $Enums.ParticipantRole | null
   joinedAt: Date | null
   leftAt: Date | null
+  lastConnectedAt: Date | null
+  connectionState: string | null
   hasRecording: boolean | null
 }
 
@@ -57,12 +63,15 @@ export type SpaceParticipantCountAggregateOutputType = {
   spaceId: number
   userId: number
   participantSessionId: number
+  livekitIdentity: number
   displayName: number
   isGuest: number
   isActive: number
   role: number
   joinedAt: number
   leftAt: number
+  lastConnectedAt: number
+  connectionState: number
   hasRecording: number
   _all: number
 }
@@ -73,12 +82,15 @@ export type SpaceParticipantMinAggregateInputType = {
   spaceId?: true
   userId?: true
   participantSessionId?: true
+  livekitIdentity?: true
   displayName?: true
   isGuest?: true
   isActive?: true
   role?: true
   joinedAt?: true
   leftAt?: true
+  lastConnectedAt?: true
+  connectionState?: true
   hasRecording?: true
 }
 
@@ -87,12 +99,15 @@ export type SpaceParticipantMaxAggregateInputType = {
   spaceId?: true
   userId?: true
   participantSessionId?: true
+  livekitIdentity?: true
   displayName?: true
   isGuest?: true
   isActive?: true
   role?: true
   joinedAt?: true
   leftAt?: true
+  lastConnectedAt?: true
+  connectionState?: true
   hasRecording?: true
 }
 
@@ -101,12 +116,15 @@ export type SpaceParticipantCountAggregateInputType = {
   spaceId?: true
   userId?: true
   participantSessionId?: true
+  livekitIdentity?: true
   displayName?: true
   isGuest?: true
   isActive?: true
   role?: true
   joinedAt?: true
   leftAt?: true
+  lastConnectedAt?: true
+  connectionState?: true
   hasRecording?: true
   _all?: true
 }
@@ -188,12 +206,15 @@ export type SpaceParticipantGroupByOutputType = {
   spaceId: string
   userId: string | null
   participantSessionId: string
+  livekitIdentity: string | null
   displayName: string | null
   isGuest: boolean
   isActive: boolean
   role: $Enums.ParticipantRole
   joinedAt: Date
   leftAt: Date | null
+  lastConnectedAt: Date | null
+  connectionState: string | null
   hasRecording: boolean
   _count: SpaceParticipantCountAggregateOutputType | null
   _min: SpaceParticipantMinAggregateOutputType | null
@@ -223,12 +244,15 @@ export type SpaceParticipantWhereInput = {
   spaceId?: Prisma.StringFilter<"SpaceParticipant"> | string
   userId?: Prisma.StringNullableFilter<"SpaceParticipant"> | string | null
   participantSessionId?: Prisma.StringFilter<"SpaceParticipant"> | string
+  livekitIdentity?: Prisma.StringNullableFilter<"SpaceParticipant"> | string | null
   displayName?: Prisma.StringNullableFilter<"SpaceParticipant"> | string | null
   isGuest?: Prisma.BoolFilter<"SpaceParticipant"> | boolean
   isActive?: Prisma.BoolFilter<"SpaceParticipant"> | boolean
   role?: Prisma.EnumParticipantRoleFilter<"SpaceParticipant"> | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFilter<"SpaceParticipant"> | Date | string
   leftAt?: Prisma.DateTimeNullableFilter<"SpaceParticipant"> | Date | string | null
+  lastConnectedAt?: Prisma.DateTimeNullableFilter<"SpaceParticipant"> | Date | string | null
+  connectionState?: Prisma.StringNullableFilter<"SpaceParticipant"> | string | null
   hasRecording?: Prisma.BoolFilter<"SpaceParticipant"> | boolean
   space?: Prisma.XOR<Prisma.SpaceScalarRelationFilter, Prisma.SpaceWhereInput>
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
@@ -240,12 +264,15 @@ export type SpaceParticipantOrderByWithRelationInput = {
   spaceId?: Prisma.SortOrder
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
   participantSessionId?: Prisma.SortOrder
+  livekitIdentity?: Prisma.SortOrderInput | Prisma.SortOrder
   displayName?: Prisma.SortOrderInput | Prisma.SortOrder
   isGuest?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   role?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   leftAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastConnectedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  connectionState?: Prisma.SortOrderInput | Prisma.SortOrder
   hasRecording?: Prisma.SortOrder
   space?: Prisma.SpaceOrderByWithRelationInput
   user?: Prisma.UserOrderByWithRelationInput
@@ -254,6 +281,7 @@ export type SpaceParticipantOrderByWithRelationInput = {
 
 export type SpaceParticipantWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  livekitIdentity?: string
   AND?: Prisma.SpaceParticipantWhereInput | Prisma.SpaceParticipantWhereInput[]
   OR?: Prisma.SpaceParticipantWhereInput[]
   NOT?: Prisma.SpaceParticipantWhereInput | Prisma.SpaceParticipantWhereInput[]
@@ -266,23 +294,28 @@ export type SpaceParticipantWhereUniqueInput = Prisma.AtLeast<{
   role?: Prisma.EnumParticipantRoleFilter<"SpaceParticipant"> | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFilter<"SpaceParticipant"> | Date | string
   leftAt?: Prisma.DateTimeNullableFilter<"SpaceParticipant"> | Date | string | null
+  lastConnectedAt?: Prisma.DateTimeNullableFilter<"SpaceParticipant"> | Date | string | null
+  connectionState?: Prisma.StringNullableFilter<"SpaceParticipant"> | string | null
   hasRecording?: Prisma.BoolFilter<"SpaceParticipant"> | boolean
   space?: Prisma.XOR<Prisma.SpaceScalarRelationFilter, Prisma.SpaceWhereInput>
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   recordings?: Prisma.ParticipantRecordingListRelationFilter
-}, "id">
+}, "id" | "livekitIdentity">
 
 export type SpaceParticipantOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   spaceId?: Prisma.SortOrder
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
   participantSessionId?: Prisma.SortOrder
+  livekitIdentity?: Prisma.SortOrderInput | Prisma.SortOrder
   displayName?: Prisma.SortOrderInput | Prisma.SortOrder
   isGuest?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   role?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   leftAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastConnectedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  connectionState?: Prisma.SortOrderInput | Prisma.SortOrder
   hasRecording?: Prisma.SortOrder
   _count?: Prisma.SpaceParticipantCountOrderByAggregateInput
   _max?: Prisma.SpaceParticipantMaxOrderByAggregateInput
@@ -297,24 +330,30 @@ export type SpaceParticipantScalarWhereWithAggregatesInput = {
   spaceId?: Prisma.StringWithAggregatesFilter<"SpaceParticipant"> | string
   userId?: Prisma.StringNullableWithAggregatesFilter<"SpaceParticipant"> | string | null
   participantSessionId?: Prisma.StringWithAggregatesFilter<"SpaceParticipant"> | string
+  livekitIdentity?: Prisma.StringNullableWithAggregatesFilter<"SpaceParticipant"> | string | null
   displayName?: Prisma.StringNullableWithAggregatesFilter<"SpaceParticipant"> | string | null
   isGuest?: Prisma.BoolWithAggregatesFilter<"SpaceParticipant"> | boolean
   isActive?: Prisma.BoolWithAggregatesFilter<"SpaceParticipant"> | boolean
   role?: Prisma.EnumParticipantRoleWithAggregatesFilter<"SpaceParticipant"> | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeWithAggregatesFilter<"SpaceParticipant"> | Date | string
   leftAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SpaceParticipant"> | Date | string | null
+  lastConnectedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SpaceParticipant"> | Date | string | null
+  connectionState?: Prisma.StringNullableWithAggregatesFilter<"SpaceParticipant"> | string | null
   hasRecording?: Prisma.BoolWithAggregatesFilter<"SpaceParticipant"> | boolean
 }
 
 export type SpaceParticipantCreateInput = {
   id?: string
   participantSessionId: string
+  livekitIdentity?: string | null
   displayName?: string | null
   isGuest?: boolean
   isActive?: boolean
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  lastConnectedAt?: Date | string | null
+  connectionState?: string | null
   hasRecording?: boolean
   space: Prisma.SpaceCreateNestedOneWithoutParticipantsInput
   user?: Prisma.UserCreateNestedOneWithoutSpaceParticipantsInput
@@ -326,12 +365,15 @@ export type SpaceParticipantUncheckedCreateInput = {
   spaceId: string
   userId?: string | null
   participantSessionId: string
+  livekitIdentity?: string | null
   displayName?: string | null
   isGuest?: boolean
   isActive?: boolean
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  lastConnectedAt?: Date | string | null
+  connectionState?: string | null
   hasRecording?: boolean
   recordings?: Prisma.ParticipantRecordingUncheckedCreateNestedManyWithoutParticipantInput
 }
@@ -339,12 +381,15 @@ export type SpaceParticipantUncheckedCreateInput = {
 export type SpaceParticipantUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   participantSessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitIdentity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isGuest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastConnectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasRecording?: Prisma.BoolFieldUpdateOperationsInput | boolean
   space?: Prisma.SpaceUpdateOneRequiredWithoutParticipantsNestedInput
   user?: Prisma.UserUpdateOneWithoutSpaceParticipantsNestedInput
@@ -356,12 +401,15 @@ export type SpaceParticipantUncheckedUpdateInput = {
   spaceId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   participantSessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitIdentity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isGuest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastConnectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasRecording?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recordings?: Prisma.ParticipantRecordingUncheckedUpdateManyWithoutParticipantNestedInput
 }
@@ -371,24 +419,30 @@ export type SpaceParticipantCreateManyInput = {
   spaceId: string
   userId?: string | null
   participantSessionId: string
+  livekitIdentity?: string | null
   displayName?: string | null
   isGuest?: boolean
   isActive?: boolean
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  lastConnectedAt?: Date | string | null
+  connectionState?: string | null
   hasRecording?: boolean
 }
 
 export type SpaceParticipantUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   participantSessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitIdentity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isGuest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastConnectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasRecording?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
@@ -397,12 +451,15 @@ export type SpaceParticipantUncheckedUpdateManyInput = {
   spaceId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   participantSessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitIdentity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isGuest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastConnectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasRecording?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
@@ -421,12 +478,15 @@ export type SpaceParticipantCountOrderByAggregateInput = {
   spaceId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   participantSessionId?: Prisma.SortOrder
+  livekitIdentity?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   isGuest?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   role?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   leftAt?: Prisma.SortOrder
+  lastConnectedAt?: Prisma.SortOrder
+  connectionState?: Prisma.SortOrder
   hasRecording?: Prisma.SortOrder
 }
 
@@ -435,12 +495,15 @@ export type SpaceParticipantMaxOrderByAggregateInput = {
   spaceId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   participantSessionId?: Prisma.SortOrder
+  livekitIdentity?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   isGuest?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   role?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   leftAt?: Prisma.SortOrder
+  lastConnectedAt?: Prisma.SortOrder
+  connectionState?: Prisma.SortOrder
   hasRecording?: Prisma.SortOrder
 }
 
@@ -449,12 +512,15 @@ export type SpaceParticipantMinOrderByAggregateInput = {
   spaceId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   participantSessionId?: Prisma.SortOrder
+  livekitIdentity?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   isGuest?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   role?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   leftAt?: Prisma.SortOrder
+  lastConnectedAt?: Prisma.SortOrder
+  connectionState?: Prisma.SortOrder
   hasRecording?: Prisma.SortOrder
 }
 
@@ -572,12 +638,15 @@ export type SpaceParticipantUpdateOneRequiredWithoutRecordingsNestedInput = {
 export type SpaceParticipantCreateWithoutUserInput = {
   id?: string
   participantSessionId: string
+  livekitIdentity?: string | null
   displayName?: string | null
   isGuest?: boolean
   isActive?: boolean
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  lastConnectedAt?: Date | string | null
+  connectionState?: string | null
   hasRecording?: boolean
   space: Prisma.SpaceCreateNestedOneWithoutParticipantsInput
   recordings?: Prisma.ParticipantRecordingCreateNestedManyWithoutParticipantInput
@@ -587,12 +656,15 @@ export type SpaceParticipantUncheckedCreateWithoutUserInput = {
   id?: string
   spaceId: string
   participantSessionId: string
+  livekitIdentity?: string | null
   displayName?: string | null
   isGuest?: boolean
   isActive?: boolean
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  lastConnectedAt?: Date | string | null
+  connectionState?: string | null
   hasRecording?: boolean
   recordings?: Prisma.ParticipantRecordingUncheckedCreateNestedManyWithoutParticipantInput
 }
@@ -631,24 +703,30 @@ export type SpaceParticipantScalarWhereInput = {
   spaceId?: Prisma.StringFilter<"SpaceParticipant"> | string
   userId?: Prisma.StringNullableFilter<"SpaceParticipant"> | string | null
   participantSessionId?: Prisma.StringFilter<"SpaceParticipant"> | string
+  livekitIdentity?: Prisma.StringNullableFilter<"SpaceParticipant"> | string | null
   displayName?: Prisma.StringNullableFilter<"SpaceParticipant"> | string | null
   isGuest?: Prisma.BoolFilter<"SpaceParticipant"> | boolean
   isActive?: Prisma.BoolFilter<"SpaceParticipant"> | boolean
   role?: Prisma.EnumParticipantRoleFilter<"SpaceParticipant"> | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFilter<"SpaceParticipant"> | Date | string
   leftAt?: Prisma.DateTimeNullableFilter<"SpaceParticipant"> | Date | string | null
+  lastConnectedAt?: Prisma.DateTimeNullableFilter<"SpaceParticipant"> | Date | string | null
+  connectionState?: Prisma.StringNullableFilter<"SpaceParticipant"> | string | null
   hasRecording?: Prisma.BoolFilter<"SpaceParticipant"> | boolean
 }
 
 export type SpaceParticipantCreateWithoutSpaceInput = {
   id?: string
   participantSessionId: string
+  livekitIdentity?: string | null
   displayName?: string | null
   isGuest?: boolean
   isActive?: boolean
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  lastConnectedAt?: Date | string | null
+  connectionState?: string | null
   hasRecording?: boolean
   user?: Prisma.UserCreateNestedOneWithoutSpaceParticipantsInput
   recordings?: Prisma.ParticipantRecordingCreateNestedManyWithoutParticipantInput
@@ -658,12 +736,15 @@ export type SpaceParticipantUncheckedCreateWithoutSpaceInput = {
   id?: string
   userId?: string | null
   participantSessionId: string
+  livekitIdentity?: string | null
   displayName?: string | null
   isGuest?: boolean
   isActive?: boolean
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  lastConnectedAt?: Date | string | null
+  connectionState?: string | null
   hasRecording?: boolean
   recordings?: Prisma.ParticipantRecordingUncheckedCreateNestedManyWithoutParticipantInput
 }
@@ -697,12 +778,15 @@ export type SpaceParticipantUpdateManyWithWhereWithoutSpaceInput = {
 export type SpaceParticipantCreateWithoutRecordingsInput = {
   id?: string
   participantSessionId: string
+  livekitIdentity?: string | null
   displayName?: string | null
   isGuest?: boolean
   isActive?: boolean
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  lastConnectedAt?: Date | string | null
+  connectionState?: string | null
   hasRecording?: boolean
   space: Prisma.SpaceCreateNestedOneWithoutParticipantsInput
   user?: Prisma.UserCreateNestedOneWithoutSpaceParticipantsInput
@@ -713,12 +797,15 @@ export type SpaceParticipantUncheckedCreateWithoutRecordingsInput = {
   spaceId: string
   userId?: string | null
   participantSessionId: string
+  livekitIdentity?: string | null
   displayName?: string | null
   isGuest?: boolean
   isActive?: boolean
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  lastConnectedAt?: Date | string | null
+  connectionState?: string | null
   hasRecording?: boolean
 }
 
@@ -741,12 +828,15 @@ export type SpaceParticipantUpdateToOneWithWhereWithoutRecordingsInput = {
 export type SpaceParticipantUpdateWithoutRecordingsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   participantSessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitIdentity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isGuest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastConnectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasRecording?: Prisma.BoolFieldUpdateOperationsInput | boolean
   space?: Prisma.SpaceUpdateOneRequiredWithoutParticipantsNestedInput
   user?: Prisma.UserUpdateOneWithoutSpaceParticipantsNestedInput
@@ -757,12 +847,15 @@ export type SpaceParticipantUncheckedUpdateWithoutRecordingsInput = {
   spaceId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   participantSessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitIdentity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isGuest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastConnectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasRecording?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
@@ -770,24 +863,30 @@ export type SpaceParticipantCreateManyUserInput = {
   id?: string
   spaceId: string
   participantSessionId: string
+  livekitIdentity?: string | null
   displayName?: string | null
   isGuest?: boolean
   isActive?: boolean
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  lastConnectedAt?: Date | string | null
+  connectionState?: string | null
   hasRecording?: boolean
 }
 
 export type SpaceParticipantUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   participantSessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitIdentity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isGuest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastConnectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasRecording?: Prisma.BoolFieldUpdateOperationsInput | boolean
   space?: Prisma.SpaceUpdateOneRequiredWithoutParticipantsNestedInput
   recordings?: Prisma.ParticipantRecordingUpdateManyWithoutParticipantNestedInput
@@ -797,12 +896,15 @@ export type SpaceParticipantUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spaceId?: Prisma.StringFieldUpdateOperationsInput | string
   participantSessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitIdentity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isGuest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastConnectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasRecording?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recordings?: Prisma.ParticipantRecordingUncheckedUpdateManyWithoutParticipantNestedInput
 }
@@ -811,12 +913,15 @@ export type SpaceParticipantUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spaceId?: Prisma.StringFieldUpdateOperationsInput | string
   participantSessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitIdentity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isGuest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastConnectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasRecording?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
@@ -824,24 +929,30 @@ export type SpaceParticipantCreateManySpaceInput = {
   id?: string
   userId?: string | null
   participantSessionId: string
+  livekitIdentity?: string | null
   displayName?: string | null
   isGuest?: boolean
   isActive?: boolean
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  lastConnectedAt?: Date | string | null
+  connectionState?: string | null
   hasRecording?: boolean
 }
 
 export type SpaceParticipantUpdateWithoutSpaceInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   participantSessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitIdentity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isGuest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastConnectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasRecording?: Prisma.BoolFieldUpdateOperationsInput | boolean
   user?: Prisma.UserUpdateOneWithoutSpaceParticipantsNestedInput
   recordings?: Prisma.ParticipantRecordingUpdateManyWithoutParticipantNestedInput
@@ -851,12 +962,15 @@ export type SpaceParticipantUncheckedUpdateWithoutSpaceInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   participantSessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitIdentity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isGuest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastConnectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasRecording?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recordings?: Prisma.ParticipantRecordingUncheckedUpdateManyWithoutParticipantNestedInput
 }
@@ -865,12 +979,15 @@ export type SpaceParticipantUncheckedUpdateManyWithoutSpaceInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   participantSessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitIdentity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isGuest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastConnectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasRecording?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
@@ -910,12 +1027,15 @@ export type SpaceParticipantSelect<ExtArgs extends runtime.Types.Extensions.Inte
   spaceId?: boolean
   userId?: boolean
   participantSessionId?: boolean
+  livekitIdentity?: boolean
   displayName?: boolean
   isGuest?: boolean
   isActive?: boolean
   role?: boolean
   joinedAt?: boolean
   leftAt?: boolean
+  lastConnectedAt?: boolean
+  connectionState?: boolean
   hasRecording?: boolean
   space?: boolean | Prisma.SpaceDefaultArgs<ExtArgs>
   user?: boolean | Prisma.SpaceParticipant$userArgs<ExtArgs>
@@ -928,12 +1048,15 @@ export type SpaceParticipantSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   spaceId?: boolean
   userId?: boolean
   participantSessionId?: boolean
+  livekitIdentity?: boolean
   displayName?: boolean
   isGuest?: boolean
   isActive?: boolean
   role?: boolean
   joinedAt?: boolean
   leftAt?: boolean
+  lastConnectedAt?: boolean
+  connectionState?: boolean
   hasRecording?: boolean
   space?: boolean | Prisma.SpaceDefaultArgs<ExtArgs>
   user?: boolean | Prisma.SpaceParticipant$userArgs<ExtArgs>
@@ -944,12 +1067,15 @@ export type SpaceParticipantSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   spaceId?: boolean
   userId?: boolean
   participantSessionId?: boolean
+  livekitIdentity?: boolean
   displayName?: boolean
   isGuest?: boolean
   isActive?: boolean
   role?: boolean
   joinedAt?: boolean
   leftAt?: boolean
+  lastConnectedAt?: boolean
+  connectionState?: boolean
   hasRecording?: boolean
   space?: boolean | Prisma.SpaceDefaultArgs<ExtArgs>
   user?: boolean | Prisma.SpaceParticipant$userArgs<ExtArgs>
@@ -960,16 +1086,19 @@ export type SpaceParticipantSelectScalar = {
   spaceId?: boolean
   userId?: boolean
   participantSessionId?: boolean
+  livekitIdentity?: boolean
   displayName?: boolean
   isGuest?: boolean
   isActive?: boolean
   role?: boolean
   joinedAt?: boolean
   leftAt?: boolean
+  lastConnectedAt?: boolean
+  connectionState?: boolean
   hasRecording?: boolean
 }
 
-export type SpaceParticipantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "spaceId" | "userId" | "participantSessionId" | "displayName" | "isGuest" | "isActive" | "role" | "joinedAt" | "leftAt" | "hasRecording", ExtArgs["result"]["spaceParticipant"]>
+export type SpaceParticipantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "spaceId" | "userId" | "participantSessionId" | "livekitIdentity" | "displayName" | "isGuest" | "isActive" | "role" | "joinedAt" | "leftAt" | "lastConnectedAt" | "connectionState" | "hasRecording", ExtArgs["result"]["spaceParticipant"]>
 export type SpaceParticipantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   space?: boolean | Prisma.SpaceDefaultArgs<ExtArgs>
   user?: boolean | Prisma.SpaceParticipant$userArgs<ExtArgs>
@@ -997,12 +1126,15 @@ export type $SpaceParticipantPayload<ExtArgs extends runtime.Types.Extensions.In
     spaceId: string
     userId: string | null
     participantSessionId: string
+    livekitIdentity: string | null
     displayName: string | null
     isGuest: boolean
     isActive: boolean
     role: $Enums.ParticipantRole
     joinedAt: Date
     leftAt: Date | null
+    lastConnectedAt: Date | null
+    connectionState: string | null
     hasRecording: boolean
   }, ExtArgs["result"]["spaceParticipant"]>
   composites: {}
@@ -1434,12 +1566,15 @@ export interface SpaceParticipantFieldRefs {
   readonly spaceId: Prisma.FieldRef<"SpaceParticipant", 'String'>
   readonly userId: Prisma.FieldRef<"SpaceParticipant", 'String'>
   readonly participantSessionId: Prisma.FieldRef<"SpaceParticipant", 'String'>
+  readonly livekitIdentity: Prisma.FieldRef<"SpaceParticipant", 'String'>
   readonly displayName: Prisma.FieldRef<"SpaceParticipant", 'String'>
   readonly isGuest: Prisma.FieldRef<"SpaceParticipant", 'Boolean'>
   readonly isActive: Prisma.FieldRef<"SpaceParticipant", 'Boolean'>
   readonly role: Prisma.FieldRef<"SpaceParticipant", 'ParticipantRole'>
   readonly joinedAt: Prisma.FieldRef<"SpaceParticipant", 'DateTime'>
   readonly leftAt: Prisma.FieldRef<"SpaceParticipant", 'DateTime'>
+  readonly lastConnectedAt: Prisma.FieldRef<"SpaceParticipant", 'DateTime'>
+  readonly connectionState: Prisma.FieldRef<"SpaceParticipant", 'String'>
   readonly hasRecording: Prisma.FieldRef<"SpaceParticipant", 'Boolean'>
 }
     

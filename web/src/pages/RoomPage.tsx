@@ -1,118 +1,40 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import SpaceWrapper from "@/components/Space/SpaceWrapper";
 import PreJoinScreen from "@/components/Space/PreJoinScreen";
-import SpaceScreen from "@/components/Space/SpaceScreen";
+import LiveKitSpaceScreen from "@/components/Space/LiveKitSpaceScreen";
 import { useGetMe } from "@/hooks/useUserQuery";
 import { useCreateSpace } from "@/hooks/useSpace";
-import { useJoinSpace } from "@/hooks/useParticipant";
-import usePeer from "@/hooks/usePeer";
 import { getOrCreateSessionId } from "@/utils/ParticipantSessionId";
-import type {
-  RecordingState,
-  ChunkData,
-} from "@/hooks/useRecordingManager";
+import type { RecordingState } from "@/hooks/useRecordingManager";
 import type { PreJoinSettings } from "@/types/preJoinTypes";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 type SidebarType = "info" | "users" | "chat" | null;
+
+const hostJoinSettingsKey = (joinCode: string) =>
+  `HOST_JOIN_SETTINGS_${joinCode}`;
 
 const RoomPage = () => {
   const params = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { data: user } = useGetMe();
-  const { myId } = usePeer();
   const createSpace = useCreateSpace();
   const roomId = params.roomId as string;
   const isHost = searchParams.get("host") === "true";
-  const [createdSpaceId, setCreatedSpaceId] = useState<string | null>(null);
-  const joinSpace = useJoinSpace(createdSpaceId || "");
   const [activeSidebar, setActiveSidebar] = useState<SidebarType>(null);
   const [hasJoined, setHasJoined] = useState(false);
   const [preJoinSettings, setPreJoinSettings] =
     useState<PreJoinSettings | null>(null);
+  const hasJoinSettings = hasJoined && !!preJoinSettings?.livekit;
   const [spaceCreated, setSpaceCreated] = useState(false);
   const [isCreatingSpace, setIsCreatingSpace] = useState(false);
+  const hasStartedCreateRef = useRef(false);
 
-  const [recordingState, setRecordingState] = useState<RecordingState>("idle");
-  const [recordingDurationMs, setRecordingDurationMs] = useState(0);
+  const [recordingState] = useState<RecordingState>("idle");
+  const [recordingDurationMs] = useState(0);
 
   const participantSessionId = getOrCreateSessionId(roomId);
-
-  const handleRecordingStateChange = useCallback((state: RecordingState) => {
-    setRecordingState(state);
-  }, []);
-
-  const handleRecordingDurationChange = useCallback((durationMs: number) => {
-    setRecordingDurationMs(durationMs);
-  }, []);
-
-  const chunkQueueRef = React.useRef<ChunkData[]>([]);
-  const isUploadingRef = React.useRef(false);
-
-  const processChunkQueue = useCallback(async () => {
-    if (isUploadingRef.current || chunkQueueRef.current.length === 0) {
-      return;
-    }
-
-    isUploadingRef.current = true;
-
-    while (chunkQueueRef.current.length > 0) {
-      const chunkData = chunkQueueRef.current[0];
-
-      try {
-        if (!chunkData.participantRecordingId) {
-          console.warn(
-            `[Room] No recording ID for ${chunkData.streamType} chunk, skipping`
-          );
-          chunkQueueRef.current.shift();
-          continue;
-        }
-
-        console.log(
-          `[Room] Processing ${chunkData.streamType} chunk #${chunkData.chunk.sequenceNumber}`
-        );
-
-        console.log(`[Room] ${chunkData.streamType.toUpperCase()} chunk ready:`, {
-          streamType: chunkData.streamType,
-          sequenceNumber: chunkData.chunk.sequenceNumber,
-          size: (chunkData.chunk.blob.size / 1024).toFixed(2) + " KB",
-          recordingId: chunkData.participantRecordingId,
-          sessionId: chunkData.spaceRecordingSessionId,
-          startMs: chunkData.chunk.startMs,
-          durationMs: chunkData.chunk.durationMs,
-        });
-
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        chunkQueueRef.current.shift();
-      } catch (error) {
-        console.error(
-          `[Room] Failed to upload ${chunkData.streamType} chunk:`,
-          error
-        );
-
-        chunkQueueRef.current.shift();
-      }
-    }
-
-    isUploadingRef.current = false;
-  }, []);
-
-  const handleChunkReady = useCallback(
-    (data: ChunkData) => {
-      if (!data.participantRecordingId) {
-        console.warn(
-          `[Room] Received ${data.streamType} chunk without recording ID, skipping`
-        );
-        return;
-      }
-
-      chunkQueueRef.current.push(data);
-      processChunkQueue();
-    },
-    [processChunkQueue]
-  );
 
   const toggleSidebar = (sidebarType: SidebarType) => {
     if (activeSidebar === sidebarType) {
@@ -131,62 +53,98 @@ const RoomPage = () => {
     setHasJoined(true);
   };
 
+  const renderSpace = () => (
+    <SpaceWrapper
+      activeSidebar={activeSidebar}
+      closeSidebar={closeSidebar}
+      recordingState={recordingState}
+      recordingDurationMs={recordingDurationMs}
+    >
+      <LiveKitSpaceScreen
+        toggleSidebar={toggleSidebar}
+        activeSidebar={activeSidebar}
+        preJoinSettings={preJoinSettings}
+      />
+    </SpaceWrapper>
+  );
+
   useEffect(() => {
-    if (isHost && user && myId && !spaceCreated && !isCreatingSpace) {
+    const cachedSettings = sessionStorage.getItem(hostJoinSettingsKey(roomId));
+    if (!cachedSettings) return;
+
+    try {
+      handleJoinCall(JSON.parse(cachedSettings) as PreJoinSettings);
+    } catch {
+      sessionStorage.removeItem(hostJoinSettingsKey(roomId));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId]);
+
+  useEffect(() => {
+    if (
+      isHost &&
+      user &&
+      !spaceCreated &&
+      !isCreatingSpace &&
+      !hasStartedCreateRef.current
+    ) {
+      hasStartedCreateRef.current = true;
       setIsCreatingSpace(true);
 
-      createSpace.mutate(
-        {
-          joinCode: roomId,
-          participantSessionId,
-        },
-        {
-          onSuccess: (spaceData) => {
-            console.log("Space created successfully");
-            setSpaceCreated(true);
-            setCreatedSpaceId(spaceData.id);
+      const startHostSpace = async () => {
+        try {
+          const spaceData = await createSpace.mutateAsync({
+            joinCode: roomId,
+            participantSessionId,
+          });
 
-            const defaultSettings: PreJoinSettings = {
-              videoEnabled: true,
-              audioEnabled: true,
-              name: user.name || "Host",
-              avatar: user.avatar,
-            };
-
-            joinSpace.mutate(
-              {
-                displayName: defaultSettings.name,
-                participantSessionId,
-              },
-              {
-                onSuccess: () => {
-                  console.log("Host joined space successfully");
-                  setIsCreatingSpace(false);
-                  handleJoinCall(defaultSettings);
-                  navigate(`/${roomId}`, { replace: true });
-                },
-                onError: (error) => {
-                  console.error("Failed to join space as host:", error);
-                  setIsCreatingSpace(false);
-                  handleJoinCall(defaultSettings);
-                  navigate(`/${roomId}`, { replace: true });
-                },
-              }
+          if (!spaceData?.joinCode) {
+            console.error(
+              "Create space returned an invalid response:",
+              spaceData
             );
-          },
-          onError: (error) => {
-            console.error("Failed to create space:", error);
-            setIsCreatingSpace(false);
             navigate("/dashboard/home");
-          },
+            return;
+          }
+
+          console.log("Space created successfully");
+          setSpaceCreated(true);
+
+          const defaultSettings: PreJoinSettings = {
+            videoEnabled: true,
+            audioEnabled: true,
+            name: user.name || "Host",
+            avatar: user.avatar,
+            livekit: spaceData.livekit,
+          };
+
+          try {
+            sessionStorage.setItem(
+              hostJoinSettingsKey(spaceData.joinCode),
+              JSON.stringify(defaultSettings)
+            );
+          } catch (error) {
+            console.warn("Unable to cache host join settings:", error);
+          }
+          setIsCreatingSpace(false);
+          handleJoinCall(defaultSettings);
+
+          navigate(`/${spaceData.joinCode}`, { replace: true });
+        } catch (error) {
+          console.error("Failed to create space:", error);
+          hasStartedCreateRef.current = false;
+          navigate("/dashboard/home");
+        } finally {
+          setIsCreatingSpace(false);
         }
-      );
+      };
+
+      void startHostSpace();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isHost,
     user,
-    myId,
     roomId,
     navigate,
     createSpace,
@@ -203,33 +161,20 @@ const RoomPage = () => {
     );
   }
 
-  if (!hasJoined && !isHost) {
-    return <PreJoinScreen onJoinCall={handleJoinCall} roomId={roomId} />;
+  if (hasJoinSettings) {
+    return renderSpace();
   }
 
-  if (hasJoined) {
-    return (
-      <SpaceWrapper
-        activeSidebar={activeSidebar}
-        closeSidebar={closeSidebar}
-        recordingState={recordingState}
-        recordingDurationMs={recordingDurationMs}
-      >
-        <SpaceScreen
-          toggleSidebar={toggleSidebar}
-          activeSidebar={activeSidebar}
-          preJoinSettings={preJoinSettings}
-          onRecordingStateChange={handleRecordingStateChange}
-          onRecordingDurationChange={handleRecordingDurationChange}
-          onChunkReady={handleChunkReady}
-        />
-      </SpaceWrapper>
-    );
+  if (!isHost) {
+    return <PreJoinScreen onJoinCall={handleJoinCall} roomId={roomId} />;
   }
 
   return (
     <div className="bg-call-background h-screen flex items-center justify-center">
-      <div className="animate-pulse">Loading...</div>
+      <div className="text-sm text-foreground/70">
+        Unable to finish joining the new space. Please return to the dashboard
+        and try again.
+      </div>
     </div>
   );
 };

@@ -1,0 +1,176 @@
+import { useEffect, useMemo, useState } from "react";
+import { LiveKitRoom } from "@livekit/components-react";
+import {
+  DisconnectReason,
+  MediaDeviceFailure,
+  Room,
+  type RoomOptions,
+} from "livekit-client";
+import { useNavigate, useParams } from "react-router-dom";
+import { useEndSpace, useGetSpaceByJoinCode } from "@/hooks/useSpace";
+import { useLeaveSpace } from "@/hooks/useParticipant";
+import { useGetMe } from "@/hooks/useUserQuery";
+import { getOrCreateSessionId } from "@/utils/ParticipantSessionId";
+import type { PreJoinSettings } from "@/types/preJoinTypes";
+import LiveKitControls from "./livekit/LiveKitControls";
+import LiveKitVideoStage from "./livekit/LiveKitVideoStage";
+
+type SidebarType = "info" | "users" | "chat" | null;
+
+interface LiveKitSpaceScreenProps {
+  activeSidebar: SidebarType;
+  preJoinSettings: PreJoinSettings | null;
+  toggleSidebar: (sidebarType: SidebarType) => void;
+}
+
+const LiveKitSpaceScreen = ({
+  activeSidebar,
+  preJoinSettings,
+  toggleSidebar,
+}: LiveKitSpaceScreenProps) => {
+  const navigate = useNavigate();
+  const params = useParams();
+  const roomCode = params.roomId as string;
+  const participantSessionId = getOrCreateSessionId(roomCode);
+  const { data: user } = useGetMe();
+  const { data: spaceData } = useGetSpaceByJoinCode(roomCode);
+  const leaveSpace = useLeaveSpace(spaceData?.id || "");
+  const endSpace = useEndSpace();
+  const [connectionReady, setConnectionReady] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+
+  const livekit = preJoinSettings?.livekit;
+  const isHost = !!user && !!spaceData && user.id === spaceData.host?.id;
+
+  const roomOptions = useMemo<RoomOptions>(
+    () => ({
+      adaptiveStream: true,
+      dynacast: true,
+    }),
+    []
+  );
+
+  const room = useMemo(() => new Room(roomOptions), [roomOptions]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const prepareConnection = async () => {
+      if (!livekit?.url) return;
+
+      try {
+        await room.prepareConnection(livekit.url, livekit.token);
+        if (!cancelled) {
+          setConnectionReady(true);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setConnectionError(
+            error instanceof Error
+              ? error.message
+              : "Unable to prepare LiveKit connection."
+          );
+        }
+      }
+    };
+
+    prepareConnection();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [livekit?.token, livekit?.url, room]);
+
+  const handleLeave = () => {
+    if (spaceData?.id) {
+      leaveSpace.mutate(
+        { participantSessionId },
+        {
+          onSettled: () => {
+            room.disconnect();
+            navigate("/dashboard/home");
+          },
+        }
+      );
+      return;
+    }
+
+    room.disconnect();
+    navigate("/dashboard/home");
+  };
+
+  const handleEndForAll = () => {
+    if (!spaceData?.id) return;
+
+    endSpace.mutate(spaceData.id, {
+      onSettled: () => {
+        room.disconnect();
+        navigate("/dashboard/home");
+      },
+    });
+  };
+
+  if (!livekit) {
+    return (
+      <div className="flex h-full items-center justify-center rounded-xl border border-call-border bg-call-primary text-sm text-foreground/70">
+        Missing LiveKit join token. Please rejoin the room.
+      </div>
+    );
+  }
+
+  if (connectionError) {
+    return (
+      <div className="flex h-full items-center justify-center rounded-xl border border-red-500/30 bg-red-500/10 text-sm text-red-300">
+        {connectionError}
+      </div>
+    );
+  }
+
+  const connectOptions = {
+    maxRetries: 5,
+    peerConnectionTimeout: 60000,
+  };
+
+  return (
+    <LiveKitRoom
+      room={room}
+      serverUrl={livekit.url}
+      token={livekit.token}
+      connect={connectionReady}
+      audio={preJoinSettings?.audioEnabled ?? true}
+      video={preJoinSettings?.videoEnabled ?? true}
+      connectOptions={connectOptions}
+      onDisconnected={(reason) => {
+        if (
+          reason === DisconnectReason.DUPLICATE_IDENTITY ||
+          reason === DisconnectReason.PARTICIPANT_REMOVED ||
+          reason === DisconnectReason.ROOM_DELETED
+        ) {
+          navigate("/dashboard/home");
+        }
+      }}
+      onError={(error) => setConnectionError(error.message)}
+      onMediaDeviceFailure={(error, kind) => {
+        if (error === MediaDeviceFailure.PermissionDenied) {
+          setConnectionError(`Permission denied for ${kind || "media device"}.`);
+        }
+      }}
+      className="flex h-full flex-col gap-2 bg-call-background"
+    >
+      <div className="flex-1 min-h-0">
+        <LiveKitVideoStage />
+      </div>
+      <div className="shrink-0">
+        <LiveKitControls
+          activeSidebar={activeSidebar}
+          isHost={isHost}
+          onEndForAll={handleEndForAll}
+          onLeave={handleLeave}
+          toggleSidebar={toggleSidebar}
+        />
+      </div>
+    </LiveKitRoom>
+  );
+};
+
+export default LiveKitSpaceScreen;
