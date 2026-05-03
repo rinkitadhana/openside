@@ -42,10 +42,13 @@ export type SpaceMinAggregateOutputType = {
   title: string | null
   description: string | null
   joinCode: string | null
+  livekitRoomName: string | null
   status: $Enums.SpaceStatus | null
   recordingStatus: $Enums.RecordingStatus | null
   startTime: Date | null
   endTime: Date | null
+  expiresAt: Date | null
+  endedReason: string | null
   duration: number | null
   totalRecordingHours: number | null
   createdAt: Date | null
@@ -58,10 +61,13 @@ export type SpaceMaxAggregateOutputType = {
   title: string | null
   description: string | null
   joinCode: string | null
+  livekitRoomName: string | null
   status: $Enums.SpaceStatus | null
   recordingStatus: $Enums.RecordingStatus | null
   startTime: Date | null
   endTime: Date | null
+  expiresAt: Date | null
+  endedReason: string | null
   duration: number | null
   totalRecordingHours: number | null
   createdAt: Date | null
@@ -74,10 +80,13 @@ export type SpaceCountAggregateOutputType = {
   title: number
   description: number
   joinCode: number
+  livekitRoomName: number
   status: number
   recordingStatus: number
   startTime: number
   endTime: number
+  expiresAt: number
+  endedReason: number
   duration: number
   totalRecordingHours: number
   createdAt: number
@@ -102,10 +111,13 @@ export type SpaceMinAggregateInputType = {
   title?: true
   description?: true
   joinCode?: true
+  livekitRoomName?: true
   status?: true
   recordingStatus?: true
   startTime?: true
   endTime?: true
+  expiresAt?: true
+  endedReason?: true
   duration?: true
   totalRecordingHours?: true
   createdAt?: true
@@ -118,10 +130,13 @@ export type SpaceMaxAggregateInputType = {
   title?: true
   description?: true
   joinCode?: true
+  livekitRoomName?: true
   status?: true
   recordingStatus?: true
   startTime?: true
   endTime?: true
+  expiresAt?: true
+  endedReason?: true
   duration?: true
   totalRecordingHours?: true
   createdAt?: true
@@ -134,10 +149,13 @@ export type SpaceCountAggregateInputType = {
   title?: true
   description?: true
   joinCode?: true
+  livekitRoomName?: true
   status?: true
   recordingStatus?: true
   startTime?: true
   endTime?: true
+  expiresAt?: true
+  endedReason?: true
   duration?: true
   totalRecordingHours?: true
   createdAt?: true
@@ -237,10 +255,13 @@ export type SpaceGroupByOutputType = {
   title: string
   description: string | null
   joinCode: string
+  livekitRoomName: string | null
   status: $Enums.SpaceStatus
   recordingStatus: $Enums.RecordingStatus
   startTime: Date | null
   endTime: Date | null
+  expiresAt: Date | null
+  endedReason: string | null
   duration: number | null
   totalRecordingHours: number | null
   createdAt: Date
@@ -276,10 +297,13 @@ export type SpaceWhereInput = {
   title?: Prisma.StringFilter<"Space"> | string
   description?: Prisma.StringNullableFilter<"Space"> | string | null
   joinCode?: Prisma.StringFilter<"Space"> | string
+  livekitRoomName?: Prisma.StringNullableFilter<"Space"> | string | null
   status?: Prisma.EnumSpaceStatusFilter<"Space"> | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusFilter<"Space"> | $Enums.RecordingStatus
   startTime?: Prisma.DateTimeNullableFilter<"Space"> | Date | string | null
   endTime?: Prisma.DateTimeNullableFilter<"Space"> | Date | string | null
+  expiresAt?: Prisma.DateTimeNullableFilter<"Space"> | Date | string | null
+  endedReason?: Prisma.StringNullableFilter<"Space"> | string | null
   duration?: Prisma.IntNullableFilter<"Space"> | number | null
   totalRecordingHours?: Prisma.FloatNullableFilter<"Space"> | number | null
   createdAt?: Prisma.DateTimeFilter<"Space"> | Date | string
@@ -296,10 +320,13 @@ export type SpaceOrderByWithRelationInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   joinCode?: Prisma.SortOrder
+  livekitRoomName?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   recordingStatus?: Prisma.SortOrder
   startTime?: Prisma.SortOrderInput | Prisma.SortOrder
   endTime?: Prisma.SortOrderInput | Prisma.SortOrder
+  expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  endedReason?: Prisma.SortOrderInput | Prisma.SortOrder
   duration?: Prisma.SortOrderInput | Prisma.SortOrder
   totalRecordingHours?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -313,6 +340,7 @@ export type SpaceOrderByWithRelationInput = {
 export type SpaceWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   joinCode?: string
+  livekitRoomName?: string
   AND?: Prisma.SpaceWhereInput | Prisma.SpaceWhereInput[]
   OR?: Prisma.SpaceWhereInput[]
   NOT?: Prisma.SpaceWhereInput | Prisma.SpaceWhereInput[]
@@ -323,6 +351,8 @@ export type SpaceWhereUniqueInput = Prisma.AtLeast<{
   recordingStatus?: Prisma.EnumRecordingStatusFilter<"Space"> | $Enums.RecordingStatus
   startTime?: Prisma.DateTimeNullableFilter<"Space"> | Date | string | null
   endTime?: Prisma.DateTimeNullableFilter<"Space"> | Date | string | null
+  expiresAt?: Prisma.DateTimeNullableFilter<"Space"> | Date | string | null
+  endedReason?: Prisma.StringNullableFilter<"Space"> | string | null
   duration?: Prisma.IntNullableFilter<"Space"> | number | null
   totalRecordingHours?: Prisma.FloatNullableFilter<"Space"> | number | null
   createdAt?: Prisma.DateTimeFilter<"Space"> | Date | string
@@ -331,7 +361,7 @@ export type SpaceWhereUniqueInput = Prisma.AtLeast<{
   participants?: Prisma.SpaceParticipantListRelationFilter
   recordingSessions?: Prisma.RecordingSessionListRelationFilter
   finalOutputs?: Prisma.FinalOutputListRelationFilter
-}, "id" | "joinCode">
+}, "id" | "joinCode" | "livekitRoomName">
 
 export type SpaceOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -339,10 +369,13 @@ export type SpaceOrderByWithAggregationInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   joinCode?: Prisma.SortOrder
+  livekitRoomName?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   recordingStatus?: Prisma.SortOrder
   startTime?: Prisma.SortOrderInput | Prisma.SortOrder
   endTime?: Prisma.SortOrderInput | Prisma.SortOrder
+  expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  endedReason?: Prisma.SortOrderInput | Prisma.SortOrder
   duration?: Prisma.SortOrderInput | Prisma.SortOrder
   totalRecordingHours?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -363,10 +396,13 @@ export type SpaceScalarWhereWithAggregatesInput = {
   title?: Prisma.StringWithAggregatesFilter<"Space"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Space"> | string | null
   joinCode?: Prisma.StringWithAggregatesFilter<"Space"> | string
+  livekitRoomName?: Prisma.StringNullableWithAggregatesFilter<"Space"> | string | null
   status?: Prisma.EnumSpaceStatusWithAggregatesFilter<"Space"> | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusWithAggregatesFilter<"Space"> | $Enums.RecordingStatus
   startTime?: Prisma.DateTimeNullableWithAggregatesFilter<"Space"> | Date | string | null
   endTime?: Prisma.DateTimeNullableWithAggregatesFilter<"Space"> | Date | string | null
+  expiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Space"> | Date | string | null
+  endedReason?: Prisma.StringNullableWithAggregatesFilter<"Space"> | string | null
   duration?: Prisma.IntNullableWithAggregatesFilter<"Space"> | number | null
   totalRecordingHours?: Prisma.FloatNullableWithAggregatesFilter<"Space"> | number | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Space"> | Date | string
@@ -378,10 +414,13 @@ export type SpaceCreateInput = {
   title: string
   description?: string | null
   joinCode: string
+  livekitRoomName?: string | null
   status?: $Enums.SpaceStatus
   recordingStatus?: $Enums.RecordingStatus
   startTime?: Date | string | null
   endTime?: Date | string | null
+  expiresAt?: Date | string | null
+  endedReason?: string | null
   duration?: number | null
   totalRecordingHours?: number | null
   createdAt?: Date | string
@@ -398,10 +437,13 @@ export type SpaceUncheckedCreateInput = {
   title: string
   description?: string | null
   joinCode: string
+  livekitRoomName?: string | null
   status?: $Enums.SpaceStatus
   recordingStatus?: $Enums.RecordingStatus
   startTime?: Date | string | null
   endTime?: Date | string | null
+  expiresAt?: Date | string | null
+  endedReason?: string | null
   duration?: number | null
   totalRecordingHours?: number | null
   createdAt?: Date | string
@@ -416,10 +458,13 @@ export type SpaceUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinCode?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitRoomName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumSpaceStatusFieldUpdateOperationsInput | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusFieldUpdateOperationsInput | $Enums.RecordingStatus
   startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   totalRecordingHours?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -436,10 +481,13 @@ export type SpaceUncheckedUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinCode?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitRoomName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumSpaceStatusFieldUpdateOperationsInput | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusFieldUpdateOperationsInput | $Enums.RecordingStatus
   startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   totalRecordingHours?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -455,10 +503,13 @@ export type SpaceCreateManyInput = {
   title: string
   description?: string | null
   joinCode: string
+  livekitRoomName?: string | null
   status?: $Enums.SpaceStatus
   recordingStatus?: $Enums.RecordingStatus
   startTime?: Date | string | null
   endTime?: Date | string | null
+  expiresAt?: Date | string | null
+  endedReason?: string | null
   duration?: number | null
   totalRecordingHours?: number | null
   createdAt?: Date | string
@@ -470,10 +521,13 @@ export type SpaceUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinCode?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitRoomName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumSpaceStatusFieldUpdateOperationsInput | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusFieldUpdateOperationsInput | $Enums.RecordingStatus
   startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   totalRecordingHours?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -486,10 +540,13 @@ export type SpaceUncheckedUpdateManyInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinCode?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitRoomName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumSpaceStatusFieldUpdateOperationsInput | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusFieldUpdateOperationsInput | $Enums.RecordingStatus
   startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   totalRecordingHours?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -512,10 +569,13 @@ export type SpaceCountOrderByAggregateInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   joinCode?: Prisma.SortOrder
+  livekitRoomName?: Prisma.SortOrder
   status?: Prisma.SortOrder
   recordingStatus?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
+  expiresAt?: Prisma.SortOrder
+  endedReason?: Prisma.SortOrder
   duration?: Prisma.SortOrder
   totalRecordingHours?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -533,10 +593,13 @@ export type SpaceMaxOrderByAggregateInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   joinCode?: Prisma.SortOrder
+  livekitRoomName?: Prisma.SortOrder
   status?: Prisma.SortOrder
   recordingStatus?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
+  expiresAt?: Prisma.SortOrder
+  endedReason?: Prisma.SortOrder
   duration?: Prisma.SortOrder
   totalRecordingHours?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -549,10 +612,13 @@ export type SpaceMinOrderByAggregateInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   joinCode?: Prisma.SortOrder
+  livekitRoomName?: Prisma.SortOrder
   status?: Prisma.SortOrder
   recordingStatus?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
+  expiresAt?: Prisma.SortOrder
+  endedReason?: Prisma.SortOrder
   duration?: Prisma.SortOrder
   totalRecordingHours?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -686,10 +752,13 @@ export type SpaceCreateWithoutHostInput = {
   title: string
   description?: string | null
   joinCode: string
+  livekitRoomName?: string | null
   status?: $Enums.SpaceStatus
   recordingStatus?: $Enums.RecordingStatus
   startTime?: Date | string | null
   endTime?: Date | string | null
+  expiresAt?: Date | string | null
+  endedReason?: string | null
   duration?: number | null
   totalRecordingHours?: number | null
   createdAt?: Date | string
@@ -704,10 +773,13 @@ export type SpaceUncheckedCreateWithoutHostInput = {
   title: string
   description?: string | null
   joinCode: string
+  livekitRoomName?: string | null
   status?: $Enums.SpaceStatus
   recordingStatus?: $Enums.RecordingStatus
   startTime?: Date | string | null
   endTime?: Date | string | null
+  expiresAt?: Date | string | null
+  endedReason?: string | null
   duration?: number | null
   totalRecordingHours?: number | null
   createdAt?: Date | string
@@ -752,10 +824,13 @@ export type SpaceScalarWhereInput = {
   title?: Prisma.StringFilter<"Space"> | string
   description?: Prisma.StringNullableFilter<"Space"> | string | null
   joinCode?: Prisma.StringFilter<"Space"> | string
+  livekitRoomName?: Prisma.StringNullableFilter<"Space"> | string | null
   status?: Prisma.EnumSpaceStatusFilter<"Space"> | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusFilter<"Space"> | $Enums.RecordingStatus
   startTime?: Prisma.DateTimeNullableFilter<"Space"> | Date | string | null
   endTime?: Prisma.DateTimeNullableFilter<"Space"> | Date | string | null
+  expiresAt?: Prisma.DateTimeNullableFilter<"Space"> | Date | string | null
+  endedReason?: Prisma.StringNullableFilter<"Space"> | string | null
   duration?: Prisma.IntNullableFilter<"Space"> | number | null
   totalRecordingHours?: Prisma.FloatNullableFilter<"Space"> | number | null
   createdAt?: Prisma.DateTimeFilter<"Space"> | Date | string
@@ -767,10 +842,13 @@ export type SpaceCreateWithoutParticipantsInput = {
   title: string
   description?: string | null
   joinCode: string
+  livekitRoomName?: string | null
   status?: $Enums.SpaceStatus
   recordingStatus?: $Enums.RecordingStatus
   startTime?: Date | string | null
   endTime?: Date | string | null
+  expiresAt?: Date | string | null
+  endedReason?: string | null
   duration?: number | null
   totalRecordingHours?: number | null
   createdAt?: Date | string
@@ -786,10 +864,13 @@ export type SpaceUncheckedCreateWithoutParticipantsInput = {
   title: string
   description?: string | null
   joinCode: string
+  livekitRoomName?: string | null
   status?: $Enums.SpaceStatus
   recordingStatus?: $Enums.RecordingStatus
   startTime?: Date | string | null
   endTime?: Date | string | null
+  expiresAt?: Date | string | null
+  endedReason?: string | null
   duration?: number | null
   totalRecordingHours?: number | null
   createdAt?: Date | string
@@ -819,10 +900,13 @@ export type SpaceUpdateWithoutParticipantsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinCode?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitRoomName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumSpaceStatusFieldUpdateOperationsInput | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusFieldUpdateOperationsInput | $Enums.RecordingStatus
   startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   totalRecordingHours?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -838,10 +922,13 @@ export type SpaceUncheckedUpdateWithoutParticipantsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinCode?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitRoomName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumSpaceStatusFieldUpdateOperationsInput | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusFieldUpdateOperationsInput | $Enums.RecordingStatus
   startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   totalRecordingHours?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -855,10 +942,13 @@ export type SpaceCreateWithoutRecordingSessionsInput = {
   title: string
   description?: string | null
   joinCode: string
+  livekitRoomName?: string | null
   status?: $Enums.SpaceStatus
   recordingStatus?: $Enums.RecordingStatus
   startTime?: Date | string | null
   endTime?: Date | string | null
+  expiresAt?: Date | string | null
+  endedReason?: string | null
   duration?: number | null
   totalRecordingHours?: number | null
   createdAt?: Date | string
@@ -874,10 +964,13 @@ export type SpaceUncheckedCreateWithoutRecordingSessionsInput = {
   title: string
   description?: string | null
   joinCode: string
+  livekitRoomName?: string | null
   status?: $Enums.SpaceStatus
   recordingStatus?: $Enums.RecordingStatus
   startTime?: Date | string | null
   endTime?: Date | string | null
+  expiresAt?: Date | string | null
+  endedReason?: string | null
   duration?: number | null
   totalRecordingHours?: number | null
   createdAt?: Date | string
@@ -907,10 +1000,13 @@ export type SpaceUpdateWithoutRecordingSessionsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinCode?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitRoomName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumSpaceStatusFieldUpdateOperationsInput | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusFieldUpdateOperationsInput | $Enums.RecordingStatus
   startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   totalRecordingHours?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -926,10 +1022,13 @@ export type SpaceUncheckedUpdateWithoutRecordingSessionsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinCode?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitRoomName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumSpaceStatusFieldUpdateOperationsInput | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusFieldUpdateOperationsInput | $Enums.RecordingStatus
   startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   totalRecordingHours?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -943,10 +1042,13 @@ export type SpaceCreateWithoutFinalOutputsInput = {
   title: string
   description?: string | null
   joinCode: string
+  livekitRoomName?: string | null
   status?: $Enums.SpaceStatus
   recordingStatus?: $Enums.RecordingStatus
   startTime?: Date | string | null
   endTime?: Date | string | null
+  expiresAt?: Date | string | null
+  endedReason?: string | null
   duration?: number | null
   totalRecordingHours?: number | null
   createdAt?: Date | string
@@ -962,10 +1064,13 @@ export type SpaceUncheckedCreateWithoutFinalOutputsInput = {
   title: string
   description?: string | null
   joinCode: string
+  livekitRoomName?: string | null
   status?: $Enums.SpaceStatus
   recordingStatus?: $Enums.RecordingStatus
   startTime?: Date | string | null
   endTime?: Date | string | null
+  expiresAt?: Date | string | null
+  endedReason?: string | null
   duration?: number | null
   totalRecordingHours?: number | null
   createdAt?: Date | string
@@ -995,10 +1100,13 @@ export type SpaceUpdateWithoutFinalOutputsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinCode?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitRoomName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumSpaceStatusFieldUpdateOperationsInput | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusFieldUpdateOperationsInput | $Enums.RecordingStatus
   startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   totalRecordingHours?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1014,10 +1122,13 @@ export type SpaceUncheckedUpdateWithoutFinalOutputsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinCode?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitRoomName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumSpaceStatusFieldUpdateOperationsInput | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusFieldUpdateOperationsInput | $Enums.RecordingStatus
   startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   totalRecordingHours?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1031,10 +1142,13 @@ export type SpaceCreateManyHostInput = {
   title: string
   description?: string | null
   joinCode: string
+  livekitRoomName?: string | null
   status?: $Enums.SpaceStatus
   recordingStatus?: $Enums.RecordingStatus
   startTime?: Date | string | null
   endTime?: Date | string | null
+  expiresAt?: Date | string | null
+  endedReason?: string | null
   duration?: number | null
   totalRecordingHours?: number | null
   createdAt?: Date | string
@@ -1046,10 +1160,13 @@ export type SpaceUpdateWithoutHostInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinCode?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitRoomName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumSpaceStatusFieldUpdateOperationsInput | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusFieldUpdateOperationsInput | $Enums.RecordingStatus
   startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   totalRecordingHours?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1064,10 +1181,13 @@ export type SpaceUncheckedUpdateWithoutHostInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinCode?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitRoomName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumSpaceStatusFieldUpdateOperationsInput | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusFieldUpdateOperationsInput | $Enums.RecordingStatus
   startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   totalRecordingHours?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1082,10 +1202,13 @@ export type SpaceUncheckedUpdateManyWithoutHostInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinCode?: Prisma.StringFieldUpdateOperationsInput | string
+  livekitRoomName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumSpaceStatusFieldUpdateOperationsInput | $Enums.SpaceStatus
   recordingStatus?: Prisma.EnumRecordingStatusFieldUpdateOperationsInput | $Enums.RecordingStatus
   startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   totalRecordingHours?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1147,10 +1270,13 @@ export type SpaceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   title?: boolean
   description?: boolean
   joinCode?: boolean
+  livekitRoomName?: boolean
   status?: boolean
   recordingStatus?: boolean
   startTime?: boolean
   endTime?: boolean
+  expiresAt?: boolean
+  endedReason?: boolean
   duration?: boolean
   totalRecordingHours?: boolean
   createdAt?: boolean
@@ -1168,10 +1294,13 @@ export type SpaceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   title?: boolean
   description?: boolean
   joinCode?: boolean
+  livekitRoomName?: boolean
   status?: boolean
   recordingStatus?: boolean
   startTime?: boolean
   endTime?: boolean
+  expiresAt?: boolean
+  endedReason?: boolean
   duration?: boolean
   totalRecordingHours?: boolean
   createdAt?: boolean
@@ -1185,10 +1314,13 @@ export type SpaceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   title?: boolean
   description?: boolean
   joinCode?: boolean
+  livekitRoomName?: boolean
   status?: boolean
   recordingStatus?: boolean
   startTime?: boolean
   endTime?: boolean
+  expiresAt?: boolean
+  endedReason?: boolean
   duration?: boolean
   totalRecordingHours?: boolean
   createdAt?: boolean
@@ -1202,17 +1334,20 @@ export type SpaceSelectScalar = {
   title?: boolean
   description?: boolean
   joinCode?: boolean
+  livekitRoomName?: boolean
   status?: boolean
   recordingStatus?: boolean
   startTime?: boolean
   endTime?: boolean
+  expiresAt?: boolean
+  endedReason?: boolean
   duration?: boolean
   totalRecordingHours?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type SpaceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "hostId" | "title" | "description" | "joinCode" | "status" | "recordingStatus" | "startTime" | "endTime" | "duration" | "totalRecordingHours" | "createdAt" | "updatedAt", ExtArgs["result"]["space"]>
+export type SpaceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "hostId" | "title" | "description" | "joinCode" | "livekitRoomName" | "status" | "recordingStatus" | "startTime" | "endTime" | "expiresAt" | "endedReason" | "duration" | "totalRecordingHours" | "createdAt" | "updatedAt", ExtArgs["result"]["space"]>
 export type SpaceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   host?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   participants?: boolean | Prisma.Space$participantsArgs<ExtArgs>
@@ -1241,10 +1376,13 @@ export type $SpacePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     title: string
     description: string | null
     joinCode: string
+    livekitRoomName: string | null
     status: $Enums.SpaceStatus
     recordingStatus: $Enums.RecordingStatus
     startTime: Date | null
     endTime: Date | null
+    expiresAt: Date | null
+    endedReason: string | null
     duration: number | null
     totalRecordingHours: number | null
     createdAt: Date
@@ -1681,10 +1819,13 @@ export interface SpaceFieldRefs {
   readonly title: Prisma.FieldRef<"Space", 'String'>
   readonly description: Prisma.FieldRef<"Space", 'String'>
   readonly joinCode: Prisma.FieldRef<"Space", 'String'>
+  readonly livekitRoomName: Prisma.FieldRef<"Space", 'String'>
   readonly status: Prisma.FieldRef<"Space", 'SpaceStatus'>
   readonly recordingStatus: Prisma.FieldRef<"Space", 'RecordingStatus'>
   readonly startTime: Prisma.FieldRef<"Space", 'DateTime'>
   readonly endTime: Prisma.FieldRef<"Space", 'DateTime'>
+  readonly expiresAt: Prisma.FieldRef<"Space", 'DateTime'>
+  readonly endedReason: Prisma.FieldRef<"Space", 'String'>
   readonly duration: Prisma.FieldRef<"Space", 'Int'>
   readonly totalRecordingHours: Prisma.FieldRef<"Space", 'Float'>
   readonly createdAt: Prisma.FieldRef<"Space", 'DateTime'>

@@ -1,5 +1,5 @@
 export interface CreateSpacePayload {
-  joinCode: string;
+  joinCode?: string;
   participantSessionId: string;
   title?: string;
   description?: string;
@@ -22,12 +22,14 @@ export interface Participant {
   userId: string;
   spaceId: string;
   participantSessionId: string;
+  livekitIdentity?: string;
   displayName: string;
   role: string;
   isActive: boolean;
   isGuest: boolean;
   joinedAt: string;
   leftAt?: string;
+  connectionState?: string;
   user?: {
     id: string;
     name: string;
@@ -40,17 +42,28 @@ export interface Space {
   title: string;
   description?: string;
   joinCode: string;
+  livekitRoomName?: string;
   hostId: string;
   status: string;
   startTime: string;
   endTime?: string;
+  expiresAt?: string;
   duration?: number;
   host?: Host;
   participants?: Participant[];
 }
 
+export interface LiveKitJoinConfig {
+  url: string;
+  room: string;
+  token: string;
+  expiresAt: string;
+}
+
 export interface SpaceResponse {
   success: boolean;
-  data: Space;
+  data: Space & {
+    livekit?: LiveKitJoinConfig;
+  };
   message: string;
 }

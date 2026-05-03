@@ -3,19 +3,13 @@
  *
  * PURPOSE:
  * Provides a single Socket.IO connection shared across the entire app.
- * This connection is used for SIGNALING in WebRTC (coordinating peer connections).
+ * This connection is used for app-specific realtime events that are not handled
+ * by LiveKit, such as recording coordination and upload progress.
  *
  * KEY CONCEPTS:
  * - Socket.IO = Real-time bidirectional communication (like WebSockets)
- * - Used for CONTROL MESSAGES only (join, leave, mute, etc.)
- * - Actual video/audio streams flow via WebRTC (peer-to-peer), NOT through sockets
- *
- * USAGE:
- * ```tsx
- * const socket = useSocket();
- * socket?.emit("join-room", roomId, userId);
- * socket?.on("user-connected", (userId) => { ... });
- * ```
+ * - LiveKit owns video, audio, participants, and media reconnection.
+ * - Socket.IO owns current app-level recording events.
  */
 
 "use client";
@@ -52,12 +46,6 @@ interface RecordingCompleteData {
 }
 
 interface ServerToClientEvents {
-  "user-connected": (userId: string) => void;
-  "user-toggle-audio": (userId: string) => void;
-  "user-toggle-video": (userId: string) => void;
-  "user-toggle-speaker": (userId: string) => void;
-  "user-leave": (userId: string) => void;
-  // Recording events
   "recording-started": (data: RecordingSessionData) => void;
   "recording-stopped": (sessionId: string) => void;
   "participant-chunk-uploaded": (data: ChunkUploadedData) => void;
@@ -65,12 +53,6 @@ interface ServerToClientEvents {
 }
 
 interface ClientToServerEvents {
-  "join-room": (roomId: string, userId: string) => void;
-  "user-toggle-audio": (userId: string, roomId: string) => void;
-  "user-toggle-video": (userId: string, roomId: string) => void;
-  "user-toggle-speaker": (userId: string, roomId: string) => void;
-  "user-leave": (userId: string, roomId: string) => void;
-  // Recording events
   "recording-start": (roomId: string, data: RecordingSessionData) => void;
   "recording-stop": (roomId: string, sessionId: string) => void;
   "recording-chunk-uploaded": (roomId: string, data: ChunkUploadedData) => void;
@@ -144,58 +126,4 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   return (
     <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
   );
-};
-
-/**
- * HOOK: useVideoCall
- *
- * PURPOSE:
- * Provides convenient wrapper functions for common video call socket events.
- * Use this instead of directly calling socket.emit() for better abstraction.
- *
- * BENEFITS:
- * - Single source of truth for socket events
- * - Type safety enforced by TypeScript
- * - Easier to add logging/analytics
- * - Cleaner component code
- * - Easier to test (mock one hook)
- *
- * USAGE:
- * ```tsx
- * const { joinRoom, toggleAudio } = useVideoCall();
- * joinRoom(roomId, userId);
- * toggleAudio(userId, roomId);
- * ```
- */
-export const useVideoCall = () => {
-  const socket = useSocket();
-
-  const joinRoom = (roomId: string, userId: string) => {
-    socket?.emit("join-room", roomId, userId);
-  };
-
-  const toggleAudio = (userId: string, roomId: string) => {
-    socket?.emit("user-toggle-audio", userId, roomId);
-  };
-
-  const toggleVideo = (userId: string, roomId: string) => {
-    socket?.emit("user-toggle-video", userId, roomId);
-  };
-
-  const toggleSpeaker = (userId: string, roomId: string) => {
-    socket?.emit("user-toggle-speaker", userId, roomId);
-  };
-
-  const leaveRoom = (userId: string, roomId: string) => {
-    socket?.emit("user-leave", userId, roomId);
-  };
-
-  return {
-    socket,
-    joinRoom,
-    toggleAudio,
-    toggleVideo,
-    toggleSpeaker,
-    leaveRoom,
-  };
 };

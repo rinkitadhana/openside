@@ -34,10 +34,13 @@ model Space {
   title               String
   description         String?
   joinCode            String          @unique
+  livekitRoomName     String?         @unique
   status              SpaceStatus     @default(LIVE)
   recordingStatus     RecordingStatus @default(IDLE)
   startTime           DateTime?
   endTime             DateTime?
+  expiresAt           DateTime?
+  endedReason         String?
   duration            Int? // milliseconds
   totalRecordingHours Float?
   createdAt           DateTime        @default(now())
@@ -68,12 +71,15 @@ model SpaceParticipant {
   userId               String?
   user                 User?           @relation(fields: [userId], references: [id])
   participantSessionId String
+  livekitIdentity      String?         @unique
   displayName          String?
   isGuest              Boolean         @default(false)
   isActive             Boolean         @default(true)
   role                 ParticipantRole @default(GUEST)
   joinedAt             DateTime        @default(now())
   leftAt               DateTime?
+  lastConnectedAt      DateTime?
+  connectionState      String?
   hasRecording         Boolean         @default(false)
 
   recordings ParticipantRecording[]

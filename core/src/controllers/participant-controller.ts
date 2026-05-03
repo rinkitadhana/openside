@@ -60,6 +60,7 @@ export async function joinSpaceController(
       data: {
         participant: result.participant,
         space: result.space,
+        livekit: result.livekit,
         isRejoin: result.isRejoin,
       },
       message: result.isRejoin ? "Rejoined space successfully!" : "Joined space successfully!",
@@ -72,6 +73,14 @@ export async function joinSpaceController(
       }
       if (error.message === "SPACE_NOT_LIVE") {
         res.status(400).json({ success: false, data: null, message: "Space is not currently live!" });
+        return;
+      }
+      if (error.message === "SPACE_EXPIRED") {
+        res.status(410).json({ success: false, data: null, message: "Space has expired!" });
+        return;
+      }
+      if (error.message === "LIVEKIT_NOT_CONFIGURED") {
+        res.status(503).json({ success: false, data: null, message: "LiveKit is not configured on the server!" });
         return;
       }
     }
@@ -307,4 +316,3 @@ export async function kickParticipantController(
     res.status(500).json({ success: false, data: null, message: `Failed to kick participant: ${errorMessage}!` });
   }
 }
-

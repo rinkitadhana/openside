@@ -133,6 +133,7 @@ const PreJoinScreen = ({ onJoinCall, roomId }: PreJoinScreenProps) => {
             audioEnabled,
             name,
             avatar: user?.avatar,
+            livekit: data.livekit,
           });
         },
         onError: (error: unknown) => {

@@ -1,4 +1,5 @@
 import type { Response } from "express";
+import { randomBytes } from "crypto";
 import type { AuthenticatedRequest } from "../middlewares/auth-middleware";
 import {
   createSpace,
@@ -12,6 +13,23 @@ import {
 } from "../services/space-service";
 import { findOrCreateUser } from "../services/auth-service";
 
+function generateJoinCode(): string {
+  const alphabet = "abcdefghijklmnopqrstuvwxyz";
+  const bytes = randomBytes(10);
+  const parts = [3, 4, 3];
+  let cursor = 0;
+
+  return parts
+    .map((length) => {
+      const segment = Array.from(bytes.subarray(cursor, cursor + length))
+        .map((byte) => alphabet[byte % alphabet.length])
+        .join("");
+      cursor += length;
+      return segment;
+    })
+    .join("-");
+}
+
 export async function createSpaceController(
   req: AuthenticatedRequest,
   res: Response
@@ -24,8 +42,8 @@ export async function createSpaceController(
 
     const { title, description, joinCode, participantSessionId } = req.body;
 
-    if (!joinCode || typeof joinCode !== "string" || joinCode.trim().length === 0) {
-      res.status(400).json({ success: false, data: null, message: "Join code is required!" });
+    if (joinCode !== undefined && (typeof joinCode !== "string" || joinCode.trim().length === 0)) {
+      res.status(400).json({ success: false, data: null, message: "Join code must be a non-empty string!" });
       return;
     }
 
@@ -38,14 +56,39 @@ export async function createSpaceController(
     const spaceTitle = (title && title.trim()) || `${user.name}'s Space`;
     const spaceDescription = (description && description.trim()) || `This is ${user.name}'s space`;
 
-    const space = await createSpace({
-      title: spaceTitle,
-      description: spaceDescription,
-      joinCode: joinCode.trim(),
-      hostId: user.id,
-      hostName: user.name,
-      hostParticipantSessionId: participantSessionId.trim(),
-    });
+    const requestedJoinCode = joinCode?.trim();
+    let space;
+    let attempts = 0;
+
+    while (attempts < 5) {
+      attempts += 1;
+
+      try {
+        space = await createSpace({
+          title: spaceTitle,
+          description: spaceDescription,
+          joinCode: requestedJoinCode || generateJoinCode(),
+          hostId: user.id,
+          hostName: user.name,
+          hostParticipantSessionId: participantSessionId.trim(),
+        });
+        break;
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message === "JOIN_CODE_EXISTS" &&
+          !requestedJoinCode
+        ) {
+          continue;
+        }
+
+        throw error;
+      }
+    }
+
+    if (!space) {
+      throw new Error("JOIN_CODE_EXISTS");
+    }
 
     res.status(201).json({
       success: true,
@@ -58,6 +101,14 @@ export async function createSpaceController(
         success: false,
         data: null,
         message: "A space with this join code already exists!",
+      });
+      return;
+    }
+    if (error instanceof Error && error.message === "LIVEKIT_NOT_CONFIGURED") {
+      res.status(503).json({
+        success: false,
+        data: null,
+        message: "LiveKit is not configured on the server!",
       });
       return;
     }
@@ -175,6 +226,10 @@ export async function endSpaceController(
       }
       if (error.message === "SPACE_NOT_LIVE") {
         res.status(400).json({ success: false, data: null, message: "Space is not currently live!" });
+        return;
+      }
+      if (error.message === "LIVEKIT_NOT_CONFIGURED") {
+        res.status(503).json({ success: false, data: null, message: "LiveKit is not configured on the server!" });
         return;
       }
     }
@@ -331,4 +386,3 @@ export async function getUserSpacesController(
     });
   }
 }
-

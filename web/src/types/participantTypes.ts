@@ -1,4 +1,4 @@
-import type { Participant, Space } from "./spaceTypes";
+import type { LiveKitJoinConfig, Participant, Space } from "./spaceTypes";
 
 export interface JoinSpacePayload {
   displayName: string;
@@ -10,6 +10,7 @@ export interface JoinSpaceResponse {
   data: {
     participant: Participant;
     space: Space;
+    livekit: LiveKitJoinConfig;
     isRejoin: boolean;
   };
   message: string;

@@ -6,7 +6,7 @@ Date: 2026-05-03
 
 Replace the current PeerJS peer-to-peer video call stack with a LiveKit-based room stack, using La Suite Meet as the reference application. Do not touch `/backup` or any backup-named files/directories.
 
-This is a plan only. It does not remove PeerJS yet.
+Implementation has started. PeerJS hooks, rendered PeerJS call screen, PeerJS signaling events, and direct PeerJS dependencies have been removed from the active app code.
 
 ## References
 
@@ -27,7 +27,7 @@ This is a plan only. It does not remove PeerJS yet.
 
 ## Current Code Inventory
 
-PeerJS is currently used in these non-backup files:
+PeerJS was originally used in these non-backup files:
 
 - `web/src/hooks/usePeer.ts`: creates the PeerJS instance and exposes `peer` / `myId`.
 - `web/src/hooks/usePlayer.ts`: stores local and remote `MediaStream` players, toggles media, and disconnects PeerJS.
@@ -578,4 +578,3 @@ Regression:
 - Token TTL: LiveKit says token expiry affects initial connection and refresh/reconnect behavior, but self-hosted deployments need short TTL plus backend refusal after kick/end to prevent stale-token rejoin.
 - Room code generation: current create endpoint accepts client-supplied `joinCode`; this should move server-side before public guest joining is considered secure.
 - Browser output device selection is not supported everywhere, so the UI must gracefully hide/disable speaker selection where unavailable.
-
