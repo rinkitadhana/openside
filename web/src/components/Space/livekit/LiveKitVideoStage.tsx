@@ -1,22 +1,125 @@
 import { isTrackReference } from "@livekit/components-core";
 import {
+  ConnectionQualityIndicator,
   ParticipantTile,
   RoomAudioRenderer,
+  VideoTrack,
+  useIsMuted,
+  useIsSpeaking,
   useParticipants,
   useTracks,
 } from "@livekit/components-react";
-import { Track } from "livekit-client";
-import { useState } from "react";
+import { Track, type Participant } from "livekit-client";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Copy, Check, Link } from "lucide-react";
+import { Copy, Check, Link, MicOff, X } from "lucide-react";
+import UserAvatar from "../ui/UserAvatar";
+import { AudioLinesIcon } from "@/components/shared/ui/audio-lines";
 
 const getRoleLabel = (attributes?: Record<string, string>) => {
-  if (attributes?.role === "HOST") return "Host";
-  if (attributes?.isGuest === "true") return "Guest";
+  if (attributes?.role === "HOST") return "(Host)";
+  if (attributes?.role === "CO_HOST") return "(Co-host)";
   return null;
 };
 
-const InvitePanel = () => {
+const LOCAL_SPEAKING_START_THRESHOLD = 0.025;
+const LOCAL_SPEAKING_STOP_THRESHOLD = 0.018;
+
+type WindowWithWebkitAudioContext = Window & {
+  webkitAudioContext?: typeof AudioContext;
+};
+
+const useLocalMicSpeaking = (participant: Participant, isMicMuted: boolean) => {
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const isSpeakingRef = useRef(false);
+
+  useEffect(() => {
+    const resetSpeaking = () => {
+      isSpeakingRef.current = false;
+      window.setTimeout(() => setIsSpeaking(false), 0);
+    };
+
+    if (!participant.isLocal || isMicMuted) {
+      resetSpeaking();
+      return;
+    }
+
+    const publication = participant.getTrackPublication(Track.Source.Microphone);
+    const mediaStreamTrack = publication?.audioTrack?.mediaStreamTrack;
+
+    if (!mediaStreamTrack || mediaStreamTrack.readyState !== "live") {
+      resetSpeaking();
+      return;
+    }
+
+    const AudioContextConstructor =
+      window.AudioContext ||
+      (window as WindowWithWebkitAudioContext).webkitAudioContext;
+
+    if (!AudioContextConstructor) return;
+
+    const audioContext = new AudioContextConstructor();
+    const analyser = audioContext.createAnalyser();
+    const source = audioContext.createMediaStreamSource(
+      new MediaStream([mediaStreamTrack])
+    );
+    let animationFrameId = 0;
+    let speakingUntil = 0;
+
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.2;
+    const samples = new Uint8Array(analyser.fftSize);
+    source.connect(analyser);
+
+    const updateSpeaking = (nextIsSpeaking: boolean) => {
+      if (isSpeakingRef.current === nextIsSpeaking) return;
+
+      isSpeakingRef.current = nextIsSpeaking;
+      setIsSpeaking(nextIsSpeaking);
+    };
+
+    const tick = () => {
+      analyser.getByteTimeDomainData(samples);
+
+      let sum = 0;
+      for (const sample of samples) {
+        const centeredSample = (sample - 128) / 128;
+        sum += centeredSample * centeredSample;
+      }
+
+      const volume = Math.sqrt(sum / samples.length);
+      const now = performance.now();
+
+      if (volume > LOCAL_SPEAKING_START_THRESHOLD) {
+        speakingUntil = now + 220;
+      } else if (volume < LOCAL_SPEAKING_STOP_THRESHOLD && now > speakingUntil) {
+        speakingUntil = 0;
+      }
+
+      updateSpeaking(now < speakingUntil);
+      animationFrameId = requestAnimationFrame(tick);
+    };
+
+    void audioContext.resume();
+    tick();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      source.disconnect();
+      analyser.disconnect();
+      void audioContext.close();
+      resetSpeaking();
+    };
+  }, [isMicMuted, participant]);
+
+  return isSpeaking;
+};
+
+interface InvitePanelProps {
+  onDismiss: () => void;
+}
+
+const InvitePanel = ({ onDismiss }: InvitePanelProps) => {
   const { roomId } = useParams<{ roomId: string }>();
   const [copied, setCopied] = useState(false);
   const inviteLink = `${window.location.origin}/${roomId}`;
@@ -28,7 +131,15 @@ const InvitePanel = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full rounded-xl border border-call-border bg-call-primary gap-6 p-8">
+    <div className="relative flex flex-col items-center justify-center h-full rounded-xl border border-call-border bg-call-primary gap-6 p-8">
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="absolute right-3 top-3 select-none p-1.5 rounded-full bg-call-background hover:bg-primary-hover border border-call-border cursor-pointer transition-all duration-300"
+        aria-label="Hide invite panel"
+      >
+        <X size={17} />
+      </button>
       <div className="flex flex-col items-center gap-4 text-center">
         <Link size={36} className="text-muted-foreground" />
         <div className="flex flex-col items-center gap-1">
@@ -36,8 +147,8 @@ const InvitePanel = () => {
           <p className="text-sm text-muted-foreground">Share this link to invite others to join</p>
         </div>
       </div>
-      <div className="flex items-center gap-2 bg-call-background rounded-xl px-3 py-2.5 max-w-[420px] w-full">
-        <span className="flex-1 text-sm text-foreground/70 truncate font-mono">{inviteLink}</span>
+      <div className="flex items-center gap-2 bg-call-background rounded-lg px-3 py-2.5 max-w-[420px] w-full">
+        <span className="flex-1 text-sm font-light text-foreground/70 truncate font-mono">{inviteLink}</span>
         <button
           onClick={handleCopy}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-call-primary border border-call-border hover:bg-primary-hover transition-all duration-150 text-sm font-medium flex-shrink-0 cursor-pointer"
@@ -51,6 +162,7 @@ const InvitePanel = () => {
 };
 
 const LiveKitVideoStage = () => {
+  const [isInvitePanelHidden, setIsInvitePanelHidden] = useState(false);
   const participants = useParticipants();
   const tracks = useTracks(
     [
@@ -97,14 +209,20 @@ const LiveKitVideoStage = () => {
             </div>
           </div>
         ) : isAlone ? (
-          <div className="grid h-full gap-2 grid-cols-2">
+          <div
+            className={`grid h-full gap-2 ${
+              isInvitePanelHidden ? "grid-cols-1" : "grid-cols-2"
+            }`}
+          >
             {visibleTracks.map((trackRef) => (
               <ParticipantFrame
                 key={`${trackRef.participant.identity}-${trackRef.source}`}
                 trackRef={trackRef}
               />
             ))}
-            <InvitePanel />
+            {!isInvitePanelHidden && (
+              <InvitePanel onDismiss={() => setIsInvitePanelHidden(true)} />
+            )}
           </div>
         ) : (
           <div className="grid h-full gap-2 auto-rows-fr grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
@@ -129,32 +247,58 @@ interface ParticipantFrameProps {
 
 const ParticipantFrame = ({ trackRef, focus = false }: ParticipantFrameProps) => {
   const participant = trackRef.participant;
+  const isMicMuted = useIsMuted({
+    participant,
+    source: Track.Source.Microphone,
+  });
+  const liveKitIsSpeaking = useIsSpeaking(participant);
+  const localMicIsSpeaking = useLocalMicSpeaking(participant, isMicMuted);
+  const isSpeaking = participant.isLocal ? localMicIsSpeaking : liveKitIsSpeaking;
   const roleLabel = getRoleLabel(participant.attributes);
+  const displayName = participant.isLocal ? "You" : participant.name || "Guest";
+  const displayLabel = roleLabel ? `${displayName} ${roleLabel}` : displayName;
 
   return (
     <div
-      className={`relative overflow-hidden rounded-xl border bg-call-primary ${
-        participant.isSpeaking
-          ? "border-purple-400 shadow-[0_0_0_1px_rgba(192,132,252,0.6)]"
-          : "border-call-border"
-      } ${focus ? "min-h-[360px]" : "min-h-[180px]"}`}
+      className={`group relative overflow-hidden rounded-xl bg-call-primary ${
+        focus ? "min-h-[360px]" : "min-h-[180px]"
+      }`}
     >
       <ParticipantTile
         trackRef={trackRef}
         className="h-full w-full bg-call-primary"
+      >
+        {isTrackReference(trackRef) ? (
+          <VideoTrack
+            trackRef={trackRef}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <UserAvatar name={displayName} avatar="" />
+        )}
+      </ParticipantTile>
+      {isSpeaking && (
+        <div className="pointer-events-none absolute inset-0 z-10 rounded-xl ring-3 ring-inset ring-purple-400 dark:ring-2 dark:ring-purple-400/80" />
+      )}
+      <ConnectionQualityIndicator
+        participant={participant}
+        className="pointer-events-none absolute right-2 top-2 z-20 flex h-5 w-6 items-center justify-center overflow-visible text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 [&_svg]:h-3.5 [&_svg]:w-3.5 [&_svg]:overflow-visible"
       />
-      <div className="pointer-events-none absolute left-3 bottom-3 flex items-center gap-2">
-        <span className="max-w-[220px] truncate rounded-full bg-call-background/80 px-3 py-1 text-sm font-medium text-foreground">
-          {participant.isLocal ? "You" : participant.name || "Guest"}
-        </span>
-        {roleLabel && (
-          <span className="rounded-full bg-call-background/80 px-2 py-1 text-xs text-foreground/70">
-            {roleLabel}
-          </span>
+      <div className="pointer-events-none absolute right-2 bottom-2 z-20 flex h-8 w-8 items-center justify-center text-white">
+        {isMicMuted ? (
+          <MicOff size={18} />
+        ) : (
+          <AudioLinesIcon
+            animated={isSpeaking}
+            size={20}
+            className="text-white"
+          />
         )}
       </div>
-      <div className="pointer-events-none absolute right-3 top-3 rounded-full bg-call-background/80 px-2 py-1 text-xs capitalize text-foreground/70">
-        {participant.connectionQuality}
+      <div className="pointer-events-none absolute left-2 bottom-2 z-20 flex items-center gap-2">
+        <span className="max-w-[220px] truncate rounded-full bg-call-background/55 px-3 py-1 text-sm font-medium text-foreground">
+          {displayLabel}
+        </span>
       </div>
     </div>
   );
