@@ -30,6 +30,29 @@ export async function verifySpaceHost(spaceId: string, userId: string): Promise<
   return space?.hostId === userId;
 }
 
+export async function verifySpaceEndPermission(spaceId: string, userId: string): Promise<boolean> {
+  const space = await prisma.space.findUnique({
+    where: { id: spaceId },
+    select: { hostId: true },
+  });
+
+  if (space?.hostId === userId) {
+    return true;
+  }
+
+  const participant = await prisma.spaceParticipant.findFirst({
+    where: {
+      spaceId,
+      userId,
+      isActive: true,
+      role: { in: ["HOST", "CO_HOST"] },
+    },
+    select: { id: true },
+  });
+
+  return !!participant;
+}
+
 export async function isJoinCodeUnique(joinCode: string): Promise<boolean> {
   const existingSpace = await prisma.space.findUnique({
     where: { joinCode },

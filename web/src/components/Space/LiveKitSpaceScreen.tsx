@@ -14,6 +14,7 @@ import { getOrCreateSessionId } from "@/utils/ParticipantSessionId";
 import type { PreJoinSettings } from "@/types/preJoinTypes";
 import LiveKitControls from "./livekit/LiveKitControls";
 import LiveKitVideoStage from "./livekit/LiveKitVideoStage";
+import CallWarningDialog from "./ui/CallWarningDialog";
 
 type SidebarType = "info" | "users" | "chat" | null;
 
@@ -38,6 +39,10 @@ const LiveKitSpaceScreen = ({
   const endSpace = useEndSpace();
   const [connectionReady, setConnectionReady] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [disconnectWarning, setDisconnectWarning] = useState<{
+    title: string;
+    description: string;
+  } | null>(null);
 
   const livekit = preJoinSettings?.livekit;
   const isHost = !!user && !!spaceData && user.id === spaceData.host?.id;
@@ -47,7 +52,7 @@ const LiveKitSpaceScreen = ({
       adaptiveStream: true,
       dynacast: true,
     }),
-    []
+    [],
   );
 
   const room = useMemo(() => new Room(roomOptions), [roomOptions]);
@@ -68,7 +73,7 @@ const LiveKitSpaceScreen = ({
           setConnectionError(
             error instanceof Error
               ? error.message
-              : "Unable to prepare LiveKit connection."
+              : "Unable to prepare LiveKit connection.",
           );
         }
       }
@@ -90,7 +95,7 @@ const LiveKitSpaceScreen = ({
             room.disconnect();
             navigate("/dashboard/home");
           },
-        }
+        },
       );
       return;
     }
@@ -146,13 +151,28 @@ const LiveKitSpaceScreen = ({
           reason === DisconnectReason.PARTICIPANT_REMOVED ||
           reason === DisconnectReason.ROOM_DELETED
         ) {
-          navigate("/dashboard/home");
+          const message =
+            reason === DisconnectReason.DUPLICATE_IDENTITY
+              ? {
+                  title: "Call disconnected",
+                  description:
+                    "This session was disconnected because the same participant joined from another tab or device.",
+                }
+              : {
+                  title: "Call ended",
+                  description:
+                    "The room is no longer available. You can return to the dashboard.",
+                };
+
+          setDisconnectWarning(message);
         }
       }}
       onError={(error) => setConnectionError(error.message)}
       onMediaDeviceFailure={(error, kind) => {
         if (error === MediaDeviceFailure.PermissionDenied) {
-          setConnectionError(`Permission denied for ${kind || "media device"}.`);
+          setConnectionError(
+            `Permission denied for ${kind || "media device"}.`,
+          );
         }
       }}
       className="flex h-full flex-col gap-2 bg-call-background"
@@ -164,11 +184,21 @@ const LiveKitSpaceScreen = ({
         <LiveKitControls
           activeSidebar={activeSidebar}
           isHost={isHost}
+          roomCode={roomCode}
           onEndForAll={handleEndForAll}
           onLeave={handleLeave}
           toggleSidebar={toggleSidebar}
         />
       </div>
+      {disconnectWarning && (
+        <CallWarningDialog
+          title={disconnectWarning.title}
+          description={disconnectWarning.description}
+          confirmLabel="Go to dashboard"
+          confirmVariant="default"
+          onConfirm={() => navigate("/dashboard/home")}
+        />
+      )}
     </LiveKitRoom>
   );
 };

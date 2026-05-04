@@ -8,6 +8,7 @@ import {
   getSpaceById,
   getSpaceByJoinCode,
   verifySpaceHost,
+  verifySpaceEndPermission,
   isUserParticipant,
   getUserSpaces,
 } from "../services/space-service";
@@ -201,12 +202,12 @@ export async function endSpaceController(
 
     const user = await findOrCreateUser(req.user);
 
-    const isHost = await verifySpaceHost(spaceId, user.id);
-    if (!isHost) {
+    const canEndSpace = await verifySpaceEndPermission(spaceId, user.id);
+    if (!canEndSpace) {
       res.status(403).json({
         success: false,
         data: null,
-        message: "Only the host can end the space!",
+        message: "Only the host or co-host can end the space!",
       });
       return;
     }
