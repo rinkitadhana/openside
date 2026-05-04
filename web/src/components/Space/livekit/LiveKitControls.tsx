@@ -126,7 +126,7 @@ const LiveKitControls = ({
   };
 
   const renderTimeCode = () => (
-    <div className="flex items-center gap-4">
+    <div className="ml-2 flex items-center gap-4">
       <DateComponent className="text-base font-normal text-foreground" />
       <span className="h-5 w-px bg-foreground/45" />
       <span className="text-base font-normal text-foreground">{roomCode}</span>

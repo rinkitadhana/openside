@@ -11,8 +11,7 @@ import {
 } from "@livekit/components-react";
 import { Track, type Participant } from "livekit-client";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Copy, Check, Link, MicOff, X } from "lucide-react";
+import { Check, Copy, Link, MicOff, X } from "lucide-react";
 import UserAvatar from "../ui/UserAvatar";
 import { AudioLinesIcon } from "@/components/shared/ui/audio-lines";
 
@@ -20,6 +19,23 @@ const getRoleLabel = (attributes?: Record<string, string>) => {
   if (attributes?.role === "HOST") return "(Host)";
   if (attributes?.role === "CO_HOST") return "(Co-host)";
   return null;
+};
+
+const getParticipantAvatar = (participant: Participant) => {
+  if (participant.attributes.avatar) {
+    return participant.attributes.avatar;
+  }
+
+  if (!participant.metadata) {
+    return "";
+  }
+
+  try {
+    const metadata = JSON.parse(participant.metadata) as { avatar?: unknown };
+    return typeof metadata.avatar === "string" ? metadata.avatar : "";
+  } catch {
+    return "";
+  }
 };
 
 const LOCAL_SPEAKING_START_THRESHOLD = 0.025;
@@ -116,26 +132,26 @@ const useLocalMicSpeaking = (participant: Participant, isMicMuted: boolean) => {
 };
 
 interface InvitePanelProps {
+  roomCode: string;
   onDismiss: () => void;
 }
 
-const InvitePanel = ({ onDismiss }: InvitePanelProps) => {
-  const { roomId } = useParams<{ roomId: string }>();
+const InvitePanel = ({ roomCode, onDismiss }: InvitePanelProps) => {
   const [copied, setCopied] = useState(false);
-  const inviteLink = `${window.location.origin}/${roomId}`;
+  const inviteLink = `${window.location.origin}/${roomCode}`;
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(inviteLink);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    window.setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-center h-full rounded-xl border border-call-border bg-call-primary gap-6 p-8">
+    <div className="relative flex h-full min-h-[180px] flex-col items-center justify-center gap-6 rounded-xl border border-call-border bg-call-primary p-8">
       <button
         type="button"
         onClick={onDismiss}
-        className="absolute right-3 top-3 select-none p-1.5 rounded-full bg-call-background hover:bg-primary-hover border border-call-border cursor-pointer transition-all duration-300"
+        className="absolute right-3 top-3 select-none rounded-full border border-call-border bg-call-background p-1.5 transition-all duration-300 hover:bg-primary-hover"
         aria-label="Hide invite panel"
       >
         <X size={17} />
@@ -143,15 +159,22 @@ const InvitePanel = ({ onDismiss }: InvitePanelProps) => {
       <div className="flex flex-col items-center gap-4 text-center">
         <Link size={36} className="text-muted-foreground" />
         <div className="flex flex-col items-center gap-1">
-          <p className="text-base font-semibold text-foreground">Invite someone</p>
-          <p className="text-sm text-muted-foreground">Share this link to invite others to join</p>
+          <p className="text-base font-semibold text-foreground">
+            Invite someone
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Share this link to invite others to join
+          </p>
         </div>
       </div>
-      <div className="flex items-center gap-2 bg-call-background rounded-lg px-3 py-2.5 max-w-[420px] w-full">
-        <span className="flex-1 text-sm font-light text-foreground/70 truncate font-mono">{inviteLink}</span>
+      <div className="flex w-full max-w-[420px] items-center gap-2 rounded-lg bg-call-background px-3 py-2.5">
+        <span className="flex-1 truncate font-mono text-sm font-light text-foreground/70">
+          {inviteLink}
+        </span>
         <button
+          type="button"
           onClick={handleCopy}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-call-primary border border-call-border hover:bg-primary-hover transition-all duration-150 text-sm font-medium flex-shrink-0 cursor-pointer"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-call-border bg-call-primary px-3 py-1.5 text-sm font-medium transition-all duration-150 hover:bg-primary-hover"
         >
           {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
           <span>{copied ? "Copied!" : "Copy"}</span>
@@ -161,7 +184,12 @@ const InvitePanel = ({ onDismiss }: InvitePanelProps) => {
   );
 };
 
-const LiveKitVideoStage = () => {
+interface LiveKitVideoStageProps {
+  isHost: boolean;
+  roomCode: string;
+}
+
+const LiveKitVideoStage = ({ isHost, roomCode }: LiveKitVideoStageProps) => {
   const [isInvitePanelHidden, setIsInvitePanelHidden] = useState(false);
   const participants = useParticipants();
   const tracks = useTracks(
@@ -193,8 +221,10 @@ const LiveKitVideoStage = () => {
 
   const isAlone = remoteParticipantCount === 0;
 
+  const showInvitePanel = isHost && isAlone && !isInvitePanelHidden;
+
   return (
-    <div className="h-full min-h-0 flex flex-col gap-2">
+    <div className="relative h-full min-h-0 flex flex-col gap-2">
       <div className="flex-1 min-h-0">
         {screenShareTrack ? (
           <div className="grid h-full gap-2 lg:grid-cols-[minmax(0,1fr)_260px]">
@@ -211,7 +241,7 @@ const LiveKitVideoStage = () => {
         ) : isAlone ? (
           <div
             className={`grid h-full gap-2 ${
-              isInvitePanelHidden ? "grid-cols-1" : "grid-cols-2"
+              showInvitePanel ? "grid-cols-2" : "grid-cols-1"
             }`}
           >
             {visibleTracks.map((trackRef) => (
@@ -220,8 +250,11 @@ const LiveKitVideoStage = () => {
                 trackRef={trackRef}
               />
             ))}
-            {!isInvitePanelHidden && (
-              <InvitePanel onDismiss={() => setIsInvitePanelHidden(true)} />
+            {showInvitePanel && (
+              <InvitePanel
+                roomCode={roomCode}
+                onDismiss={() => setIsInvitePanelHidden(true)}
+              />
             )}
           </div>
         ) : (
@@ -251,16 +284,25 @@ const ParticipantFrame = ({ trackRef, focus = false }: ParticipantFrameProps) =>
     participant,
     source: Track.Source.Microphone,
   });
+  const isCameraMuted = useIsMuted({
+    participant,
+    source: Track.Source.Camera,
+  });
   const liveKitIsSpeaking = useIsSpeaking(participant);
   const localMicIsSpeaking = useLocalMicSpeaking(participant, isMicMuted);
   const isSpeaking = participant.isLocal ? localMicIsSpeaking : liveKitIsSpeaking;
   const roleLabel = getRoleLabel(participant.attributes);
   const displayName = participant.isLocal ? "You" : participant.name || "Guest";
   const displayLabel = roleLabel ? `${displayName} ${roleLabel}` : displayName;
+  const avatar = getParticipantAvatar(participant);
+  const shouldShowVideo =
+    isTrackReference(trackRef) &&
+    (trackRef.source !== Track.Source.Camera ||
+      (!isCameraMuted && !trackRef.publication.isMuted));
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-xl bg-call-primary ${
+      className={`group relative overflow-hidden rounded-xl border border-call-border bg-call-primary ${
         focus ? "min-h-[360px]" : "min-h-[180px]"
       }`}
     >
@@ -268,13 +310,15 @@ const ParticipantFrame = ({ trackRef, focus = false }: ParticipantFrameProps) =>
         trackRef={trackRef}
         className="h-full w-full bg-call-primary"
       >
-        {isTrackReference(trackRef) ? (
-          <VideoTrack
-            trackRef={trackRef}
-            className="h-full w-full object-cover"
-          />
+        {shouldShowVideo ? (
+          <div className="flex h-full w-full items-center justify-center bg-call-primary">
+            <VideoTrack
+              trackRef={trackRef}
+              className="aspect-video h-full max-h-full w-auto max-w-[min(100%,1664px)] !object-cover"
+            />
+          </div>
         ) : (
-          <UserAvatar name={displayName} avatar="" />
+          <UserAvatar name={displayName} avatar={avatar} />
         )}
       </ParticipantTile>
       {isSpeaking && (
