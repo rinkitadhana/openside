@@ -6,6 +6,7 @@ import {
   getParticipantsController,
   updateRoleController,
   kickParticipantController,
+  stopParticipantTrackController,
 } from "../controllers/participant-controller";
 
 const router = express.Router();
@@ -15,5 +16,6 @@ router.post("/:spaceId/leave", optionalAuthMiddleware, leaveSpaceController);
 router.get("/:spaceId/list", optionalAuthMiddleware, getParticipantsController);
 router.patch("/:spaceId/participant/:participantId/role", authMiddleware, updateRoleController);
 router.post("/:spaceId/participant/:participantId/kick", authMiddleware, kickParticipantController);
+router.post("/:spaceId/participant/:participantId/stop-track", authMiddleware, stopParticipantTrackController);
 
 export default router;

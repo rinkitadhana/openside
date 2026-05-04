@@ -6,6 +6,23 @@ import type {
   SpaceResponse,
 } from "@/types/spaceTypes";
 
+type CachedSpace = SpaceResponse["data"] | null;
+
+const mergeSpaceUpdate = (
+  current: CachedSpace | undefined,
+  update: Partial<SpaceResponse["data"]>
+): CachedSpace | undefined => {
+  if (!current) return current;
+
+  return {
+    ...current,
+    ...update,
+    host: update.host ?? current.host,
+    participants: update.participants ?? current.participants,
+    livekit: update.livekit ?? current.livekit,
+  };
+};
+
 // ============================================================================
 // Create Space
 // ============================================================================
@@ -39,8 +56,56 @@ export const useUpdateSpace = (spaceId: string) => {
       );
       return data.data;
     },
-    onSuccess: () => {
+    onMutate: async (payload) => {
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ["space", spaceId] }),
+        queryClient.cancelQueries({ queryKey: ["space-by-code"] }),
+      ]);
+
+      const previousSpace = queryClient.getQueryData<CachedSpace>([
+        "space",
+        spaceId,
+      ]);
+      const previousSpacesByCode = queryClient.getQueriesData<CachedSpace>({
+        queryKey: ["space-by-code"],
+      });
+
+      const applyOptimisticUpdate = (space: CachedSpace | undefined) => {
+        if (!space || space.id !== spaceId) return space;
+        return mergeSpaceUpdate(space, payload);
+      };
+
+      queryClient.setQueryData<CachedSpace>(
+        ["space", spaceId],
+        applyOptimisticUpdate
+      );
+      queryClient.setQueriesData<CachedSpace>(
+        { queryKey: ["space-by-code"] },
+        applyOptimisticUpdate
+      );
+
+      return { previousSpace, previousSpacesByCode };
+    },
+    onError: (_error, _payload, context) => {
+      if (!context) return;
+
+      queryClient.setQueryData(["space", spaceId], context.previousSpace);
+      context.previousSpacesByCode.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+    },
+    onSuccess: (space) => {
+      queryClient.setQueryData<CachedSpace>(["space", spaceId], (current) =>
+        mergeSpaceUpdate(current, space)
+      );
+      queryClient.setQueryData<CachedSpace>(
+        ["space-by-code", space.joinCode],
+        (current) => mergeSpaceUpdate(current, space)
+      );
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["space", spaceId] });
+      queryClient.invalidateQueries({ queryKey: ["space-by-code"] });
       queryClient.invalidateQueries({ queryKey: ["spaces"] });
     },
   });
@@ -111,5 +176,3 @@ export const useGetSpaceByJoinCode = (
     retry: false,
   });
 };
-
-

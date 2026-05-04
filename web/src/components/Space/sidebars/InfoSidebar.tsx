@@ -31,10 +31,11 @@ const InfoSidebar: React.FC<SidebarContentProps> = ({ onClose }) => {
   }, [spaceData]);
 
   const handleSave = () => {
-    updateSpace.mutate(
-      { title: title.trim(), description: description.trim() },
-      { onSuccess: () => setEditing(false) }
-    );
+    setEditing(false);
+    updateSpace.mutate({
+      title: title.trim(),
+      description: description.trim(),
+    });
   };
 
   const handleCancel = () => {
@@ -86,10 +87,11 @@ const InfoSidebar: React.FC<SidebarContentProps> = ({ onClose }) => {
         ) : editing ? (
           <div className="mt-1 flex flex-col gap-3">
             <div className="flex flex-col gap-1.5">
-              <input
+              <textarea
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-xl border border-call-border bg-primary-hover px-3 py-2.5 text-sm font-normal text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-300"
+                rows={2}
+                className="min-h-12 w-full resize-y rounded-xl border border-call-border bg-primary-hover px-3 py-2.5 text-sm font-normal text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-300"
                 placeholder="Space title"
               />
             </div>
@@ -98,7 +100,7 @@ const InfoSidebar: React.FC<SidebarContentProps> = ({ onClose }) => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
-                className="w-full rounded-xl border border-call-border bg-primary-hover px-3 py-2.5 text-sm font-normal text-foreground outline-none transition-colors resize-none placeholder:text-muted-foreground focus:border-blue-300"
+                className="min-h-28 w-full resize-y rounded-xl border border-call-border bg-primary-hover px-3 py-2.5 text-sm font-normal text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-300"
                 placeholder="Add a description..."
               />
             </div>
@@ -119,24 +121,22 @@ const InfoSidebar: React.FC<SidebarContentProps> = ({ onClose }) => {
             </div>
           </div>
         ) : (
-          <div className="mt-1 flex flex-col gap-1">
-            <div className="flex items-center justify-between">
-              <p className="text-lg text-foreground font-medium">
-                {spaceData?.title || "Untitled Space"}
-              </p>
-              {isHost && (
-                <button
-                  onClick={() => setEditing(true)}
-                  className="flex items-center gap-2 rounded-full bg-primary-hover px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors cursor-pointer"
-                >
-                  <SquarePen size={12} />
-                  Edit
-                </button>
-              )}
-            </div>
-            <p className="text-sm font-normal text-foreground/70">
+          <div className="mt-1 flex min-w-0 flex-col gap-2">
+            <p className="whitespace-pre-wrap break-words text-lg font-medium text-foreground">
+              {spaceData?.title || "Untitled Space"}
+            </p>
+            <p className="whitespace-pre-wrap break-words text-sm font-normal text-foreground/70">
               {spaceData?.description || "No description."}
             </p>
+            {isHost && (
+              <button
+                onClick={() => setEditing(true)}
+                className="flex w-fit items-center gap-2 rounded-full bg-primary-hover px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors cursor-pointer"
+              >
+                <SquarePen size={12} />
+                Edit
+              </button>
+            )}
           </div>
         )}
       </div>

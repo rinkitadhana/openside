@@ -96,7 +96,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       {
         transports: ["websocket", "polling"], // Try WebSocket first, fallback to polling
         autoConnect: true,
-      }
+      },
     );
 
     // Connection successful

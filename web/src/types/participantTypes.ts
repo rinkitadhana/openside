@@ -50,3 +50,20 @@ export interface KickParticipantResponse {
   data: Participant;
   message: string;
 }
+
+export type StopParticipantTrackSource = "camera" | "microphone";
+
+export interface StopParticipantTrackPayload {
+  source: StopParticipantTrackSource;
+  muted: boolean;
+}
+
+export interface StopParticipantTrackResponse {
+  success: boolean;
+  data: {
+    participantId: string;
+    source: StopParticipantTrackSource;
+    muted: boolean;
+  };
+  message: string;
+}

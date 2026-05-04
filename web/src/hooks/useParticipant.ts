@@ -9,6 +9,8 @@ import type {
   UpdateRolePayload,
   UpdateRoleResponse,
   KickParticipantResponse,
+  StopParticipantTrackPayload,
+  StopParticipantTrackResponse,
 } from "@/types/participantTypes";
 
 // ============================================================================
@@ -131,3 +133,27 @@ export const useKickParticipant = (spaceId: string, participantId: string) => {
   });
 };
 
+// ============================================================================
+// Stop Participant Track
+// ============================================================================
+
+export const useStopParticipantTrack = (
+  spaceId: string,
+  participantId: string
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: StopParticipantTrackPayload) => {
+      const { data } = await api.post<StopParticipantTrackResponse>(
+        `/participant/${spaceId}/participant/${participantId}/stop-track`,
+        payload
+      );
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["space", spaceId] });
+      queryClient.invalidateQueries({ queryKey: ["participants", spaceId] });
+    },
+  });
+};

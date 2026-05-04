@@ -186,10 +186,47 @@ const InvitePanel = ({ roomCode, onDismiss }: InvitePanelProps) => {
 
 interface LiveKitVideoStageProps {
   isHost: boolean;
+  pinnedParticipantIdentity: string | null;
   roomCode: string;
 }
 
-const LiveKitVideoStage = ({ isHost, roomCode }: LiveKitVideoStageProps) => {
+const getParticipantSortRank = (participant: Participant) => {
+  if (participant.isLocal) return 0;
+  if (participant.attributes.role === "HOST") return 1;
+  if (participant.attributes.role === "CO_HOST") return 2;
+  return 3;
+};
+
+const sortTrackRefs = <T extends { participant: Participant }>(trackRefs: T[]) =>
+  [...trackRefs].sort((first, second) => {
+    const rankDelta =
+      getParticipantSortRank(first.participant) -
+      getParticipantSortRank(second.participant);
+
+    if (rankDelta !== 0) return rankDelta;
+
+    return (first.participant.name || first.participant.identity).localeCompare(
+      second.participant.name || second.participant.identity
+    );
+  });
+
+const getParticipantGridClassName = (trackCount: number) => {
+  if (trackCount <= 2) {
+    return "grid-cols-1 md:grid-cols-2";
+  }
+
+  if (trackCount <= 4) {
+    return "grid-cols-1 md:grid-cols-2 xl:grid-cols-2";
+  }
+
+  return "grid-cols-1 md:grid-cols-2 xl:grid-cols-3";
+};
+
+const LiveKitVideoStage = ({
+  isHost,
+  pinnedParticipantIdentity,
+  roomCode,
+}: LiveKitVideoStageProps) => {
   const [isInvitePanelHidden, setIsInvitePanelHidden] = useState(false);
   const participants = useParticipants();
   const tracks = useTracks(
@@ -205,8 +242,8 @@ const LiveKitVideoStage = ({ isHost, roomCode }: LiveKitVideoStageProps) => {
       isTrackReference(trackRef) &&
       trackRef.publication.source === Track.Source.ScreenShare
   );
-  const cameraTracks = tracks.filter(
-    (trackRef) => trackRef.source === Track.Source.Camera
+  const cameraTracks = sortTrackRefs(
+    tracks.filter((trackRef) => trackRef.source === Track.Source.Camera)
   );
   const remoteParticipantCount = participants.filter(
     (participant) => !participant.isLocal
@@ -218,6 +255,16 @@ const LiveKitVideoStage = ({ isHost, roomCode }: LiveKitVideoStageProps) => {
           trackRef.participant.identity !== screenShareTrack.participant.identity
       )
     : cameraTracks;
+  const pinnedTrack = !screenShareTrack
+    ? visibleTracks.find(
+        (trackRef) => trackRef.participant.identity === pinnedParticipantIdentity
+      )
+    : undefined;
+  const secondaryTracks = pinnedTrack
+    ? visibleTracks.filter(
+        (trackRef) => trackRef.participant.identity !== pinnedTrack.participant.identity
+      )
+    : visibleTracks;
 
   const isAlone = remoteParticipantCount === 0;
 
@@ -226,11 +273,11 @@ const LiveKitVideoStage = ({ isHost, roomCode }: LiveKitVideoStageProps) => {
   return (
     <div className="relative h-full min-h-0 flex flex-col gap-2">
       <div className="flex-1 min-h-0">
-        {screenShareTrack ? (
+        {screenShareTrack || pinnedTrack ? (
           <div className="grid h-full gap-2 lg:grid-cols-[minmax(0,1fr)_260px]">
-            <ParticipantFrame trackRef={screenShareTrack} focus />
+            <ParticipantFrame trackRef={screenShareTrack || pinnedTrack!} focus />
             <div className="grid gap-2 overflow-y-auto content-start">
-              {visibleTracks.map((trackRef) => (
+              {secondaryTracks.map((trackRef) => (
                 <ParticipantFrame
                   key={`${trackRef.participant.identity}-${trackRef.source}`}
                   trackRef={trackRef}
@@ -258,7 +305,11 @@ const LiveKitVideoStage = ({ isHost, roomCode }: LiveKitVideoStageProps) => {
             )}
           </div>
         ) : (
-          <div className="grid h-full gap-2 auto-rows-fr grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+          <div
+            className={`grid h-full gap-2 auto-rows-fr ${getParticipantGridClassName(
+              visibleTracks.length
+            )}`}
+          >
             {visibleTracks.map((trackRef) => (
               <ParticipantFrame
                 key={`${trackRef.participant.identity}-${trackRef.source}`}

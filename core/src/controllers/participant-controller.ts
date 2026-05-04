@@ -8,6 +8,7 @@ import {
   kickParticipant,
   isUserHost,
   getParticipantById,
+  stopParticipantTrack,
 } from "../services/participant-service";
 import { findOrCreateUser } from "../services/auth-service";
 
@@ -314,5 +315,83 @@ export async function kickParticipantController(
 
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     res.status(500).json({ success: false, data: null, message: `Failed to kick participant: ${errorMessage}!` });
+  }
+}
+
+export async function stopParticipantTrackController(
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, data: null, message: "Authentication required!" });
+      return;
+    }
+
+    const spaceId = req.params.spaceId as string | undefined;
+    const participantId = req.params.participantId as string | undefined;
+    const { muted, source } = req.body;
+
+    if (!spaceId) {
+      res.status(400).json({ success: false, data: null, message: "Space ID is required!" });
+      return;
+    }
+
+    if (!participantId) {
+      res.status(400).json({ success: false, data: null, message: "Participant ID is required!" });
+      return;
+    }
+
+    if (source !== "camera" && source !== "microphone") {
+      res.status(400).json({ success: false, data: null, message: "Source must be camera or microphone!" });
+      return;
+    }
+
+    if (typeof muted !== "boolean") {
+      res.status(400).json({ success: false, data: null, message: "Muted must be a boolean!" });
+      return;
+    }
+
+    const user = await findOrCreateUser(req.user);
+    const isHost = await isUserHost(spaceId, user.id);
+
+    if (!isHost) {
+      res.status(403).json({ success: false, data: null, message: "Only the host can moderate participants!" });
+      return;
+    }
+
+    const participant = await getParticipantById(participantId);
+    if (!participant || participant.spaceId !== spaceId) {
+      res.status(404).json({ success: false, data: null, message: "Participant not found in this space!" });
+      return;
+    }
+
+    const result = await stopParticipantTrack(participantId, source, muted);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+      message: muted
+        ? source === "camera"
+          ? "Participant video stopped!"
+          : "Participant mic stopped!"
+        : source === "camera"
+          ? "Participant video started!"
+          : "Participant mic started!",
+    });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      if (error.message === "PARTICIPANT_NOT_FOUND") {
+        res.status(404).json({ success: false, data: null, message: "Participant not found!" });
+        return;
+      }
+      if (error.message === "CANNOT_MODERATE_HOST") {
+        res.status(400).json({ success: false, data: null, message: "Cannot moderate the host!" });
+        return;
+      }
+    }
+
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ success: false, data: null, message: `Failed to stop participant track: ${errorMessage}!` });
   }
 }

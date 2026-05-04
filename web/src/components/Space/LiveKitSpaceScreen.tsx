@@ -14,6 +14,10 @@ import { getOrCreateSessionId } from "@/utils/ParticipantSessionId";
 import type { PreJoinSettings } from "@/types/preJoinTypes";
 import LiveKitControls from "./livekit/LiveKitControls";
 import LiveKitVideoStage from "./livekit/LiveKitVideoStage";
+import { LiveKitChatProvider } from "./chat/LiveKitChatProvider";
+import ChatSidebar from "./sidebars/ChatSidebar";
+import InfoSidebar from "./sidebars/InfoSidebar";
+import UsersSidebar from "./sidebars/UsersSidebar";
 import CallWarningDialog from "./ui/CallWarningDialog";
 
 type SidebarType = "info" | "users" | "chat" | null;
@@ -43,6 +47,9 @@ const LiveKitSpaceScreen = ({
     title: string;
     description: string;
   } | null>(null);
+  const [pinnedParticipantIdentity, setPinnedParticipantIdentity] = useState<
+    string | null
+  >(null);
 
   const livekit = preJoinSettings?.livekit;
   const isHost = !!user && !!spaceData && user.id === spaceData.host?.id;
@@ -115,6 +122,27 @@ const LiveKitSpaceScreen = ({
     });
   };
 
+  const renderSidebarContent = () => {
+    switch (activeSidebar) {
+      case "info":
+        return <InfoSidebar onClose={() => toggleSidebar(null)} />;
+      case "users":
+        return (
+          <UsersSidebar
+            isHost={isHost}
+            onClose={() => toggleSidebar(null)}
+            onPinParticipant={setPinnedParticipantIdentity}
+            pinnedParticipantIdentity={pinnedParticipantIdentity}
+            spaceId={spaceData?.id}
+          />
+        );
+      case "chat":
+        return <ChatSidebar onClose={() => toggleSidebar(null)} />;
+      default:
+        return null;
+    }
+  };
+
   if (!livekit) {
     return (
       <div className="flex h-full items-center justify-center rounded-xl border border-call-border bg-call-primary text-sm text-foreground/70">
@@ -177,9 +205,24 @@ const LiveKitSpaceScreen = ({
       }}
       className="flex h-full flex-col gap-2 bg-call-background"
     >
-      <div className="flex-1 min-h-0">
-        <LiveKitVideoStage isHost={isHost} roomCode={roomCode} />
-      </div>
+      <LiveKitChatProvider>
+        <div className="flex min-h-0 flex-1">
+          <div className="min-w-0 flex-1">
+            <LiveKitVideoStage
+              isHost={isHost}
+              pinnedParticipantIdentity={pinnedParticipantIdentity}
+              roomCode={roomCode}
+            />
+          </div>
+          {activeSidebar && (
+            <div className="ml-2 flex h-full shrink-0 items-center justify-center">
+              <div className="flex h-full w-[350px] flex-col items-stretch justify-start overflow-hidden rounded-2xl border border-call-border bg-call-primary">
+                {renderSidebarContent()}
+              </div>
+            </div>
+          )}
+        </div>
+      </LiveKitChatProvider>
       <div className="shrink-0">
         <LiveKitControls
           activeSidebar={activeSidebar}

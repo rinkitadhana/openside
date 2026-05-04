@@ -139,6 +139,42 @@ export async function removeLiveKitParticipant(input: {
   }
 }
 
+export async function muteLiveKitParticipantTrack(input: {
+  roomName: string | null | undefined;
+  identity: string | null | undefined;
+  source: TrackSource.CAMERA | TrackSource.MICROPHONE;
+  muted: boolean;
+}) {
+  if (!input.roomName || !input.identity) return;
+
+  const roomClient = getRoomServiceClient();
+
+  try {
+    const participant = await roomClient.getParticipant(
+      input.roomName,
+      input.identity,
+    );
+    const track = participant.tracks.find(
+      (publishedTrack) => publishedTrack.source === input.source,
+    );
+
+    if (!track?.sid) return;
+
+    await roomClient.mutePublishedTrack(
+      input.roomName,
+      input.identity,
+      track.sid,
+      input.muted,
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message.toLowerCase().includes("not found")) {
+      return;
+    }
+
+    throw error;
+  }
+}
+
 export async function generateLiveKitToken(input: GenerateTokenInput) {
   const { apiKey, apiSecret, url } = getLiveKitConfig();
   const ttl =

@@ -3,8 +3,10 @@ import {
   generateLiveKitToken,
   getLiveKitIdentity,
   getLiveKitRoomName,
+  muteLiveKitParticipantTrack,
   removeLiveKitParticipant,
 } from "./livekit-service.ts";
+import { TrackSource } from "livekit-server-sdk";
 
 interface JoinSpaceData {
   spaceId: string;
@@ -323,6 +325,44 @@ export async function kickParticipant(participantId: string) {
   });
 
   return kickedParticipant;
+}
+
+export async function stopParticipantTrack(
+  participantId: string,
+  source: "camera" | "microphone",
+  muted: boolean
+) {
+  const participant = await prisma.spaceParticipant.findUnique({
+    where: { id: participantId },
+    select: {
+      id: true,
+      role: true,
+      livekitIdentity: true,
+      space: {
+        select: {
+          livekitRoomName: true,
+        },
+      },
+    },
+  });
+
+  if (!participant) {
+    throw new Error("PARTICIPANT_NOT_FOUND");
+  }
+
+  if (participant.role === "HOST") {
+    throw new Error("CANNOT_MODERATE_HOST");
+  }
+
+  await muteLiveKitParticipantTrack({
+    roomName: participant.space.livekitRoomName,
+    identity: participant.livekitIdentity,
+    source:
+      source === "camera" ? TrackSource.CAMERA : TrackSource.MICROPHONE,
+    muted,
+  });
+
+  return { participantId, source, muted };
 }
 
 export async function isUserHost(spaceId: string, userId: string): Promise<boolean> {
