@@ -2,7 +2,7 @@ import {
   useLocalParticipant,
   useMediaDeviceSelect,
 } from "@livekit/components-react";
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useTheme } from "next-themes";
 import { Track } from "livekit-client";
 import toast from "react-hot-toast";
@@ -77,6 +77,8 @@ const LiveKitControls = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [inputVolume, setInputVolume] = useState(100);
   const [outputVolume, setOutputVolume] = useState(50);
+  const [micLevel, setMicLevel] = useState(0);
+  const animFrameRef = useRef<number>(null);
   const [deafened, setDeafened] = useState(false);
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
   const [openMediaMenu, setOpenMediaMenu] = useState<"mic" | "cam" | null>(
@@ -224,6 +226,41 @@ const LiveKitControls = ({
   };
 
   useEffect(() => {
+    let audioContext: AudioContext | null = null;
+    let analyser: AnalyserNode | null = null;
+    let source: MediaStreamAudioSourceNode | null = null;
+    const dataArray = new Uint8Array(64);
+
+    const poll = () => {
+      if (analyser) {
+        analyser.getByteFrequencyData(dataArray);
+        const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+        const normalized = avg / 255;
+        const curved = Math.pow(normalized, 2.2);
+        setMicLevel(Math.min(100, Math.round(curved * 100 * 4)));
+      }
+      animFrameRef.current = requestAnimationFrame(poll);
+    };
+
+    const track = localParticipant.getTrackPublication(Track.Source.Microphone)?.track?.mediaStreamTrack;
+    if (track) {
+      audioContext = new AudioContext();
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.75;
+      source = audioContext.createMediaStreamSource(new MediaStream([track]));
+      source.connect(analyser);
+      animFrameRef.current = requestAnimationFrame(poll);
+    }
+
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      source?.disconnect();
+      void audioContext?.close();
+    };
+  }, [localParticipant, isMicrophoneEnabled]);
+
+  useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
@@ -295,22 +332,31 @@ const LiveKitControls = ({
     activeSpeakerDeviceId,
     "Default speaker",
   );
-
-  const renderVolumeMeter = (value: number) => (
-    <div className="mt-2 grid grid-cols-[repeat(20,1fr)] gap-0.5">
-      {Array.from({ length: 20 }).map((_, index) => (
-        <span
-          key={index}
-          className={cn(
-            "h-4 rounded-full",
-            index < Math.round((value / 100) * 20)
-              ? "bg-indigo-400"
-              : "bg-foreground/15",
-          )}
-        />
-      ))}
-    </div>
+  const activeCameraLabel = getDeviceLabel(
+    cameraDevices,
+    activeCameraDeviceId,
+    "Default camera",
   );
+
+  const renderVolumeMeter = () => {
+    const count = 29;
+    const activeCount = Math.round((micLevel / 100) * count);
+    return (
+      <div className="mt-4 grid grid-cols-[repeat(29,1fr)] gap-0.5">
+        {Array.from({ length: count }).map((_, index) => {
+          const isActive = index < activeCount;
+          const hue = Math.round(52 + (90 * index) / (count - 1));
+          return (
+            <span
+              key={index}
+              className={cn("h-5 rounded-full", !isActive && "bg-foreground/15")}
+              style={isActive ? { backgroundColor: `hsl(${hue}, 85%, 55%)` } : undefined}
+            />
+          );
+        })}
+      </div>
+    );
+  };
 
   const renderRangeControl = (
     label: string,
@@ -346,7 +392,7 @@ const LiveKitControls = ({
           <span className="absolute left-1/2 top-full h-2.5 w-2.5 -translate-x-1/2 -translate-y-[5px] rotate-45 border-r border-b border-call-border/80 bg-primary-hover" />
         </span>
       </div>
-      {showMeter && renderVolumeMeter(value)}
+      {showMeter && renderVolumeMeter()}
     </div>
   );
 
@@ -588,14 +634,37 @@ const LiveKitControls = ({
       collisionPadding={8}
       side="top"
       sideOffset={6}
-      className="w-[260px] rounded-xl border-call-border bg-call-background p-1"
+      className="w-[250px] rounded-xl border-call-border bg-call-background p-1.5 overflow-visible"
     >
-      <DropdownMenuLabel className="px-2.5 py-1.5 text-[0.65rem] font-medium uppercase text-foreground/45">
-        Camera
-      </DropdownMenuLabel>
-      <DropdownMenuRadioGroup value={activeCameraDeviceId}>
-        {renderDeviceRadioItems("videoinput", cameraDevices)}
-      </DropdownMenuRadioGroup>
+      <DropdownMenuSub>
+        <DropdownMenuSubTrigger className="rounded-lg px-2 py-1.5 focus:bg-primary-hover data-[state=open]:bg-primary-hover">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-normal text-foreground">Camera</p>
+            <p className="mt-0.5 truncate text-[0.7rem] text-foreground/55">
+              {activeCameraLabel}
+            </p>
+          </div>
+        </DropdownMenuSubTrigger>
+        <DropdownMenuSubContent
+          side="right"
+          align="start"
+          sideOffset={12}
+          collisionPadding={8}
+          className="w-[250px] rounded-xl border-call-border bg-call-background p-1"
+        >
+          <DropdownMenuRadioGroup value={activeCameraDeviceId}>
+            {renderDeviceRadioItems("videoinput", cameraDevices)}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuSubContent>
+      </DropdownMenuSub>
+      <DropdownMenuSeparator className="mx-2 my-1.5 bg-call-border" />
+      <DropdownMenuItem
+        onSelect={(event) => event.preventDefault()}
+        className="cursor-pointer rounded-lg px-2.5 py-1.5 text-sm font-normal"
+      >
+        <FiSettings className="size-4 text-foreground/60" />
+        Video Settings
+      </DropdownMenuItem>
     </DropdownMenuContent>
   );
 
