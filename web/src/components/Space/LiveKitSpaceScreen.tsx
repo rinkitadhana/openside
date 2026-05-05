@@ -6,6 +6,7 @@ import {
   Room,
   type RoomOptions,
 } from "livekit-client";
+import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEndSpace, useGetSpaceByJoinCode } from "@/hooks/useSpace";
 import { useLeaveSpace } from "@/hooks/useParticipant";
@@ -195,13 +196,17 @@ const LiveKitSpaceScreen = ({
           setDisconnectWarning(message);
         }
       }}
-      onError={(error) => setConnectionError(error.message)}
+      onError={(error) => {
+        if (error.name === "NotAllowedError") return;
+
+        setConnectionError(error.message);
+      }}
       onMediaDeviceFailure={(error, kind) => {
         if (error === MediaDeviceFailure.PermissionDenied) {
-          setConnectionError(
-            `Permission denied for ${kind || "media device"}.`,
-          );
+          return;
         }
+
+        toast.error(`Unable to access ${kind || "media device"}.`);
       }}
       className="flex h-full flex-col gap-2 bg-call-background"
     >

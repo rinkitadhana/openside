@@ -1,8 +1,14 @@
-import { useLocalParticipant } from "@livekit/components-react";
-import { useEffect, useState } from "react";
+import {
+  useLocalParticipant,
+  useMediaDeviceSelect,
+} from "@livekit/components-react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTheme } from "next-themes";
+import { Track } from "livekit-client";
+import toast from "react-hot-toast";
 import { BsFillTelephoneFill, BsInfoLg } from "react-icons/bs";
 import {
+  FiChevronUp,
   FiMaximize2,
   FiMinimize2,
   FiMoon,
@@ -11,15 +17,20 @@ import {
   FiVideoOff,
 } from "react-icons/fi";
 import { IoChatbubbleOutline } from "react-icons/io5";
-import { LuScreenShare, LuScreenShareOff, LuUsers } from "react-icons/lu";
+import { LuScreenShare, LuUsers } from "react-icons/lu";
 import { RiMicLine, RiMicOffLine } from "react-icons/ri";
 import { SlOptionsVertical } from "react-icons/sl";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/shared/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 import DateComponent from "@/utils/Time";
 import playClickSound from "@/utils/ClickSound";
 import ControlButton from "../controls/ControlButton";
@@ -27,6 +38,14 @@ import CallWarningDialog from "../ui/CallWarningDialog";
 
 type SidebarType = "info" | "users" | "chat" | null;
 type ExitAction = "end-for-all" | null;
+type SelectableDeviceKind = "audioinput" | "audiooutput" | "videoinput";
+
+const isPermissionDeniedError = (error: unknown) =>
+  error instanceof DOMException
+    ? error.name === "NotAllowedError" || error.name === "PermissionDeniedError"
+    : error instanceof Error &&
+      (error.name === "NotAllowedError" ||
+        error.name === "PermissionDeniedError");
 
 interface LiveKitControlsProps {
   activeSidebar: SidebarType;
@@ -60,6 +79,24 @@ const LiveKitControls = ({
     localParticipant.attributes.room_admin === "true" ||
     participantRole === "HOST" ||
     participantRole === "CO_HOST";
+  const {
+    devices: microphoneDevices,
+    activeDeviceId: activeMicrophoneDeviceId,
+    setActiveMediaDevice: setActiveMicrophoneDevice,
+  } = useMediaDeviceSelect({ kind: "audioinput" });
+  const {
+    devices: speakerDevices,
+    activeDeviceId: activeSpeakerDeviceId,
+    setActiveMediaDevice: setActiveSpeakerDevice,
+  } = useMediaDeviceSelect({ kind: "audiooutput" });
+  const {
+    devices: cameraDevices,
+    activeDeviceId: activeCameraDeviceId,
+    setActiveMediaDevice: setActiveCameraDevice,
+  } = useMediaDeviceSelect({ kind: "videoinput" });
+  const canSelectAudioOutput =
+    typeof HTMLMediaElement !== "undefined" &&
+    "setSinkId" in HTMLMediaElement.prototype;
 
   const toggleMicrophone = async () => {
     await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
@@ -69,8 +106,105 @@ const LiveKitControls = ({
     await localParticipant.setCameraEnabled(!isCameraEnabled);
   };
 
+  const handleDeviceSelect = async (
+    kind: SelectableDeviceKind,
+    deviceId: string,
+  ) => {
+    const options = { exact: deviceId !== "default" };
+
+    if (kind === "audioinput") {
+      await setActiveMicrophoneDevice(deviceId, options);
+      return;
+    }
+
+    if (kind === "audiooutput") {
+      await setActiveSpeakerDevice(deviceId, options);
+      return;
+    }
+
+    await setActiveCameraDevice(deviceId, options);
+  };
+
   const toggleScreenShare = async () => {
-    await localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
+    try {
+      await localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
+    } catch (error) {
+      if (isPermissionDeniedError(error)) return;
+
+      toast.error("Unable to start screen share.");
+    }
+  };
+
+  const startScreenShare = async () => {
+    try {
+      if (!isScreenShareEnabled) {
+        await localParticipant.setScreenShareEnabled(true);
+        return;
+      }
+
+      const newTracks = await localParticipant.createScreenTracks();
+      const newScreenTrack = newTracks.find(
+        (track) => track.source === Track.Source.ScreenShare,
+      );
+
+      if (!newScreenTrack) {
+        throw new Error("No screen share track was selected.");
+      }
+
+      const currentScreenPublication = localParticipant.getTrackPublication(
+        Track.Source.ScreenShare,
+      );
+      const previousScreenMediaTrack =
+        currentScreenPublication?.track?.mediaStreamTrack;
+
+      if (currentScreenPublication?.track) {
+        await currentScreenPublication.track.replaceTrack(
+          newScreenTrack.mediaStreamTrack,
+        );
+        if (previousScreenMediaTrack !== newScreenTrack.mediaStreamTrack) {
+          previousScreenMediaTrack?.stop();
+        }
+      } else {
+        await localParticipant.publishTrack(newScreenTrack);
+      }
+
+      const newScreenAudioTrack = newTracks.find(
+        (track) => track.source === Track.Source.ScreenShareAudio,
+      );
+      const currentScreenAudioPublication =
+        localParticipant.getTrackPublication(Track.Source.ScreenShareAudio);
+      const previousScreenAudioMediaTrack =
+        currentScreenAudioPublication?.track?.mediaStreamTrack;
+
+      if (newScreenAudioTrack && currentScreenAudioPublication?.track) {
+        await currentScreenAudioPublication.track.replaceTrack(
+          newScreenAudioTrack.mediaStreamTrack,
+        );
+        if (
+          previousScreenAudioMediaTrack !== newScreenAudioTrack.mediaStreamTrack
+        ) {
+          previousScreenAudioMediaTrack?.stop();
+        }
+      } else if (newScreenAudioTrack) {
+        await localParticipant.publishTrack(newScreenAudioTrack);
+      } else if (currentScreenAudioPublication?.track) {
+        await localParticipant.unpublishTrack(
+          currentScreenAudioPublication.track,
+        );
+      }
+    } catch (error) {
+      if (isPermissionDeniedError(error)) return;
+
+      toast.error("Unable to start screen share.");
+    }
+  };
+
+  const stopScreenShare = async () => {
+    try {
+      await localParticipant.setScreenShareEnabled(false);
+    } catch {
+      toast.error("Unable to stop screen share.");
+    }
   };
 
   useEffect(() => {
@@ -220,23 +354,205 @@ const LiveKitControls = ({
       />
     );
 
-  const renderPrimaryControls = () => (
-    <div className="select-none flex items-center gap-2.5 p-2">
+  const renderDeviceRadioItems = (
+    kind: SelectableDeviceKind,
+    devices: MediaDeviceInfo[],
+  ) => {
+    if (devices.length === 0) {
+      return (
+        <DropdownMenuItem
+          disabled
+          className="cursor-default rounded-lg px-3 py-2 text-foreground/50"
+        >
+          No devices found
+        </DropdownMenuItem>
+      );
+    }
+
+    return devices.map((device, index) => (
+      <DropdownMenuRadioItem
+        key={`${kind}-${device.deviceId || index}`}
+        value={device.deviceId}
+        onSelect={() => handleDeviceSelect(kind, device.deviceId)}
+        className="max-w-[260px] cursor-pointer rounded-lg px-3 py-2 pl-8"
+      >
+        <span className="truncate">
+          {device.label || `Device ${index + 1}`}
+        </span>
+      </DropdownMenuRadioItem>
+    ));
+  };
+
+  const renderMicDeviceMenu = () => (
+    <DropdownMenuContent
+      align="start"
+      collisionPadding={8}
+      side="top"
+      sideOffset={8}
+      className="w-[290px] rounded-xl border-call-border bg-call-background p-1.5"
+    >
+      <DropdownMenuLabel className="px-3 py-2 text-xs font-medium uppercase text-foreground/45">
+        Microphone
+      </DropdownMenuLabel>
+      <DropdownMenuRadioGroup value={activeMicrophoneDeviceId}>
+        {renderDeviceRadioItems("audioinput", microphoneDevices)}
+      </DropdownMenuRadioGroup>
+      <DropdownMenuSeparator className="mx-1 bg-call-border" />
+      <DropdownMenuLabel className="px-3 py-2 text-xs font-medium uppercase text-foreground/45">
+        Speaker
+      </DropdownMenuLabel>
+      {canSelectAudioOutput ? (
+        <DropdownMenuRadioGroup value={activeSpeakerDeviceId}>
+          {renderDeviceRadioItems("audiooutput", speakerDevices)}
+        </DropdownMenuRadioGroup>
+      ) : (
+        <DropdownMenuItem
+          disabled
+          className="cursor-default rounded-lg px-3 py-2 text-foreground/50"
+        >
+          Speaker selection unsupported
+        </DropdownMenuItem>
+      )}
+    </DropdownMenuContent>
+  );
+
+  const renderCameraDeviceMenu = () => (
+    <DropdownMenuContent
+      align="start"
+      collisionPadding={8}
+      side="top"
+      sideOffset={8}
+      className="w-[290px] rounded-xl border-call-border bg-call-background p-1.5"
+    >
+      <DropdownMenuLabel className="px-3 py-2 text-xs font-medium uppercase text-foreground/45">
+        Camera
+      </DropdownMenuLabel>
+      <DropdownMenuRadioGroup value={activeCameraDeviceId}>
+        {renderDeviceRadioItems("videoinput", cameraDevices)}
+      </DropdownMenuRadioGroup>
+    </DropdownMenuContent>
+  );
+
+  const renderSplitMediaControl = ({
+    icon,
+    label,
+    onClick,
+    menu,
+    activeLabel,
+    active,
+  }: {
+    icon: ReactNode;
+    label: string;
+    onClick: () => void;
+    menu: ReactNode;
+    activeLabel: string;
+    active: boolean;
+  }) => (
+    <div className="flex flex-col gap-1 items-center">
+      <div className="flex items-stretch">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              onClick={playClickSound}
+              className={cn(
+                "flex min-h-11 w-10 items-center justify-center rounded-l-xl border text-base font-medium cursor-pointer transition-all duration-200",
+                active
+                  ? "border-call-border bg-call-primary hover:bg-primary-hover"
+                  : "border-red-400/10 bg-red-400/20 text-red-400 hover:bg-red-400/40",
+              )}
+              aria-label={activeLabel}
+            >
+              <FiChevronUp />
+            </button>
+          </DropdownMenuTrigger>
+          {menu}
+        </DropdownMenu>
+        <button
+          type="button"
+          onClick={() => {
+            playClickSound();
+            onClick();
+          }}
+          className={cn(
+            "flex min-h-11 w-11 items-center justify-center rounded-r-xl border border-l-0 text-lg font-medium cursor-pointer transition-all duration-200",
+            active
+              ? "border-call-border bg-call-primary hover:bg-primary-hover"
+              : "border-red-400/10 bg-red-400/20 text-red-400 hover:bg-red-400/40",
+          )}
+          aria-label={label}
+        >
+          {icon}
+        </button>
+      </div>
+      <p className="text-[0.675rem] text-foreground/50">{label}</p>
+    </div>
+  );
+
+  const renderScreenShareControl = () =>
+    isScreenShareEnabled ? (
+      <div className="flex flex-col gap-1 items-center">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              onClick={playClickSound}
+              className="flex items-center justify-center rounded-xl border border-emerald-400/10 bg-emerald-400/20 p-3 text-lg font-medium text-emerald-400 cursor-pointer transition-all duration-200 hover:bg-emerald-400/40"
+              aria-label="Screen share options"
+            >
+              <LuScreenShare />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            collisionPadding={8}
+            side="top"
+            sideOffset={8}
+            className="min-w-[190px] rounded-xl border-call-border bg-call-background p-1.5"
+          >
+            <DropdownMenuItem
+              onSelect={startScreenShare}
+              className="cursor-pointer rounded-lg px-3 py-2"
+            >
+              Share something else
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={stopScreenShare}
+              className="cursor-pointer rounded-lg px-3 py-2"
+            >
+              Stop sharing
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <p className="text-[0.675rem] text-foreground/50">Share</p>
+      </div>
+    ) : (
       <ControlButton
-        icon={isMicrophoneEnabled ? <RiMicLine /> : <RiMicOffLine />}
-        label="Mic"
-        onClick={toggleMicrophone}
-      />
-      <ControlButton
-        icon={isCameraEnabled ? <FiVideo /> : <FiVideoOff />}
-        label="Cam"
-        onClick={toggleCamera}
-      />
-      <ControlButton
-        icon={isScreenShareEnabled ? <LuScreenShareOff /> : <LuScreenShare />}
+        icon={<LuScreenShare />}
         label="Share"
         onClick={toggleScreenShare}
       />
+    );
+
+  const renderPrimaryControls = () => (
+    <div className="select-none flex items-center gap-2.5 p-2">
+      {renderSplitMediaControl({
+        icon: isMicrophoneEnabled ? <RiMicLine /> : <RiMicOffLine />,
+        label: "Mic",
+        onClick: toggleMicrophone,
+        menu: renderMicDeviceMenu(),
+        activeLabel: "Microphone and speaker options",
+        active: isMicrophoneEnabled,
+      })}
+      {renderSplitMediaControl({
+        icon: isCameraEnabled ? <FiVideo /> : <FiVideoOff />,
+        label: "Cam",
+        onClick: toggleCamera,
+        menu: renderCameraDeviceMenu(),
+        activeLabel: "Camera options",
+        active: isCameraEnabled,
+      })}
+      {renderScreenShareControl()}
       {renderOptionsControl()}
       <div className="h-8 border-r border-primary-border mx-1 mb-4.5" />
       {renderEndControl()}
