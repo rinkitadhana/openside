@@ -8,26 +8,33 @@ import { Track } from "livekit-client";
 import toast from "react-hot-toast";
 import { BsFillTelephoneFill, BsInfoLg } from "react-icons/bs";
 import {
+  FiChevronDown,
   FiChevronUp,
   FiMaximize2,
   FiMinimize2,
   FiMoon,
+  FiSettings,
   FiSun,
   FiVideo,
   FiVideoOff,
 } from "react-icons/fi";
 import { IoChatbubbleOutline } from "react-icons/io5";
-import { LuScreenShare, LuUsers } from "react-icons/lu";
+import { LuScreenShare, LuScreenShareOff, LuUsers } from "react-icons/lu";
+import { MdCallEnd, MdLogout } from "react-icons/md";
 import { RiMicLine, RiMicOffLine } from "react-icons/ri";
 import { SlOptionsVertical } from "react-icons/sl";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/shared/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -66,6 +73,12 @@ const LiveKitControls = ({
 }: LiveKitControlsProps) => {
   const [pendingExitAction, setPendingExitAction] = useState<ExitAction>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [inputVolume, setInputVolume] = useState(100);
+  const [outputVolume, setOutputVolume] = useState(50);
+  const [deafened, setDeafened] = useState(false);
+  const [openMediaMenu, setOpenMediaMenu] = useState<"mic" | "cam" | null>(
+    null,
+  );
   const { resolvedTheme, setTheme } = useTheme();
   const {
     isCameraEnabled,
@@ -259,6 +272,63 @@ const LiveKitControls = ({
     onLeave();
   };
 
+  const getDeviceLabel = (
+    devices: MediaDeviceInfo[],
+    activeDeviceId: string,
+    fallback: string,
+  ) => {
+    const device = devices.find((item) => item.deviceId === activeDeviceId);
+
+    return device?.label || devices[0]?.label || fallback;
+  };
+
+  const activeMicrophoneLabel = getDeviceLabel(
+    microphoneDevices,
+    activeMicrophoneDeviceId,
+    "Default microphone",
+  );
+  const activeSpeakerLabel = getDeviceLabel(
+    speakerDevices,
+    activeSpeakerDeviceId,
+    "Default speaker",
+  );
+
+  const renderVolumeMeter = (value: number) => (
+    <div className="mt-3 grid grid-cols-[repeat(24,1fr)] gap-1">
+      {Array.from({ length: 24 }).map((_, index) => (
+        <span
+          key={index}
+          className={cn(
+            "h-6 rounded-full",
+            index < Math.round((value / 100) * 24)
+              ? "bg-indigo-400"
+              : "bg-foreground/15",
+          )}
+        />
+      ))}
+    </div>
+  );
+
+  const renderRangeControl = (
+    label: string,
+    value: number,
+    onChange: (value: number) => void,
+    showMeter = false,
+  ) => (
+    <div className="px-3 py-4">
+      <p className="text-sm font-semibold text-foreground">{label}</p>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className="mt-4 h-1.5 w-full cursor-pointer accent-indigo-400"
+      />
+      {showMeter && renderVolumeMeter(value)}
+    </div>
+  );
+
   const renderTimeCode = () => (
     <div className="ml-2 flex items-center gap-4">
       <DateComponent className="text-base font-normal text-foreground" />
@@ -332,6 +402,7 @@ const LiveKitControls = ({
               onSelect={handleLeaveSelect}
               className="cursor-pointer rounded-lg px-3 py-2"
             >
+              <MdLogout />
               Leave call
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -339,6 +410,7 @@ const LiveKitControls = ({
               variant="destructive"
               className="cursor-pointer rounded-lg px-3 py-2"
             >
+              <MdCallEnd />
               End for all
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -374,7 +446,7 @@ const LiveKitControls = ({
         key={`${kind}-${device.deviceId || index}`}
         value={device.deviceId}
         onSelect={() => handleDeviceSelect(kind, device.deviceId)}
-        className="max-w-[260px] cursor-pointer rounded-lg px-3 py-2 pl-8"
+        className="max-w-[360px] cursor-pointer rounded-lg px-3 py-2.5 pl-8 text-sm"
       >
         <span className="truncate">
           {device.label || `Device ${index + 1}`}
@@ -389,30 +461,102 @@ const LiveKitControls = ({
       collisionPadding={8}
       side="top"
       sideOffset={8}
-      className="w-[290px] rounded-xl border-call-border bg-call-background p-1.5"
+      className="w-[360px] rounded-xl border-call-border bg-call-background p-3"
     >
-      <DropdownMenuLabel className="px-3 py-2 text-xs font-medium uppercase text-foreground/45">
-        Microphone
-      </DropdownMenuLabel>
-      <DropdownMenuRadioGroup value={activeMicrophoneDeviceId}>
-        {renderDeviceRadioItems("audioinput", microphoneDevices)}
-      </DropdownMenuRadioGroup>
-      <DropdownMenuSeparator className="mx-1 bg-call-border" />
-      <DropdownMenuLabel className="px-3 py-2 text-xs font-medium uppercase text-foreground/45">
-        Speaker
-      </DropdownMenuLabel>
-      {canSelectAudioOutput ? (
-        <DropdownMenuRadioGroup value={activeSpeakerDeviceId}>
-          {renderDeviceRadioItems("audiooutput", speakerDevices)}
-        </DropdownMenuRadioGroup>
-      ) : (
-        <DropdownMenuItem
-          disabled
-          className="cursor-default rounded-lg px-3 py-2 text-foreground/50"
+      <DropdownMenuSub>
+        <DropdownMenuSubTrigger className="rounded-lg px-3 py-3 focus:bg-primary-hover data-[state=open]:bg-primary-hover">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground">
+              Input Device
+            </p>
+            <p className="mt-1 truncate text-sm text-foreground/55">
+              {activeMicrophoneLabel}
+            </p>
+          </div>
+        </DropdownMenuSubTrigger>
+        <DropdownMenuSubContent
+          collisionPadding={8}
+          className="w-[370px] rounded-xl border-call-border bg-call-background p-2"
         >
-          Speaker selection unsupported
-        </DropdownMenuItem>
-      )}
+          <DropdownMenuRadioGroup value={activeMicrophoneDeviceId}>
+            {renderDeviceRadioItems("audioinput", microphoneDevices)}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuSubContent>
+      </DropdownMenuSub>
+
+      <DropdownMenuSub>
+        <DropdownMenuSubTrigger className="rounded-lg px-3 py-3 focus:bg-primary-hover data-[state=open]:bg-primary-hover">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground">
+              Input Profile
+            </p>
+            <p className="mt-1 truncate text-sm text-foreground/55">Custom</p>
+          </div>
+        </DropdownMenuSubTrigger>
+        <DropdownMenuSubContent
+          collisionPadding={8}
+          className="w-[240px] rounded-xl border-call-border bg-call-background p-2"
+        >
+          <DropdownMenuRadioGroup value="custom">
+            <DropdownMenuRadioItem
+              value="custom"
+              className="cursor-pointer rounded-lg px-3 py-2.5 pl-8 text-sm"
+            >
+              Custom
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+        </DropdownMenuSubContent>
+      </DropdownMenuSub>
+
+      <DropdownMenuSub>
+        <DropdownMenuSubTrigger className="rounded-lg px-3 py-3 focus:bg-primary-hover data-[state=open]:bg-primary-hover">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground">
+              Output Device
+            </p>
+            <p className="mt-1 truncate text-sm text-foreground/55">
+              {activeSpeakerLabel}
+            </p>
+          </div>
+        </DropdownMenuSubTrigger>
+        <DropdownMenuSubContent
+          collisionPadding={8}
+          className="w-[370px] rounded-xl border-call-border bg-call-background p-2"
+        >
+          {canSelectAudioOutput ? (
+            <DropdownMenuRadioGroup value={activeSpeakerDeviceId}>
+              {renderDeviceRadioItems("audiooutput", speakerDevices)}
+            </DropdownMenuRadioGroup>
+          ) : (
+            <DropdownMenuItem
+              disabled
+              className="cursor-default rounded-lg px-3 py-2 text-foreground/50"
+            >
+              Speaker selection unsupported
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuSubContent>
+      </DropdownMenuSub>
+
+      <DropdownMenuSeparator className="mx-3 my-3 bg-call-border" />
+      {renderRangeControl("Input Volume", inputVolume, setInputVolume, true)}
+      {renderRangeControl("Output Volume", outputVolume, setOutputVolume)}
+      <DropdownMenuSeparator className="mx-3 my-3 bg-call-border" />
+      <DropdownMenuCheckboxItem
+        checked={deafened}
+        onCheckedChange={(checked) => setDeafened(checked === true)}
+        onSelect={(event) => event.preventDefault()}
+        className="rounded-lg py-3 pr-3 pl-10 text-sm font-semibold"
+      >
+        Deafen
+      </DropdownMenuCheckboxItem>
+      <DropdownMenuItem
+        onSelect={(event) => event.preventDefault()}
+        className="cursor-pointer rounded-lg px-3 py-3 text-sm font-semibold"
+      >
+        Voice Settings
+        <FiSettings className="ml-auto size-5 text-foreground/60" />
+      </DropdownMenuItem>
     </DropdownMenuContent>
   );
 
@@ -440,6 +584,7 @@ const LiveKitControls = ({
     menu,
     activeLabel,
     active,
+    menuId,
   }: {
     icon: ReactNode;
     label: string;
@@ -447,27 +592,10 @@ const LiveKitControls = ({
     menu: ReactNode;
     activeLabel: string;
     active: boolean;
+    menuId: "mic" | "cam";
   }) => (
     <div className="flex flex-col gap-1 items-center">
-      <div className="flex items-stretch">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              onClick={playClickSound}
-              className={cn(
-                "flex min-h-11 w-10 items-center justify-center rounded-l-xl border text-base font-medium cursor-pointer transition-all duration-200",
-                active
-                  ? "border-call-border bg-call-primary hover:bg-primary-hover"
-                  : "border-red-400/10 bg-red-400/20 text-red-400 hover:bg-red-400/40",
-              )}
-              aria-label={activeLabel}
-            >
-              <FiChevronUp />
-            </button>
-          </DropdownMenuTrigger>
-          {menu}
-        </DropdownMenu>
+      <div className="flex items-stretch gap-0.5">
         <button
           type="button"
           onClick={() => {
@@ -475,7 +603,7 @@ const LiveKitControls = ({
             onClick();
           }}
           className={cn(
-            "flex min-h-11 w-11 items-center justify-center rounded-r-xl border border-l-0 text-lg font-medium cursor-pointer transition-all duration-200",
+            "flex min-h-11 w-11 items-center justify-center rounded-l-xl border text-lg font-medium cursor-pointer transition-all duration-200",
             active
               ? "border-call-border bg-call-primary hover:bg-primary-hover"
               : "border-red-400/10 bg-red-400/20 text-red-400 hover:bg-red-400/40",
@@ -484,6 +612,31 @@ const LiveKitControls = ({
         >
           {icon}
         </button>
+        <DropdownMenu
+          open={openMediaMenu === menuId}
+          onOpenChange={(open) => setOpenMediaMenu(open ? menuId : null)}
+        >
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              onClick={playClickSound}
+              className={cn(
+                "flex min-h-11 w-6 items-center justify-center rounded-r-xl border text-base font-medium cursor-pointer transition-all duration-200",
+                active
+                  ? openMediaMenu === menuId
+                    ? "border-call-border bg-primary-hover"
+                    : "border-call-border bg-call-primary hover:bg-primary-hover"
+                  : openMediaMenu === menuId
+                    ? "border-red-400/10 bg-red-400/40 text-red-400"
+                    : "border-red-400/10 bg-red-400/20 text-red-400 hover:bg-red-400/40",
+              )}
+              aria-label={activeLabel}
+            >
+              {openMediaMenu === menuId ? <FiChevronUp /> : <FiChevronDown />}
+            </button>
+          </DropdownMenuTrigger>
+          {menu}
+        </DropdownMenu>
       </div>
       <p className="text-[0.675rem] text-foreground/50">{label}</p>
     </div>
@@ -497,7 +650,7 @@ const LiveKitControls = ({
             <button
               type="button"
               onClick={playClickSound}
-              className="flex items-center justify-center rounded-xl border border-emerald-400/10 bg-emerald-400/20 p-3 text-lg font-medium text-emerald-400 cursor-pointer transition-all duration-200 hover:bg-emerald-400/40"
+              className="flex items-center justify-center rounded-xl border border-blue-400/10 bg-blue-400/20 p-3 text-lg font-medium text-blue-400 cursor-pointer transition-all duration-200 hover:bg-blue-400/40"
               aria-label="Screen share options"
             >
               <LuScreenShare />
@@ -514,12 +667,15 @@ const LiveKitControls = ({
               onSelect={startScreenShare}
               className="cursor-pointer rounded-lg px-3 py-2"
             >
+              <LuScreenShare />
               Share something else
             </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={stopScreenShare}
-              className="cursor-pointer rounded-lg px-3 py-2"
+              variant="destructive"
+              className="cursor-pointer rounded-lg px-3 py-2 text-red-400 focus:bg-red-400/10 focus:text-red-400"
             >
+              <LuScreenShareOff className="text-red-400" />
               Stop sharing
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -543,6 +699,7 @@ const LiveKitControls = ({
         menu: renderMicDeviceMenu(),
         activeLabel: "Microphone and speaker options",
         active: isMicrophoneEnabled,
+        menuId: "mic",
       })}
       {renderSplitMediaControl({
         icon: isCameraEnabled ? <FiVideo /> : <FiVideoOff />,
@@ -551,6 +708,7 @@ const LiveKitControls = ({
         menu: renderCameraDeviceMenu(),
         activeLabel: "Camera options",
         active: isCameraEnabled,
+        menuId: "cam",
       })}
       {renderScreenShareControl()}
       {renderOptionsControl()}
