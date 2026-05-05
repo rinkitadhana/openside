@@ -2,7 +2,7 @@ import {
   useLocalParticipant,
   useMediaDeviceSelect,
 } from "@livekit/components-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { useTheme } from "next-themes";
 import { Track } from "livekit-client";
 import toast from "react-hot-toast";
@@ -320,14 +320,32 @@ const LiveKitControls = ({
   ) => (
     <div className="px-2.5 py-2">
       <p className="text-xs font-normal text-foreground/85">{label}</p>
-      <input
-        type="range"
-        min={0}
-        max={100}
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-        className="mt-2 h-1 w-full cursor-pointer accent-indigo-400"
-      />
+      <div
+        className="relative mt-2"
+        style={
+          {
+            "--volume-ratio": value / 100,
+            "--volume-value": value,
+          } as CSSProperties
+        }
+      >
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={value}
+          onChange={(event) => onChange(Number(event.target.value))}
+          className="peer volume-slider h-1.5 w-full cursor-pointer"
+          style={{ "--volume-progress": `${value}%` } as CSSProperties}
+        />
+        <span
+          className="pointer-events-none absolute -top-8 z-50 -translate-x-1/2 translate-y-1.5 scale-90 rounded-lg border border-call-border/80 bg-primary-hover px-2 py-0.5 text-[13px] font-medium tabular-nums text-foreground shadow-[0_8px_24px_-6px_rgba(0,0,0,0.45),0_0_0_1px_rgba(0,0,0,0.06)] backdrop-blur-sm opacity-0 transition-[opacity,transform] duration-150 ease-out peer-hover:translate-y-0 peer-hover:scale-100 peer-hover:opacity-100 peer-active:translate-y-0 peer-active:scale-100 peer-active:opacity-100"
+          style={{ left: "calc(7px + (100% - 14px) * var(--volume-ratio))" }}
+        >
+          {value}%
+          <span className="absolute left-1/2 top-full h-2.5 w-2.5 -translate-x-1/2 -translate-y-[5px] rotate-45 border-r border-b border-call-border/80 bg-primary-hover" />
+        </span>
+      </div>
       {showMeter && renderVolumeMeter(value)}
     </div>
   );
@@ -481,7 +499,7 @@ const LiveKitControls = ({
       collisionPadding={8}
       side="top"
       sideOffset={6}
-      className="w-[250px] rounded-xl border-call-border bg-call-background p-1.5"
+      className="w-[250px] rounded-xl border-call-border bg-call-background p-1.5 overflow-visible"
     >
       <DropdownMenuSub>
         <DropdownMenuSubTrigger className="rounded-lg px-2 py-1.5 focus:bg-primary-hover data-[state=open]:bg-primary-hover">
