@@ -801,8 +801,8 @@ const LiveKitControls = ({
         active: isCameraEnabled,
         menuId: "cam",
       })}
-      {renderOptionsControl()}
       {renderScreenShareControl()}
+      {renderOptionsControl()}
       <div className="h-8 border-r border-primary-border mx-1 mb-4.5" />
       {renderEndControl()}
     </div>
