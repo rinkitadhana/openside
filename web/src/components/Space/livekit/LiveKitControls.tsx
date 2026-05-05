@@ -236,8 +236,8 @@ const LiveKitControls = ({
         analyser.getByteFrequencyData(dataArray);
         const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
         const normalized = avg / 255;
-        const curved = Math.pow(normalized, 2.2);
-        setMicLevel(Math.min(100, Math.round(curved * 100 * 4)));
+        const curved = Math.pow(normalized, 1.5);
+        setMicLevel(Math.min(100, Math.round(curved * 100 * 3)));
       }
       animFrameRef.current = requestAnimationFrame(poll);
     };
