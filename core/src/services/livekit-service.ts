@@ -193,6 +193,7 @@ export async function generateLiveKitToken(input: GenerateTokenInput) {
     isGuest: String(input.participant.isGuest),
     room_admin: isAdmin ? "true" : "false",
     avatar: input.participant.user?.avatar || "",
+    deafened: "false",
   };
 
   const token = new AccessToken(apiKey, apiSecret, {
@@ -210,7 +211,7 @@ export async function generateLiveKitToken(input: GenerateTokenInput) {
     canPublish: true,
     canSubscribe: true,
     canPublishData: true,
-    canUpdateOwnMetadata: false,
+    canUpdateOwnMetadata: true,
     canPublishSources: [
       TrackSource.CAMERA,
       TrackSource.MICROPHONE,

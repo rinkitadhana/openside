@@ -58,8 +58,10 @@ const isPermissionDeniedError = (error: unknown) =>
 
 interface LiveKitControlsProps {
   activeSidebar: SidebarType;
+  deafened: boolean;
   isHost: boolean;
   roomCode: string;
+  setDeafened: (value: boolean) => void;
   onEndForAll: () => void;
   onLeave: () => void;
   toggleSidebar: (sidebarType: SidebarType) => void;
@@ -67,8 +69,10 @@ interface LiveKitControlsProps {
 
 const LiveKitControls = ({
   activeSidebar,
+  deafened,
   isHost,
   roomCode,
+  setDeafened,
   onEndForAll,
   onLeave,
   toggleSidebar,
@@ -79,11 +83,12 @@ const LiveKitControls = ({
   const [outputVolume, setOutputVolume] = useState(50);
   const [micLevel, setMicLevel] = useState(0);
   const animFrameRef = useRef<number>(null);
-  const [deafened, setDeafened] = useState(false);
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
   const [openMediaMenu, setOpenMediaMenu] = useState<"mic" | "cam" | null>(
     null,
   );
+  const previousMicEnabledBeforeDeafenRef = useRef<boolean | null>(null);
+  const previousOutputVolumeBeforeDeafenRef = useRef(outputVolume);
   const { resolvedTheme, setTheme } = useTheme();
   const {
     isCameraEnabled,
@@ -117,6 +122,11 @@ const LiveKitControls = ({
     "setSinkId" in HTMLMediaElement.prototype;
 
   const toggleMicrophone = async () => {
+    if (deafened) {
+      await handleDeafenToggle(false);
+      await localParticipant.setMicrophoneEnabled(true);
+      return;
+    }
     await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
   };
 
@@ -259,6 +269,65 @@ const LiveKitControls = ({
       void audioContext?.close();
     };
   }, [localParticipant, isMicrophoneEnabled]);
+
+  useEffect(() => {
+    const applyOutputVolume = () => {
+      const volume = deafened ? 0 : outputVolume / 100;
+      document.querySelectorAll("audio, video").forEach((mediaNode) => {
+        if (mediaNode instanceof HTMLMediaElement && !mediaNode.muted) {
+          mediaNode.volume = volume;
+        }
+      });
+    };
+
+    applyOutputVolume();
+
+    const observer = new MutationObserver(applyOutputVolume);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [deafened, outputVolume]);
+
+  const handleDeafenToggle = async (checked: boolean) => {
+    const shouldDeafen = checked === true;
+
+    playClickSound();
+    setDeafened(shouldDeafen);
+
+    if (shouldDeafen) {
+      previousMicEnabledBeforeDeafenRef.current = isMicrophoneEnabled;
+      if (outputVolume > 0) {
+        previousOutputVolumeBeforeDeafenRef.current = outputVolume;
+      }
+
+      if (isMicrophoneEnabled) {
+        await localParticipant.setMicrophoneEnabled(false);
+      }
+
+      setOutputVolume(0);
+    } else {
+      const volumeToRestore =
+        previousOutputVolumeBeforeDeafenRef.current > 0
+          ? previousOutputVolumeBeforeDeafenRef.current
+          : 50;
+      setOutputVolume(volumeToRestore);
+
+      if (previousMicEnabledBeforeDeafenRef.current === true) {
+        await localParticipant.setMicrophoneEnabled(true);
+      }
+      previousMicEnabledBeforeDeafenRef.current = null;
+    }
+
+    try {
+      await localParticipant.setAttributes({
+        deafened: shouldDeafen ? "true" : "false",
+      });
+    } catch {
+      // Ignore attribute update failures; local deafen behavior still applies.
+    }
+  };
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -610,7 +679,7 @@ const LiveKitControls = ({
       <DropdownMenuSeparator className="mx-2 my-1.5 bg-call-border" />
       <DropdownMenuCheckboxItem
         checked={deafened}
-        onCheckedChange={(checked) => setDeafened(checked === true)}
+        onCheckedChange={(checked) => void handleDeafenToggle(checked === true)}
         onSelect={(event) => event.preventDefault()}
         className="cursor-pointer rounded-lg px-2.5 py-1.5 pl-2.5 text-sm font-normal [&>span]:hidden"
       >

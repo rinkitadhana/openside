@@ -12,6 +12,7 @@ import {
 import { Track, type Participant } from "livekit-client";
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Link, MicOff, X } from "lucide-react";
+import { LuHeadphoneOff } from "react-icons/lu";
 import UserAvatar from "../ui/UserAvatar";
 import { AudioLinesIcon } from "@/components/shared/ui/audio-lines";
 
@@ -185,6 +186,7 @@ const InvitePanel = ({ roomCode, onDismiss }: InvitePanelProps) => {
 };
 
 interface LiveKitVideoStageProps {
+  deafened: boolean;
   isHost: boolean;
   pinnedParticipantIdentity: string | null;
   roomCode: string;
@@ -223,6 +225,7 @@ const getParticipantGridClassName = (trackCount: number) => {
 };
 
 const LiveKitVideoStage = ({
+  deafened,
   isHost,
   pinnedParticipantIdentity,
   roomCode,
@@ -275,10 +278,15 @@ const LiveKitVideoStage = ({
       <div className="flex-1 min-h-0">
         {screenShareTrack || pinnedTrack ? (
           <div className="grid h-full gap-2 lg:grid-cols-[minmax(0,1fr)_260px]">
-            <ParticipantFrame trackRef={screenShareTrack || pinnedTrack!} focus />
+            <ParticipantFrame
+              deafened={deafened}
+              trackRef={screenShareTrack || pinnedTrack!}
+              focus
+            />
             <div className="grid gap-2 overflow-y-auto content-start">
               {secondaryTracks.map((trackRef) => (
                 <ParticipantFrame
+                  deafened={deafened}
                   key={`${trackRef.participant.identity}-${trackRef.source}`}
                   trackRef={trackRef}
                 />
@@ -293,6 +301,7 @@ const LiveKitVideoStage = ({
           >
             {visibleTracks.map((trackRef) => (
               <ParticipantFrame
+                deafened={deafened}
                 key={`${trackRef.participant.identity}-${trackRef.source}`}
                 trackRef={trackRef}
               />
@@ -312,6 +321,7 @@ const LiveKitVideoStage = ({
           >
             {visibleTracks.map((trackRef) => (
               <ParticipantFrame
+                deafened={deafened}
                 key={`${trackRef.participant.identity}-${trackRef.source}`}
                 trackRef={trackRef}
               />
@@ -325,11 +335,16 @@ const LiveKitVideoStage = ({
 };
 
 interface ParticipantFrameProps {
+  deafened: boolean;
   trackRef: ReturnType<typeof useTracks>[number];
   focus?: boolean;
 }
 
-const ParticipantFrame = ({ trackRef, focus = false }: ParticipantFrameProps) => {
+const ParticipantFrame = ({
+  deafened,
+  trackRef,
+  focus = false,
+}: ParticipantFrameProps) => {
   const participant = trackRef.participant;
   const isMicMuted = useIsMuted({
     participant,
@@ -346,6 +361,9 @@ const ParticipantFrame = ({ trackRef, focus = false }: ParticipantFrameProps) =>
   const displayName = participant.isLocal ? "You" : participant.name || "Guest";
   const displayLabel = roleLabel ? `${displayName} ${roleLabel}` : displayName;
   const avatar = getParticipantAvatar(participant);
+  const isParticipantDeafened = participant.isLocal
+    ? deafened
+    : participant.attributes.deafened === "true";
   const shouldShowVideo =
     isTrackReference(trackRef) &&
     (trackRef.source !== Track.Source.Camera ||
@@ -379,8 +397,10 @@ const ParticipantFrame = ({ trackRef, focus = false }: ParticipantFrameProps) =>
         participant={participant}
         className="pointer-events-none absolute right-2 top-2 z-20 flex h-5 w-6 items-center justify-center overflow-visible text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 [&_svg]:h-3.5 [&_svg]:w-3.5 [&_svg]:overflow-visible"
       />
-      <div className="pointer-events-none absolute right-2 bottom-2 z-20 flex h-8 w-8 items-center justify-center text-white">
-        {isMicMuted ? (
+      <div className="pointer-events-none absolute right-2 bottom-2 z-20 flex min-h-8 min-w-8 items-center justify-center text-white">
+        {isParticipantDeafened ? (
+          <LuHeadphoneOff size={18} />
+        ) : isMicMuted ? (
           <MicOff size={18} />
         ) : (
           <AudioLinesIcon

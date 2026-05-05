@@ -51,6 +51,7 @@ const LiveKitSpaceScreen = ({
   const [pinnedParticipantIdentity, setPinnedParticipantIdentity] = useState<
     string | null
   >(null);
+  const [deafened, setDeafened] = useState(false);
 
   const livekit = preJoinSettings?.livekit;
   const isHost = !!user && !!spaceData && user.id === spaceData.host?.id;
@@ -214,6 +215,7 @@ const LiveKitSpaceScreen = ({
         <div className="flex min-h-0 flex-1">
           <div className="min-w-0 flex-1">
             <LiveKitVideoStage
+              deafened={deafened}
               isHost={isHost}
               pinnedParticipantIdentity={pinnedParticipantIdentity}
               roomCode={roomCode}
@@ -231,8 +233,10 @@ const LiveKitSpaceScreen = ({
       <div className="shrink-0">
         <LiveKitControls
           activeSidebar={activeSidebar}
+          deafened={deafened}
           isHost={isHost}
           roomCode={roomCode}
+          setDeafened={setDeafened}
           onEndForAll={handleEndForAll}
           onLeave={handleLeave}
           toggleSidebar={toggleSidebar}
