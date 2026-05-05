@@ -385,7 +385,7 @@ const LiveKitControls = ({
             <button
               type="button"
               onClick={playClickSound}
-              className="flex items-center justify-center border border-red-400/10 bg-red-400/20 p-3 rounded-xl text-lg font-medium text-red-400 cursor-pointer transition-all duration-200 hover:bg-red-400/40"
+              className="flex items-center justify-center border border-[#dc362e] bg-[#dc362e] p-3 rounded-xl text-lg font-medium text-white cursor-pointer transition-all duration-200 hover:border-[rgba(220,54,46,0.8)] hover:bg-[rgba(220,54,46,0.8)]"
               aria-label="End call options"
             >
               <BsFillTelephoneFill className="-rotate-[225deg]" />
@@ -649,7 +649,6 @@ const LiveKitControls = ({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              onClick={playClickSound}
               className="flex items-center justify-center rounded-xl border border-blue-400/10 bg-blue-400/20 p-3 text-lg font-medium text-blue-400 cursor-pointer transition-all duration-200 hover:bg-blue-400/40"
               aria-label="Screen share options"
             >
@@ -686,6 +685,7 @@ const LiveKitControls = ({
       <ControlButton
         icon={<LuScreenShare />}
         label="Share"
+        sound={false}
         onClick={toggleScreenShare}
       />
     );
