@@ -147,7 +147,7 @@ const LiveKitControls = ({
     kind: SelectableDeviceKind,
     deviceId: string,
   ) => {
-    const options = { exact: deviceId !== "default" };
+    const options = deviceId === "default" ? undefined : { exact: true };
 
     if (kind === "audioinput") {
       await setActiveMicrophoneDevice(deviceId, options);
@@ -530,8 +530,25 @@ const LiveKitControls = ({
     fallback: string,
   ) => {
     const device = devices.find((item) => item.deviceId === activeDeviceId);
+    const defaultDevice = devices.find((item) => item.deviceId === "default");
 
-    return device?.label || devices[0]?.label || fallback;
+    return device?.label || defaultDevice?.label || devices[0]?.label || fallback;
+  };
+
+  const getSelectedDeviceId = (
+    devices: MediaDeviceInfo[],
+    activeDeviceId: string,
+  ) => {
+    if (devices.some((device) => device.deviceId === activeDeviceId)) {
+      return activeDeviceId;
+    }
+
+    const defaultDevice = devices.find((device) => device.deviceId === "default");
+    if (defaultDevice) {
+      return defaultDevice.deviceId;
+    }
+
+    return devices[0]?.deviceId ?? "";
   };
 
   const activeMicrophoneLabel = getDeviceLabel(
@@ -548,6 +565,18 @@ const LiveKitControls = ({
     cameraDevices,
     activeCameraDeviceId,
     "Default camera",
+  );
+  const selectedMicrophoneDeviceId = getSelectedDeviceId(
+    microphoneDevices,
+    activeMicrophoneDeviceId,
+  );
+  const selectedSpeakerDeviceId = getSelectedDeviceId(
+    speakerDevices,
+    activeSpeakerDeviceId,
+  );
+  const selectedCameraDeviceId = getSelectedDeviceId(
+    cameraDevices,
+    activeCameraDeviceId,
   );
 
   const renderVolumeMeter = () => {
@@ -740,9 +769,12 @@ const LiveKitControls = ({
         }}
         className="max-w-[250px] cursor-pointer rounded-lg px-2.5 py-1.5 pl-2.5 text-sm font-normal [&>span:first-child]:hidden"
       >
-        {((kind === "audioinput" && activeMicrophoneDeviceId === device.deviceId) ||
-          (kind === "audiooutput" && activeSpeakerDeviceId === device.deviceId) ||
-          (kind === "videoinput" && activeCameraDeviceId === device.deviceId)) ? (
+        {((kind === "audioinput" &&
+          selectedMicrophoneDeviceId === device.deviceId) ||
+          (kind === "audiooutput" &&
+            selectedSpeakerDeviceId === device.deviceId) ||
+          (kind === "videoinput" &&
+            selectedCameraDeviceId === device.deviceId)) ? (
           <FiCheckSquare className="size-4" />
         ) : (
           <FiSquare className="size-4" />
@@ -781,7 +813,7 @@ const LiveKitControls = ({
           collisionPadding={8}
           className="w-[250px] rounded-xl border-call-border bg-call-background p-1"
         >
-          <DropdownMenuRadioGroup value={activeMicrophoneDeviceId}>
+          <DropdownMenuRadioGroup value={selectedMicrophoneDeviceId}>
             {renderDeviceRadioItems("audioinput", microphoneDevices)}
           </DropdownMenuRadioGroup>
         </DropdownMenuSubContent>
@@ -806,7 +838,7 @@ const LiveKitControls = ({
           className="w-[250px] rounded-xl border-call-border bg-call-background p-1"
         >
           {canSelectAudioOutput ? (
-            <DropdownMenuRadioGroup value={activeSpeakerDeviceId}>
+            <DropdownMenuRadioGroup value={selectedSpeakerDeviceId}>
               {renderDeviceRadioItems("audiooutput", speakerDevices)}
             </DropdownMenuRadioGroup>
           ) : (
@@ -880,7 +912,7 @@ const LiveKitControls = ({
           collisionPadding={8}
           className="w-[250px] rounded-xl border-call-border bg-call-background p-1"
         >
-          <DropdownMenuRadioGroup value={activeCameraDeviceId}>
+          <DropdownMenuRadioGroup value={selectedCameraDeviceId}>
             {renderDeviceRadioItems("videoinput", cameraDevices)}
           </DropdownMenuRadioGroup>
         </DropdownMenuSubContent>
