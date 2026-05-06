@@ -11,8 +11,6 @@ import {
   FiChevronDown,
   FiChevronUp,
   FiCheckSquare,
-  FiMaximize2,
-  FiMinimize2,
   FiMoon,
   FiSettings,
   FiSquare,
@@ -21,6 +19,7 @@ import {
   FiVideoOff,
 } from "react-icons/fi";
 import { IoChatbubbleOutline } from "react-icons/io5";
+import { Maximize, Minimize } from "lucide-react";
 import { LuScreenShare, LuScreenShareOff, LuUsers } from "react-icons/lu";
 import { MdCallEnd, MdLogout } from "react-icons/md";
 import { RiMicLine, RiMicOffLine } from "react-icons/ri";
@@ -510,7 +509,7 @@ const LiveKitControls = ({
             onSelect={toggleFullscreen}
             className="cursor-pointer rounded-lg px-2.5 py-1.5 text-sm"
           >
-            {isFullscreen ? <FiMinimize2 /> : <FiMaximize2 />}
+            {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
             {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
           </DropdownMenuItem>
         </DropdownMenuContent>
