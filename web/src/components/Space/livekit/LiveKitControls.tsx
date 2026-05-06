@@ -82,6 +82,11 @@ const LiveKitControls = ({
   const [outputVolume, setOutputVolume] = useState(100);
   const [micLevel, setMicLevel] = useState(0);
   const animFrameRef = useRef<number>(null);
+  const micGainContextRef = useRef<AudioContext | null>(null);
+  const micGainNodeRef = useRef<GainNode | null>(null);
+  const micGainSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const originalMicTrackRef = useRef<MediaStreamTrack | null>(null);
+  const processedMicTrackRef = useRef<MediaStreamTrack | null>(null);
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
   const [openMediaMenu, setOpenMediaMenu] = useState<"mic" | "cam" | null>(
     null,
@@ -90,6 +95,8 @@ const LiveKitControls = ({
   const previousInputVolumeBeforeMuteRef = useRef(inputVolume);
   const previousInputVolumeBeforeDeafenRef = useRef(inputVolume);
   const previousOutputVolumeBeforeDeafenRef = useRef(outputVolume);
+  const hasHandledInitialMicStateRef = useRef(false);
+  const shouldApplyMuteVolumeRuleRef = useRef(false);
   const { resolvedTheme, setTheme } = useTheme();
   const {
     isCameraEnabled,
@@ -123,6 +130,7 @@ const LiveKitControls = ({
     "setSinkId" in HTMLMediaElement.prototype;
 
   const toggleMicrophone = async () => {
+    shouldApplyMuteVolumeRuleRef.current = true;
     if (deafened) {
       await handleDeafenToggle(false);
       await localParticipant.setMicrophoneEnabled(true);
@@ -248,7 +256,9 @@ const LiveKitControls = ({
         const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
         const normalized = avg / 255;
         const curved = Math.pow(normalized, 1.5);
-        setMicLevel(Math.min(100, Math.round(curved * 100 * 3)));
+        const inputGain = inputVolume / 100;
+        // Lower input volume should reduce meter sensitivity and visible waves.
+        setMicLevel(Math.min(100, Math.round(curved * 100 * 3 * inputGain)));
       }
       animFrameRef.current = requestAnimationFrame(poll);
     };
@@ -269,7 +279,7 @@ const LiveKitControls = ({
       source?.disconnect();
       void audioContext?.close();
     };
-  }, [localParticipant, isMicrophoneEnabled]);
+  }, [inputVolume, localParticipant, isMicrophoneEnabled]);
 
   useEffect(() => {
     const applyOutputVolume = () => {
@@ -292,6 +302,92 @@ const LiveKitControls = ({
   }, [deafened, outputVolume]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const setupMicGain = async () => {
+      const publication = localParticipant.getTrackPublication(
+        Track.Source.Microphone,
+      );
+      const localMicTrack = publication?.track;
+      const publishedTrack = localMicTrack?.mediaStreamTrack;
+
+      if (!localMicTrack || !publishedTrack || !isMicrophoneEnabled || deafened) {
+        return;
+      }
+
+      const isPublishedTrackProcessed =
+        !!processedMicTrackRef.current &&
+        publishedTrack === processedMicTrackRef.current;
+      const sourceTrack =
+        isPublishedTrackProcessed && originalMicTrackRef.current
+          ? originalMicTrackRef.current
+          : publishedTrack;
+
+      const needsRebuild =
+        !micGainNodeRef.current ||
+        !processedMicTrackRef.current ||
+        originalMicTrackRef.current !== sourceTrack;
+
+      if (needsRebuild) {
+        micGainSourceRef.current?.disconnect();
+        micGainNodeRef.current?.disconnect();
+        if (processedMicTrackRef.current) {
+          processedMicTrackRef.current.stop();
+        }
+        void micGainContextRef.current?.close();
+
+        const audioContext = new AudioContext();
+        const source = audioContext.createMediaStreamSource(
+          new MediaStream([sourceTrack]),
+        );
+        const gainNode = audioContext.createGain();
+        const destination = audioContext.createMediaStreamDestination();
+
+        source.connect(gainNode);
+        gainNode.connect(destination);
+
+        const processedTrack = destination.stream.getAudioTracks()[0];
+        if (!processedTrack) return;
+
+        await localMicTrack.replaceTrack(processedTrack);
+        if (cancelled) {
+          processedTrack.stop();
+          void audioContext.close();
+          return;
+        }
+
+        await audioContext.resume();
+        micGainContextRef.current = audioContext;
+        micGainSourceRef.current = source;
+        micGainNodeRef.current = gainNode;
+        originalMicTrackRef.current = sourceTrack;
+        processedMicTrackRef.current = processedTrack;
+      }
+
+      if (micGainNodeRef.current) {
+        micGainNodeRef.current.gain.value = inputVolume / 100;
+      }
+    };
+
+    void setupMicGain();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [deafened, inputVolume, isMicrophoneEnabled, localParticipant]);
+
+  useEffect(() => {
+    return () => {
+      micGainSourceRef.current?.disconnect();
+      micGainNodeRef.current?.disconnect();
+      if (processedMicTrackRef.current) {
+        processedMicTrackRef.current.stop();
+      }
+      void micGainContextRef.current?.close();
+    };
+  }, []);
+
+  useEffect(() => {
     if (deafened) {
       if (inputVolume > 0) {
         previousInputVolumeBeforeDeafenRef.current = inputVolume;
@@ -302,7 +398,15 @@ const LiveKitControls = ({
       return;
     }
 
+    if (!hasHandledInitialMicStateRef.current) {
+      hasHandledInitialMicStateRef.current = true;
+      return;
+    }
+
     if (!isMicrophoneEnabled) {
+      if (!shouldApplyMuteVolumeRuleRef.current) {
+        return;
+      }
       if (inputVolume > 0) {
         previousInputVolumeBeforeMuteRef.current = inputVolume;
       }
@@ -312,13 +416,14 @@ const LiveKitControls = ({
       return;
     }
 
-    if (inputVolume === 0) {
+    if (shouldApplyMuteVolumeRuleRef.current && inputVolume === 0) {
       setInputVolume(
         previousInputVolumeBeforeMuteRef.current > 0
           ? previousInputVolumeBeforeMuteRef.current
           : 100,
       );
     }
+    shouldApplyMuteVolumeRuleRef.current = false;
   }, [deafened, inputVolume, isMicrophoneEnabled]);
 
   const handleDeafenToggle = async (checked: boolean) => {
@@ -329,12 +434,8 @@ const LiveKitControls = ({
 
     if (shouldDeafen) {
       previousMicEnabledBeforeDeafenRef.current = isMicrophoneEnabled;
-      if (inputVolume > 0) {
-        previousInputVolumeBeforeDeafenRef.current = inputVolume;
-      }
-      if (outputVolume > 0) {
-        previousOutputVolumeBeforeDeafenRef.current = outputVolume;
-      }
+      previousInputVolumeBeforeDeafenRef.current = inputVolume;
+      previousOutputVolumeBeforeDeafenRef.current = outputVolume;
 
       if (isMicrophoneEnabled) {
         await localParticipant.setMicrophoneEnabled(false);
@@ -343,18 +444,10 @@ const LiveKitControls = ({
       setInputVolume(0);
       setOutputVolume(0);
     } else {
-      const volumeToRestore =
-        previousOutputVolumeBeforeDeafenRef.current > 0
-          ? previousOutputVolumeBeforeDeafenRef.current
-          : 100;
-      setOutputVolume(volumeToRestore);
+      setOutputVolume(previousOutputVolumeBeforeDeafenRef.current);
 
       if (previousMicEnabledBeforeDeafenRef.current === true) {
-        const inputToRestore =
-          previousInputVolumeBeforeDeafenRef.current > 0
-            ? previousInputVolumeBeforeDeafenRef.current
-            : 100;
-        setInputVolume(inputToRestore);
+        setInputVolume(previousInputVolumeBeforeDeafenRef.current);
         await localParticipant.setMicrophoneEnabled(true);
       } else {
         setInputVolume(0);
@@ -371,23 +464,11 @@ const LiveKitControls = ({
     }
   };
 
-  const handleInputVolumeChange = async (value: number) => {
-    if (deafened) {
-      await handleDeafenToggle(false);
-    }
-
-    if (!isMicrophoneEnabled) {
-      await localParticipant.setMicrophoneEnabled(true);
-    }
-
+  const handleInputVolumeChange = (value: number) => {
     setInputVolume(value);
   };
 
-  const handleOutputVolumeChange = async (value: number) => {
-    if (deafened) {
-      await handleDeafenToggle(false);
-    }
-
+  const handleOutputVolumeChange = (value: number) => {
     setOutputVolume(value);
   };
 
