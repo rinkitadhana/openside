@@ -1,18 +1,19 @@
 import { isTrackReference } from "@livekit/components-core";
 import {
-  ConnectionQualityIndicator,
   ParticipantTile,
   RoomAudioRenderer,
   VideoTrack,
   useIsMuted,
+  useLocalParticipant,
   useIsSpeaking,
   useParticipants,
   useTracks,
 } from "@livekit/components-react";
-import { Track, type Participant } from "livekit-client";
+import { ConnectionQuality, Track, type Participant } from "livekit-client";
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Link, MicOff, X } from "lucide-react";
-import { LuHeadphoneOff } from "react-icons/lu";
+import { FiWifiOff } from "react-icons/fi";
+import { LuHeadphoneOff, LuWifiHigh } from "react-icons/lu";
 import UserAvatar from "../ui/UserAvatar";
 import { AudioLinesIcon } from "@/components/shared/ui/audio-lines";
 
@@ -224,6 +225,37 @@ const getParticipantGridClassName = (trackCount: number) => {
   return "grid-cols-1 md:grid-cols-2 xl:grid-cols-3";
 };
 
+const getConnectionQualityWarning = (quality: ConnectionQuality | undefined) => {
+  if (quality === ConnectionQuality.Poor) {
+    return {
+      label: "Network unstable",
+      tone: "warning" as const,
+      icon: <LuWifiHigh size={16} />,
+    };
+  }
+
+  if (quality === ConnectionQuality.Lost) {
+    return {
+      label: "Connection lost",
+      tone: "danger" as const,
+      icon: <FiWifiOff size={16} />,
+    };
+  }
+
+  if (quality === ConnectionQuality.Unknown) {
+    return {
+      label: "Checking network quality...",
+      tone: "muted" as const,
+      icon: null,
+    };
+  }
+
+  return null;
+};
+
+const DEMO_FORCE_CONNECTION_QUALITY: ConnectionQuality | null =
+  null;
+
 const LiveKitVideoStage = ({
   deafened,
   isHost,
@@ -231,6 +263,7 @@ const LiveKitVideoStage = ({
   roomCode,
 }: LiveKitVideoStageProps) => {
   const [isInvitePanelHidden, setIsInvitePanelHidden] = useState(false);
+  const { localParticipant } = useLocalParticipant();
   const participants = useParticipants();
   const tracks = useTracks(
     [
@@ -270,11 +303,30 @@ const LiveKitVideoStage = ({
     : visibleTracks;
 
   const isAlone = remoteParticipantCount === 0;
+  const connectionWarning = getConnectionQualityWarning(
+    DEMO_FORCE_CONNECTION_QUALITY ?? localParticipant.connectionQuality,
+  );
 
   const showInvitePanel = isHost && isAlone && !isInvitePanelHidden;
 
   return (
     <div className="relative h-full min-h-0 flex flex-col gap-2">
+      {connectionWarning && (
+        <div className="pointer-events-none absolute right-2 top-2 z-30">
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-normal text-white ${
+              connectionWarning.tone === "danger"
+                ? "bg-red-500/70"
+                : connectionWarning.tone === "warning"
+                  ? "bg-amber-500/70"
+                  : "bg-foreground/55"
+            }`}
+          >
+            {connectionWarning.icon}
+            {connectionWarning.label}
+          </span>
+        </div>
+      )}
       <div className="flex-1 min-h-0">
         {screenShareTrack || pinnedTrack ? (
           <div className="grid h-full gap-2 lg:grid-cols-[minmax(0,1fr)_260px]">
@@ -393,10 +445,6 @@ const ParticipantFrame = ({
       {isSpeaking && (
         <div className="pointer-events-none absolute inset-0 z-10 rounded-xl ring-3 ring-inset ring-purple-400 dark:ring-2 dark:ring-purple-400/80" />
       )}
-      <ConnectionQualityIndicator
-        participant={participant}
-        className="pointer-events-none absolute right-2 top-2 z-20 flex h-5 w-6 items-center justify-center overflow-visible text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 [&_svg]:h-3.5 [&_svg]:w-3.5 [&_svg]:overflow-visible"
-      />
       <div className="pointer-events-none absolute right-2 bottom-2 z-20 flex min-h-8 min-w-8 items-center justify-center text-white">
         {isParticipantDeafened ? (
           <LuHeadphoneOff size={18} />
