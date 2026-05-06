@@ -16,6 +16,8 @@ import type { PreJoinSettings } from "@/types/preJoinTypes";
 import LiveKitControls from "./livekit/LiveKitControls";
 import LiveKitVideoStage from "./livekit/LiveKitVideoStage";
 import { LiveKitChatProvider } from "./chat/LiveKitChatProvider";
+import { LiveKitReactionsProvider } from "./reactions/LiveKitReactionsProvider";
+import LiveKitReactionsOverlay from "./reactions/LiveKitReactionsOverlay";
 import ChatSidebar from "./sidebars/ChatSidebar";
 import InfoSidebar from "./sidebars/InfoSidebar";
 import UsersSidebar from "./sidebars/UsersSidebar";
@@ -212,36 +214,39 @@ const LiveKitSpaceScreen = ({
       className="flex h-full flex-col gap-2 bg-call-background"
     >
       <LiveKitChatProvider>
-        <div className="flex min-h-0 flex-1">
-          <div className="min-w-0 flex-1">
-            <LiveKitVideoStage
+        <LiveKitReactionsProvider>
+          <div className="relative flex min-h-0 flex-1">
+            <div className="min-w-0 flex-1">
+              <LiveKitVideoStage
+                deafened={deafened}
+                isHost={isHost}
+                pinnedParticipantIdentity={pinnedParticipantIdentity}
+                roomCode={roomCode}
+              />
+            </div>
+            <LiveKitReactionsOverlay />
+            {activeSidebar && (
+              <div className="ml-2 flex h-full shrink-0 items-center justify-center">
+                <div className="flex h-full w-[350px] flex-col items-stretch justify-start overflow-hidden rounded-2xl border border-call-border bg-call-primary">
+                  {renderSidebarContent()}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="shrink-0">
+            <LiveKitControls
+              activeSidebar={activeSidebar}
               deafened={deafened}
               isHost={isHost}
-              pinnedParticipantIdentity={pinnedParticipantIdentity}
               roomCode={roomCode}
+              setDeafened={setDeafened}
+              onEndForAll={handleEndForAll}
+              onLeave={handleLeave}
+              toggleSidebar={toggleSidebar}
             />
           </div>
-          {activeSidebar && (
-            <div className="ml-2 flex h-full shrink-0 items-center justify-center">
-              <div className="flex h-full w-[350px] flex-col items-stretch justify-start overflow-hidden rounded-2xl border border-call-border bg-call-primary">
-                {renderSidebarContent()}
-              </div>
-            </div>
-          )}
-        </div>
+        </LiveKitReactionsProvider>
       </LiveKitChatProvider>
-      <div className="shrink-0">
-        <LiveKitControls
-          activeSidebar={activeSidebar}
-          deafened={deafened}
-          isHost={isHost}
-          roomCode={roomCode}
-          setDeafened={setDeafened}
-          onEndForAll={handleEndForAll}
-          onLeave={handleLeave}
-          toggleSidebar={toggleSidebar}
-        />
-      </div>
       {disconnectWarning && (
         <CallWarningDialog
           title={disconnectWarning.title}

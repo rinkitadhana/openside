@@ -13,13 +13,14 @@ import {
   FiCheckSquare,
   FiMoon,
   FiSettings,
+  FiSmile,
   FiSquare,
   FiSun,
   FiVideo,
   FiVideoOff,
 } from "react-icons/fi";
-import { IoChatbubbleOutline } from "react-icons/io5";
-import { Maximize, Minimize } from "lucide-react";
+import { IoChatbubbleOutline, IoHandRightOutline } from "react-icons/io5";
+import { Maximize, Minimize, SmilePlus } from "lucide-react";
 import { LuScreenShare, LuScreenShareOff, LuUsers } from "react-icons/lu";
 import { MdCallEnd, MdLogout } from "react-icons/md";
 import { RiMicLine, RiMicOffLine } from "react-icons/ri";
@@ -43,6 +44,7 @@ import DateComponent from "@/utils/Time";
 import playClickSound from "@/utils/ClickSound";
 import ControlButton from "../controls/ControlButton";
 import CallWarningDialog from "../ui/CallWarningDialog";
+import { useLiveKitReactions } from "../reactions/LiveKitReactionsProvider";
 
 type SidebarType = "info" | "users" | "chat" | null;
 type ExitAction = "end-for-all" | null;
@@ -54,6 +56,70 @@ const isPermissionDeniedError = (error: unknown) =>
     : error instanceof Error &&
       (error.name === "NotAllowedError" ||
         error.name === "PermissionDeniedError");
+
+const QUICK_REACTIONS = ["👍", "👏", "❤️", "😂", "🎉", "🔥"];
+const EXTRA_REACTIONS = [
+  "😀",
+  "😁",
+  "😅",
+  "🤣",
+  "😊",
+  "😍",
+  "😘",
+  "😎",
+  "🤔",
+  "😴",
+  "😭",
+  "😡",
+  "🥳",
+  "🤩",
+  "🙌",
+  "👌",
+  "✌️",
+  "🙏",
+  "💪",
+  "👋",
+  "🤝",
+  "🫶",
+  "💯",
+  "✨",
+  "⭐",
+  "🌟",
+  "🎊",
+  "🍾",
+  "🚀",
+  "🏆",
+  "😇",
+  "😋",
+  "😜",
+  "🤗",
+  "🤭",
+  "🫡",
+  "😌",
+  "😬",
+  "🤤",
+  "😮",
+  "😱",
+  "🥹",
+  "😤",
+  "🤨",
+  "🧠",
+  "🫠",
+  "🥲",
+  "🐐",
+  "💥",
+  "🎯",
+  "✅",
+  "❌",
+  "📣",
+  "💫",
+  "🕺",
+  "💃",
+  "🤘",
+  "🫶🏻",
+  "🫶🏽",
+  "🫶🏿",
+];
 
 interface LiveKitControlsProps {
   activeSidebar: SidebarType;
@@ -88,6 +154,10 @@ const LiveKitControls = ({
   const originalMicTrackRef = useRef<MediaStreamTrack | null>(null);
   const processedMicTrackRef = useRef<MediaStreamTrack | null>(null);
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
+  const [isReactionMenuOpen, setIsReactionMenuOpen] = useState(false);
+  const [optimisticHandRaised, setOptimisticHandRaised] = useState<
+    boolean | null
+  >(null);
   const [openMediaMenu, setOpenMediaMenu] = useState<"mic" | "cam" | null>(
     null,
   );
@@ -98,6 +168,7 @@ const LiveKitControls = ({
   const hasHandledInitialMicStateRef = useRef(false);
   const shouldApplyMuteVolumeRuleRef = useRef(false);
   const { resolvedTheme, setTheme } = useTheme();
+  const { sendReaction } = useLiveKitReactions();
   const {
     isCameraEnabled,
     isMicrophoneEnabled,
@@ -128,6 +199,15 @@ const LiveKitControls = ({
   const canSelectAudioOutput =
     typeof HTMLMediaElement !== "undefined" &&
     "setSinkId" in HTMLMediaElement.prototype;
+  const attributeHandRaised = localParticipant.attributes.handRaised === "true";
+  const isHandRaised =
+    optimisticHandRaised === null ? attributeHandRaised : optimisticHandRaised;
+
+  useEffect(() => {
+    if (optimisticHandRaised !== null && optimisticHandRaised === attributeHandRaised) {
+      setOptimisticHandRaised(null);
+    }
+  }, [attributeHandRaised, optimisticHandRaised]);
 
   const toggleMicrophone = async () => {
     shouldApplyMuteVolumeRuleRef.current = true;
@@ -169,6 +249,20 @@ const LiveKitControls = ({
       if (isPermissionDeniedError(error)) return;
 
       toast.error("Unable to start screen share.");
+    }
+  };
+
+  const toggleHandRaise = async () => {
+    const nextValue = !isHandRaised;
+    setOptimisticHandRaised(nextValue);
+
+    try {
+      await localParticipant.setAttributes({
+        handRaised: nextValue ? "true" : "false",
+      });
+    } catch {
+      setOptimisticHandRaised(null);
+      toast.error("Unable to update hand raise status.");
     }
   };
 
@@ -1041,6 +1135,105 @@ const LiveKitControls = ({
       />
     );
 
+  const renderReactionsControl = () => (
+    <div className="flex flex-col gap-1 items-center">
+      <DropdownMenu
+        open={isReactionMenuOpen}
+        onOpenChange={setIsReactionMenuOpen}
+      >
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className={cn(
+              "flex min-h-11 w-11 items-center justify-center rounded-xl border border-call-border text-lg font-medium cursor-pointer transition-all duration-200",
+              isReactionMenuOpen
+                ? "bg-primary-hover"
+                : "bg-call-primary hover:bg-primary-hover",
+            )}
+            onClick={playClickSound}
+            aria-label="Reactions"
+          >
+            <FiSmile />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="center"
+          collisionPadding={8}
+          side="top"
+          sideOffset={6}
+          className="w-auto border-none bg-transparent p-0 shadow-none"
+        >
+          <div className="flex items-center gap-1 rounded-xl border border-call-border bg-call-background px-1 py-1">
+            {QUICK_REACTIONS.map((emoji) => (
+              <DropdownMenuItem
+                key={emoji}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  playClickSound();
+                  void sendReaction(emoji);
+                }}
+                className="cursor-pointer rounded-lg px-2 py-1 text-center text-2xl transition-colors hover:bg-primary-hover focus:bg-primary-hover"
+              >
+                <span className="w-full">{emoji}</span>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger
+                hideChevron
+                className="ml-1 flex items-center justify-center cursor-pointer rounded-lg px-2 py-1 text-center text-2xl transition-colors data-[state=open]:bg-primary-hover hover:bg-primary-hover focus:bg-primary-hover"
+                aria-label="More emojis"
+                title="More emojis"
+              >
+                <SmilePlus className="size-5" />
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent
+                side="top"
+                align="end"
+                sideOffset={8}
+                collisionPadding={8}
+                className="w-[320px] rounded-xl border-call-border bg-call-background p-2"
+              >
+                <div className="grid max-h-[280px] grid-cols-8 gap-1 overflow-y-auto pr-1">
+                  {EXTRA_REACTIONS.map((emoji) => (
+                    <DropdownMenuItem
+                      key={emoji}
+                      onSelect={(event) => {
+                        event.preventDefault();
+                        playClickSound();
+                        void sendReaction(emoji);
+                      }}
+                      className="cursor-pointer rounded-lg px-2 py-1 text-center text-2xl transition-colors hover:bg-primary-hover focus:bg-primary-hover"
+                    >
+                      <span className="w-full">{emoji}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </div>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <button
+              type="button"
+              onClick={() => {
+                playClickSound();
+                void toggleHandRaise();
+              }}
+              className={cn(
+                "ml-1 flex h-10 w-10 items-center justify-center rounded-lg border transition-all duration-200",
+                isHandRaised
+                  ? "border-blue-400/30 bg-blue-500/30 text-blue-200 hover:bg-blue-500/40"
+                  : "border-call-border bg-call-primary text-foreground hover:bg-primary-hover",
+              )}
+              aria-label={isHandRaised ? "Lower hand" : "Raise hand"}
+              title={isHandRaised ? "Lower hand" : "Raise hand"}
+            >
+              <IoHandRightOutline className="size-5" />
+            </button>
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <p className="text-[0.675rem] text-foreground/50">React</p>
+    </div>
+  );
+
   const renderPrimaryControls = () => (
     <div className="select-none flex items-center gap-2.5 p-2">
       {renderSplitMediaControl({
@@ -1062,6 +1255,7 @@ const LiveKitControls = ({
         menuId: "cam",
       })}
       {renderScreenShareControl()}
+      {renderReactionsControl()}
       {renderOptionsControl()}
       <div className="h-8 border-r border-primary-border mx-1 mb-4.5" />
       {renderEndControl()}

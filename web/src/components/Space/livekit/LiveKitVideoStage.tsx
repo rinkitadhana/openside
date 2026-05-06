@@ -13,6 +13,7 @@ import { ConnectionQuality, Track, type Participant } from "livekit-client";
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Link, MicOff, X } from "lucide-react";
 import { FiWifiOff } from "react-icons/fi";
+import { IoHandRightOutline } from "react-icons/io5";
 import { LuHeadphoneOff, LuWifiHigh } from "react-icons/lu";
 import UserAvatar from "../ui/UserAvatar";
 import { AudioLinesIcon } from "@/components/shared/ui/audio-lines";
@@ -413,6 +414,7 @@ const ParticipantFrame = ({
   const displayName = participant.isLocal ? "You" : participant.name || "Guest";
   const displayLabel = roleLabel ? `${displayName} ${roleLabel}` : displayName;
   const avatar = getParticipantAvatar(participant);
+  const isHandRaised = participant.attributes.handRaised === "true";
   const isParticipantDeafened = participant.isLocal
     ? deafened
     : participant.attributes.deafened === "true";
@@ -423,16 +425,18 @@ const ParticipantFrame = ({
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-xl border border-call-border bg-call-primary ${
-        focus ? "min-h-[360px]" : "min-h-[180px]"
-      }`}
+      className={`group relative overflow-hidden rounded-xl border ${
+        isHandRaised
+          ? "border-blue-400/60 bg-blue-500/12"
+          : "border-call-border bg-call-primary"
+      } ${focus ? "min-h-[360px]" : "min-h-[180px]"}`}
     >
       <ParticipantTile
         trackRef={trackRef}
-        className="h-full w-full bg-call-primary"
+        className={`h-full w-full ${isHandRaised ? "bg-blue-500/12" : "bg-call-primary"}`}
       >
         {shouldShowVideo ? (
-          <div className="flex h-full w-full items-center justify-center bg-call-primary">
+          <div className={`flex h-full w-full items-center justify-center ${isHandRaised ? "bg-blue-500/12" : "bg-call-primary"}`}>
             <VideoTrack
               trackRef={trackRef}
               className="aspect-video h-full max-h-full w-auto max-w-[min(100%,1664px)] !object-cover"
@@ -459,7 +463,14 @@ const ParticipantFrame = ({
         )}
       </div>
       <div className="pointer-events-none absolute left-2 bottom-2 z-20 flex items-center gap-2">
-        <span className="max-w-[220px] truncate rounded-full bg-call-background/55 px-3 py-1 text-sm font-medium text-foreground">
+        <span
+          className={`max-w-[220px] truncate rounded-full px-3 py-1 text-sm font-medium ${
+            isHandRaised
+              ? "bg-blue-500/45 text-white"
+              : "bg-call-background/55 text-foreground"
+          }`}
+        >
+          {isHandRaised && <IoHandRightOutline className="mr-1.5 mb-0.5 inline size-3.5" />}
           {displayLabel}
         </span>
       </div>
