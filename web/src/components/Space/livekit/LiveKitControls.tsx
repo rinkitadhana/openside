@@ -79,7 +79,7 @@ const LiveKitControls = ({
   const [pendingExitAction, setPendingExitAction] = useState<ExitAction>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [inputVolume, setInputVolume] = useState(100);
-  const [outputVolume, setOutputVolume] = useState(50);
+  const [outputVolume, setOutputVolume] = useState(100);
   const [micLevel, setMicLevel] = useState(0);
   const animFrameRef = useRef<number>(null);
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
@@ -87,6 +87,8 @@ const LiveKitControls = ({
     null,
   );
   const previousMicEnabledBeforeDeafenRef = useRef<boolean | null>(null);
+  const previousInputVolumeBeforeMuteRef = useRef(inputVolume);
+  const previousInputVolumeBeforeDeafenRef = useRef(inputVolume);
   const previousOutputVolumeBeforeDeafenRef = useRef(outputVolume);
   const { resolvedTheme, setTheme } = useTheme();
   const {
@@ -289,6 +291,36 @@ const LiveKitControls = ({
     };
   }, [deafened, outputVolume]);
 
+  useEffect(() => {
+    if (deafened) {
+      if (inputVolume > 0) {
+        previousInputVolumeBeforeDeafenRef.current = inputVolume;
+      }
+      if (inputVolume !== 0) {
+        setInputVolume(0);
+      }
+      return;
+    }
+
+    if (!isMicrophoneEnabled) {
+      if (inputVolume > 0) {
+        previousInputVolumeBeforeMuteRef.current = inputVolume;
+      }
+      if (inputVolume !== 0) {
+        setInputVolume(0);
+      }
+      return;
+    }
+
+    if (inputVolume === 0) {
+      setInputVolume(
+        previousInputVolumeBeforeMuteRef.current > 0
+          ? previousInputVolumeBeforeMuteRef.current
+          : 100,
+      );
+    }
+  }, [deafened, inputVolume, isMicrophoneEnabled]);
+
   const handleDeafenToggle = async (checked: boolean) => {
     const shouldDeafen = checked === true;
 
@@ -297,6 +329,9 @@ const LiveKitControls = ({
 
     if (shouldDeafen) {
       previousMicEnabledBeforeDeafenRef.current = isMicrophoneEnabled;
+      if (inputVolume > 0) {
+        previousInputVolumeBeforeDeafenRef.current = inputVolume;
+      }
       if (outputVolume > 0) {
         previousOutputVolumeBeforeDeafenRef.current = outputVolume;
       }
@@ -305,16 +340,24 @@ const LiveKitControls = ({
         await localParticipant.setMicrophoneEnabled(false);
       }
 
+      setInputVolume(0);
       setOutputVolume(0);
     } else {
       const volumeToRestore =
         previousOutputVolumeBeforeDeafenRef.current > 0
           ? previousOutputVolumeBeforeDeafenRef.current
-          : 50;
+          : 100;
       setOutputVolume(volumeToRestore);
 
       if (previousMicEnabledBeforeDeafenRef.current === true) {
+        const inputToRestore =
+          previousInputVolumeBeforeDeafenRef.current > 0
+            ? previousInputVolumeBeforeDeafenRef.current
+            : 100;
+        setInputVolume(inputToRestore);
         await localParticipant.setMicrophoneEnabled(true);
+      } else {
+        setInputVolume(0);
       }
       previousMicEnabledBeforeDeafenRef.current = null;
     }
@@ -326,6 +369,26 @@ const LiveKitControls = ({
     } catch {
       // Ignore attribute update failures; local deafen behavior still applies.
     }
+  };
+
+  const handleInputVolumeChange = async (value: number) => {
+    if (deafened) {
+      await handleDeafenToggle(false);
+    }
+
+    if (!isMicrophoneEnabled) {
+      await localParticipant.setMicrophoneEnabled(true);
+    }
+
+    setInputVolume(value);
+  };
+
+  const handleOutputVolumeChange = async (value: number) => {
+    if (deafened) {
+      await handleDeafenToggle(false);
+    }
+
+    setOutputVolume(value);
   };
 
   useEffect(() => {
@@ -431,8 +494,9 @@ const LiveKitControls = ({
     value: number,
     onChange: (value: number) => void,
     showMeter = false,
+    disabled = false,
   ) => (
-    <div className="px-2.5 py-2">
+    <div className={`px-2.5 py-2 ${disabled ? "opacity-55" : ""}`}>
       <p className="text-xs font-normal text-foreground/85">{label}</p>
       <div
         className="relative mt-2"
@@ -449,7 +513,10 @@ const LiveKitControls = ({
           max={100}
           value={value}
           onChange={(event) => onChange(Number(event.target.value))}
-          className="peer volume-slider h-1.5 w-full cursor-pointer"
+          disabled={disabled}
+          className={`peer volume-slider h-1.5 w-full ${
+            disabled ? "cursor-not-allowed" : "cursor-pointer"
+          }`}
           style={{ "--volume-progress": `${value}%` } as CSSProperties}
         />
         <span
@@ -673,8 +740,20 @@ const LiveKitControls = ({
       </DropdownMenuSub>
 
       <DropdownMenuSeparator className="mx-2 my-1.5 bg-call-border" />
-      {renderRangeControl("Input Volume", inputVolume, setInputVolume, true)}
-      {renderRangeControl("Output Volume", outputVolume, setOutputVolume)}
+      {renderRangeControl(
+        "Input Volume",
+        inputVolume,
+        handleInputVolumeChange,
+        true,
+        deafened || !isMicrophoneEnabled,
+      )}
+      {renderRangeControl(
+        "Output Volume",
+        outputVolume,
+        handleOutputVolumeChange,
+        false,
+        deafened,
+      )}
       <DropdownMenuSeparator className="mx-2 my-1.5 bg-call-border" />
       <DropdownMenuCheckboxItem
         checked={deafened}
