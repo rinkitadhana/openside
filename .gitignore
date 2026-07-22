@@ -1,0 +1,301 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# ===========================
+# Dependencies & Package Managers
+# ===========================
+node_modules/
+web/node_modules/
+core/node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+.npm
+.eslintcache
+web/.eslintcache
+core/.eslintcache
+.cache
+web/.cache/
+core/.cache/
+*.tgz
+
+# ===========================
+# Environment Files
+# ===========================
+.env*
+!.env.example
+!.env.template
+
+# ===========================
+# Build Outputs & Distribution
+# ===========================
+# Root level builds
+.next/
+out/
+build/
+dist/
+
+# App builds
+web/.next/
+web/out/
+web/build/
+web/dist/
+core/.next/
+core/out/
+core/build/
+core/dist/
+
+# TypeScript builds
+*.tsbuildinfo
+**/tsconfig.tsbuildinfo
+web/tsconfig.tsbuildinfo
+core/tsconfig.tsbuildinfo
+next-env.d.ts
+web/next-env.d.ts
+
+# Bun specific outputs
+*.bun
+web/bun.lockb
+core/bun.lockb
+
+# Other build artifacts
+web/storybook-static/
+core/storybook-static/
+
+# ===========================
+# Prisma
+# ===========================
+core/prisma/generated/
+
+# ===========================
+# Testing & Coverage
+# ===========================
+coverage/
+web/coverage/
+core/coverage/
+*.lcov
+.nyc_output
+web/.nyc_output
+core/.nyc_output
+.jest
+web/.jest
+core/.jest
+junit.xml
+web/junit.xml
+core/junit.xml
+test-results/
+web/test-results/
+core/test-results/
+
+# ===========================
+# Logs & Debug
+# ===========================
+logs/
+web/logs/
+core/logs/
+*.log
+web/*.log
+core/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
+bun-debug.log*
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# ===========================
+# Temporary Files
+# ===========================
+.tmp/
+tmp/
+temp/
+web/.tmp/
+web/tmp/
+web/temp/
+core/.tmp/
+core/tmp/
+core/temp/
+*.tmp
+*.temp
+.sass-cache/
+web/.sass-cache/
+core/.sass-cache/
+
+# ===========================
+# Operating System
+# ===========================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ===========================
+# IDEs & Editors
+# ===========================
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# IntelliJ IDEA
+.idea/
+*.swp
+*.swo
+*~
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Emacs
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
+
+# ===========================
+# Build Tools & Caches
+# ===========================
+.turbo/
+web/.turbo/
+core/.turbo/
+.rush/
+.changeset/
+.nx/
+web/.nx/
+core/.nx/
+
+# Package manager cache & lock files
+.pnpm-store/
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.swc/
+web/.swc/
+core/.swc/
+
+# Development servers
+.vite/
+web/.vite/
+core/.vite/
+.parcel-cache/
+web/.parcel-cache/
+core/.parcel-cache/
+
+# ===========================
+# Cloud & Deployment
+# ===========================
+.vercel/
+web/.vercel/
+core/.vercel/
+.netlify/
+web/.netlify/
+core/.netlify/
+.serverless/
+web/.serverless/
+core/.serverless/
+.firebase/
+web/.firebase/
+core/.firebase/
+.amplify/
+web/.amplify/
+core/.amplify/
+
+# ===========================
+# Database
+# ===========================
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-wal
+
+# ===========================
+# Security & Certificates
+# ===========================
+*.pem
+*.key
+*.p12
+*.crt
+*.cert
+*.ca
+secrets/
+.secrets
+
+# ===========================
+# Docker
+# ===========================
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+.docker/
+
+# ===========================
+# Backup & Archives
+# ===========================
+backup/
+
+# ===========================
+# Miscellaneous
+# ===========================
+.husky/_/
+.editorconfig
+*.tgz
+*.tar.gz
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+.storybook-static/

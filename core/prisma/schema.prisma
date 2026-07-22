@@ -1,0 +1,515 @@
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id         String   @id @default(cuid())
+  clerkId    String   @unique
+  name       String
+  email      String   @unique
+  avatar     String? // Clerk imageUrl OR presigned URL derived from avatarKey
+  avatarKey  String? // R2 object key for a user-uploaded avatar (avatars/{userId}/...)
+  brandColor String? // hex accent color chosen by the user (e.g. "#6366f1")
+  plan       PlanType @default(DEMO)
+  // Once the user edits their profile in-app, stop overwriting name/avatar from
+  // Clerk on every sync — the in-app values become authoritative.
+  profileCustomized Boolean @default(false)
+  // User-level default for per-session cloud backup. OFF by default (keeps infra
+  // cost down); recordings only get a cloud egress backup when this is on.
+  cloudBackupEnabled Boolean @default(false)
+  // User-level recording frame-rate preference (24 or 30). Becomes the session
+  // target when this user hosts; every participant is then normalized to it via
+  // CFR at finalization. Defaults to 30 ("Standard (web)").
+  targetFps          Int     @default(30)
+  // Recording preferences are copied to RecordingSession when the host starts.
+  // Their defaults intentionally preserve the legacy capture behaviour.
+  videoResolution    Int     @default(2160)
+  audioSampleRate    Int     @default(48000)
+  noiseSuppression   Boolean @default(false)
+  autoGainControl    Boolean @default(false)
+  echoCancellation   Boolean @default(false)
+  recordingMode      String  @default("VIDEO_AND_AUDIO")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Polar billing state. Our DB is the source of truth, driven by webhooks.
+  polarCustomerId      String?   @unique
+  polarSubscriptionId  String?   @unique
+  subscriptionStatus   String? // Polar subscription status ("active", "canceled", ...)
+  currentPeriodStart   DateTime? // Polar billing period — usage resets on this anniversary
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+
+  hostedSpaces      Space[]            @relation("HostedSpaces")
+  spaceParticipants SpaceParticipant[]
+  recordingSessions RecordingSession[] @relation("UserRecordingSessions")
+  usagePeriods      UsagePeriod[]
+  selfHostConfig    SelfHostConfig?
+  recordingComments RecordingComment[]
+}
+
+enum PlanType {
+  DEMO
+  PRO
+}
+
+/// Metered recording usage for one billing period. DEMO users have a single
+/// lifetime row (periodEnd null — the 15 min credit never resets); PRO rows are
+/// anchored to the Polar billing anniversary. SELF_HOST users are never metered.
+model UsagePeriod {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  periodStart DateTime
+  periodEnd   DateTime? // null = lifetime (DEMO)
+  secondsUsed Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, periodStart])
+  @@index([userId, periodEnd])
+}
+
+/// Bring-your-own LiveKit + R2 keys. All credential fields are encrypted at
+/// rest (AES-256-GCM, see lib/crypto.ts) and NEVER returned to the client in
+/// plaintext — reads get masked values only.
+model SelfHostConfig {
+  id     String  @id @default(cuid())
+  userId String  @unique
+  user   User    @relation(fields: [userId], references: [id])
+
+  enabled Boolean @default(true)
+
+  livekitUrl       String
+  livekitApiKey    String // encrypted
+  livekitApiSecret String // encrypted
+
+  r2AccountId       String
+  r2AccessKeyId     String // encrypted
+  r2SecretAccessKey String // encrypted
+  r2Bucket          String
+
+  lastValidatedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+/// Processed Polar webhook events — dedupe table so redeliveries are no-ops.
+model ProcessedWebhookEvent {
+  id          String   @id // Polar event id (webhook-id header)
+  type        String
+  processedAt DateTime @default(now())
+}
+
+model Space {
+  id                  String          @id @default(cuid())
+  hostId              String
+  host                User            @relation("HostedSpaces", fields: [hostId], references: [id])
+  title               String
+  description         String?
+  joinCode            String          @unique
+  livekitRoomName     String?         @unique
+  status              SpaceStatus     @default(LIVE)
+  recordingStatus     RecordingStatus @default(IDLE)
+  scheduledFor        DateTime? // when a SCHEDULED space is meant to start
+  invitees            String[] // invitee emails notified on schedule
+  startTime           DateTime?
+  endTime             DateTime?
+  expiresAt           DateTime?
+  endedReason         String?
+  duration            Int? // milliseconds
+  totalRecordingHours Float?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  participants      SpaceParticipant[]
+  recordingSessions RecordingSession[]
+  finalOutputs      FinalOutput[]
+
+  @@index([hostId, createdAt])
+}
+
+enum SpaceStatus {
+  SCHEDULED // planned for the future, not yet started (no LiveKit room)
+  LIVE // meeting active, users connected
+  ENDED // host ended meeting
+  PROCESSING // backend merging recordings
+  READY // meeting + final output ready
+}
+
+enum RecordingStatus {
+  IDLE // recording not started
+  RECORDING // recording active
+  STOPPED // recording stopped
+}
+
+model SpaceParticipant {
+  id                   String          @id @default(cuid())
+  spaceId              String
+  space                Space           @relation(fields: [spaceId], references: [id])
+  userId               String?
+  user                 User?           @relation(fields: [userId], references: [id])
+  participantSessionId String
+  livekitIdentity      String?         @unique
+  displayName          String?
+  isGuest              Boolean         @default(false)
+  isActive             Boolean         @default(true)
+  role                 ParticipantRole @default(GUEST)
+  joinedAt             DateTime        @default(now())
+  leftAt               DateTime?
+  lastConnectedAt      DateTime?
+  connectionState      String?
+  hasRecording         Boolean         @default(false)
+
+  recordings ParticipantRecording[]
+
+  @@index([spaceId])
+  @@index([userId])
+  @@index([userId, joinedAt])
+  @@index([participantSessionId])
+  @@index([spaceId, isActive])
+}
+
+enum ParticipantRole {
+  HOST
+  CO_HOST
+  GUEST
+}
+
+model RecordingSession {
+  id                      String                 @id @default(cuid())
+  // What produced this session. SPACE = multi-participant meeting recording;
+  // SCREEN_RECORDER = single-user screen/camera recording (no space).
+  source                  RecordingSource        @default(SPACE)
+  // Nullable: SCREEN_RECORDER sessions have no space.
+  spaceId                 String?
+  space                   Space?                 @relation(fields: [spaceId], references: [id])
+  // Owner for SCREEN_RECORDER sessions (no SpaceParticipant exists for those).
+  userId                  String?
+  user                    User?                  @relation("UserRecordingSessions", fields: [userId], references: [id])
+  // User-provided metadata (primarily for SCREEN_RECORDER recordings).
+  title                   String?
+  description             String?
+  // SCREEN_RECORDER layout config captured at start (layout, camera size/shape/
+  // corner) so finalization can reproduce the camera PiP overlay.
+  composition             Json?
+  // SCREEN_RECORDER finalized output keys: { camera?, screen?, both? }.
+  outputs                 Json?
+  spaceRecordingSessionId String                 @unique
+  // Public share link. Null until the owner enables sharing; revoking clears it
+  // (so an old link dies immediately). Anyone holding the token can watch the
+  // recording and comment - the token IS the authorization.
+  shareToken              String?                @unique
+  sharedAt                DateTime?
+  startedAt               DateTime               @default(now())
+  stoppedAt               DateTime?
+  status                  RecordingSessionStatus @default(ACTIVE)
+  egressId                String? // LiveKit Room Composite Egress id (cloud-mix backup)
+  // Metering: recording seconds already credited to the owner's usage period.
+  // Advanced by the client heartbeat so a crashed tab still counts what ran.
+  lastMeteredAt           DateTime?
+  meteredSeconds          Int                    @default(0)
+  // Per-session cloud backup opt-in (PRO/self-host only; always false on DEMO).
+  cloudBackup             Boolean                @default(false)
+  // Constant frame rate every participant's master is normalized to (CFR) at
+  // finalization. Snapshotted from the host's targetFps preference at start, so
+  // all participants agree. Legacy sessions default to 30.
+  targetFps               Int                    @default(30)
+  // Host recording preferences snapshotted at session start. These make an
+  // in-progress recording independent from later Settings changes.
+  videoResolution         Int                    @default(2160)
+  audioSampleRate         Int                    @default(48000)
+  noiseSuppression        Boolean                @default(false)
+  autoGainControl         Boolean                @default(false)
+  echoCancellation        Boolean                @default(false)
+  recordingMode           String                 @default("VIDEO_AND_AUDIO")
+  createdAt               DateTime               @default(now())
+
+  participantRecordings ParticipantRecording[]
+  finalOutputs          FinalOutput[]
+  comments              RecordingComment[]
+
+  @@index([userId])
+  @@index([source])
+}
+
+/// A comment left on a recording, from the owner's project page or from the
+/// public share link. Anonymous commenters (no account) supply their own
+/// display name, so authorName is always stored rather than joined from User.
+model RecordingComment {
+  id                 String           @id @default(cuid())
+  recordingSessionId String
+  recordingSession   RecordingSession @relation(fields: [recordingSessionId], references: [id])
+  // Set when the commenter was signed in; null for anonymous share-link guests.
+  userId             String?
+  user               User?            @relation(fields: [userId], references: [id])
+  authorName         String
+  body               String
+  createdAt          DateTime         @default(now())
+
+  @@index([recordingSessionId, createdAt])
+}
+
+enum RecordingSource {
+  SPACE
+  SCREEN_RECORDER
+}
+
+enum RecordingSessionStatus {
+  ACTIVE
+  STOPPED
+  PROCESSING
+  READY
+  FAILED
+}
+
+model ParticipantRecording {
+  id                 String           @id @default(cuid())
+  recordingSessionId String
+  recordingSession   RecordingSession @relation(fields: [recordingSessionId], references: [id])
+  // Nullable: SCREEN_RECORDER recordings are owned via the session's userId and
+  // have no SpaceParticipant.
+  participantId      String?
+  participant        SpaceParticipant? @relation(fields: [participantId], references: [id])
+
+  type          RecordingType
+  isScreenShare Boolean       @default(false)
+
+  //metadata
+  container  String?
+  codec      String?
+  width      Int?
+  height     Int?
+  fps        Int?
+  bitrate    Int?
+  sampleRate Int?
+  channels   Int?
+  hasAudio   Boolean @default(false)
+  hasVideo   Boolean @default(false)
+
+  //quality (for UI)
+  videoQuality VideoQuality?
+  audioQuality AudioQuality?
+  videoLabel   String? // "1080p • 30fps • 4.8 Mbps"
+  audioLabel   String? // "48 kHz • Stereo • 192 kbps"
+
+  // timeline & processing state
+  startOffsetMs   Int?
+  durationMs      Int?
+  lastChunkAt     DateTime?
+  mergedFileKey   String? // S3 key for merged file
+  // S3 key for an early low-res poster, extracted from the first chunk while the
+  // recording is still in progress so a thumbnail is ready long before finalize.
+  thumbnailKey    String?
+  fileSize        BigInt?
+  checksum        String? // sha256 checksum of the uploaded chunk
+  mimeType        String?
+  status          RecordingFileStatus @default(UPLOADING)
+  processingJobId String?
+  processingError String?
+
+  // upload completion tracking
+  expectedSegments Int? // total chunks expected (set when recording stops)
+  uploadedSegments Int     @default(0) // count of chunks received
+  isComplete       Boolean @default(false) // true when expectedSegments == uploadedSegments
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  segments     RecordingSegment[]
+  finalOutputs FinalOutput[]
+
+  @@index([recordingSessionId])
+  @@index([participantId])
+  @@index([status])
+}
+
+enum RecordingType {
+  AUDIO
+  VIDEO
+}
+
+enum RecordingFileStatus {
+  UPLOADING
+  UPLOADED
+  PROCESSING
+  READY
+  FAILED
+}
+
+model RecordingSegment {
+  id                     String               @id @default(cuid())
+  participantRecordingId String
+  participantRecording   ParticipantRecording @relation(fields: [participantRecordingId], references: [id])
+
+  spaceRecordingSessionId String
+  spaceId                 String
+  participantId           String
+
+  sequenceNumber Int // track chunk order (0, 1, 2, 3...)
+  assetKey       String // S3 key for uploaded chunk
+  startMs        Int // offset from session start in milliseconds
+  durationMs     Int // duration in milliseconds
+  sizeBytes      BigInt
+  checksum       String? // optional sha256
+  uploadedAt     DateTime      @default(now())
+  status         SegmentStatus @default(UPLOADED)
+
+  // Raw-PCM ("pcm" trackType) segments only. Headerless PCM carries no format
+  // info in-band, so the actual capture format is stored here for the finalizer
+  // to build the WAV header. Null for every other (self-describing WebM) track.
+  sampleRate   Int? // actual AudioContext rate (may differ from 48000)
+  bitDepth     Int? // always 24 for our packing
+  channelCount Int? // mono = 1
+
+  @@unique([participantRecordingId, sequenceNumber])
+  @@index([participantRecordingId])
+  @@index([participantRecordingId, startMs])
+  @@index([participantRecordingId, sequenceNumber])
+  @@index([spaceRecordingSessionId])
+  @@index([participantId])
+  @@index([status])
+}
+
+enum SegmentStatus {
+  UPLOADED
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+/// Final output (logical exported file: composite or per-participant)
+model FinalOutput {
+  id                 String           @id @default(cuid())
+  recordingSessionId String
+  recordingSession   RecordingSession @relation(fields: [recordingSessionId], references: [id])
+  spaceId            String
+  space              Space            @relation(fields: [spaceId], references: [id])
+
+  // WHAT this output is and WHAT it contains
+  type    FinalOutputType
+  mode    FinalOutputMode    @default(MIXED) // MIXED = video+audio, VIDEO_ONLY, AUDIO_ONLY
+  variant FinalOutputVariant @default(RAW) // RAW capture, ALIGNED gap-filled capture, CLOUD LiveKit backup
+
+  // WHO/WHERE it came from (nullable)
+  targetParticipantId String? // SpaceParticipant.id when type = PER_PARTICIPANT
+  sourceRecordingId   String? // ParticipantRecording.id if derived from a single participant master
+  sourceRecording     ParticipantRecording? @relation(fields: [sourceRecordingId], references: [id])
+
+  // master metadata (actual properties of the produced master file)
+  width      Int?
+  height     Int?
+  fps        Int?
+  bitrate    Int?
+  sampleRate Int?
+  channels   Int?
+  hasAudio   Boolean? // true if master contains audio
+  hasVideo   Boolean? // true if master contains video
+
+  // derived convenience fields (set by worker when master ready)
+  videoQuality VideoQuality? // enum (P360..P2160)
+  audioQuality AudioQuality? // enum (SR_22050..SR_96000)
+  videoLabel   String? // "1080p • 30fps • 4.8 Mbps"
+  audioLabel   String? // "48 kHz • Stereo • 192 kbps"
+
+  //preview image
+  thumbnailKey String? // s3 key for a thumbnail image
+
+  // result (master final file)
+  masterKey       String? // S3 key of result (composite or single)
+  // Lossless WAV master built from the participant's parallel raw-PCM mic track,
+  // back-linked here (never overwrites the WebM masterKey). Set order-independent
+  // by whichever of video/PCM finalization runs second. Null for legacy
+  // recordings and screen-share outputs (they have no mic PCM track).
+  audioWavKey     String?
+  mimeType        String?
+  durationMs      Int?
+  fileSize        BigInt?
+  checksum        String?
+  status          OutputStatus @default(QUEUED)
+  processingJobId String?
+  errorMessage    String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  renditions FinalOutputRendition[]
+
+  @@index([recordingSessionId])
+  @@index([spaceId])
+  @@index([status])
+  @@index([targetParticipantId])
+}
+
+enum FinalOutputType {
+  COMPOSITE
+  PER_PARTICIPANT
+}
+
+enum FinalOutputMode {
+  MIXED // video + audio
+  VIDEO_ONLY
+  AUDIO_ONLY
+}
+
+enum FinalOutputVariant {
+  RAW
+  ALIGNED
+  CLOUD
+}
+
+enum OutputStatus {
+  QUEUED
+  PROCESSING
+  READY
+  FAILED
+}
+
+/// Cached / generated renditions (different resolutions / bitrates)
+model FinalOutputRendition {
+  id            String      @id @default(cuid())
+  finalOutputId String
+  finalOutput   FinalOutput @relation(fields: [finalOutputId], references: [id])
+
+  // rendition properties
+  width     Int?
+  height    Int?
+  bitrate   Int? // bits per second
+  codec     String?
+  container String?
+  assetKey  String? // s3 key for this rendition
+  sizeBytes BigInt?
+  status    RenditionStatus @default(GENERATING)
+  jobId     String? // worker job id
+  createdAt DateTime        @default(now())
+
+  @@unique([finalOutputId, width, height])
+  @@index([finalOutputId, width, height])
+  @@index([assetKey])
+}
+
+enum RenditionStatus {
+  READY
+  GENERATING
+  FAILED
+}
+
+enum VideoQuality {
+  P360
+  P480
+  P720
+  P1080
+  P1440
+  P2160 // 4K
+}
+
+enum AudioQuality {
+  SR_22050
+  SR_44100
+  SR_48000
+  SR_96000
+}

@@ -1,0 +1,584 @@
+import type { Response } from "express";
+import type { AuthenticatedRequest } from "../middlewares/auth-middleware";
+import { findOrCreateUser } from "../services/auth-service";
+import {
+	getParticipantById,
+	getSpaceParticipants,
+	isUserHost,
+	isUserHostOrCoHost,
+	joinSpace,
+	kickParticipant,
+	leaveSpace,
+	stopParticipantTrack,
+	toPublicParticipant,
+	updateParticipantRole,
+} from "../services/participant-service";
+
+export async function joinSpaceController(
+	req: AuthenticatedRequest,
+	res: Response,
+): Promise<void> {
+	try {
+		const spaceId = req.params.spaceId as string | undefined;
+		const { displayName, participantSessionId } = req.body;
+
+		if (!spaceId) {
+			res
+				.status(400)
+				.json({ success: false, data: null, message: "Space ID is required!" });
+			return;
+		}
+
+		if (
+			!participantSessionId ||
+			typeof participantSessionId !== "string" ||
+			participantSessionId.trim().length === 0
+		) {
+			res.status(400).json({
+				success: false,
+				data: null,
+				message: "Participant session ID is required!",
+			});
+			return;
+		}
+
+		let userId: string | undefined;
+		let finalDisplayName: string;
+		let isGuest: boolean;
+
+		if (req.user) {
+			const user = await findOrCreateUser(req.user);
+			userId = user.id;
+			finalDisplayName = displayName?.trim() || user.name;
+			isGuest = false;
+		} else {
+			if (
+				!displayName ||
+				typeof displayName !== "string" ||
+				displayName.trim().length === 0
+			) {
+				res.status(400).json({
+					success: false,
+					data: null,
+					message: "Display name is required for guest users!",
+				});
+				return;
+			}
+			finalDisplayName = displayName.trim();
+			isGuest = true;
+		}
+
+		const result = await joinSpace({
+			spaceId,
+			participantSessionId: participantSessionId.trim(),
+			displayName: finalDisplayName,
+			userId,
+			isGuest,
+		});
+
+		res.status(200).json({
+			success: true,
+			data: {
+				participant: toPublicParticipant(result.participant),
+				space: result.space,
+				livekit: result.livekit,
+				isRejoin: result.isRejoin,
+			},
+			message: result.isRejoin
+				? "Rejoined space successfully!"
+				: "Joined space successfully!",
+		});
+	} catch (error: unknown) {
+		if (error instanceof Error) {
+			if (error.message === "SPACE_NOT_FOUND") {
+				res
+					.status(404)
+					.json({ success: false, data: null, message: "Space not found!" });
+				return;
+			}
+			if (error.message === "SPACE_NOT_LIVE") {
+				res.status(400).json({
+					success: false,
+					data: null,
+					message: "Space is not currently live!",
+				});
+				return;
+			}
+			if (error.message === "SPACE_EXPIRED") {
+				res
+					.status(410)
+					.json({ success: false, data: null, message: "Space has expired!" });
+				return;
+			}
+			if (error.message === "LIVEKIT_NOT_CONFIGURED") {
+				res.status(503).json({
+					success: false,
+					data: null,
+					message: "LiveKit is not configured on the server!",
+				});
+				return;
+			}
+			if (error.message === "SPACE_FULL") {
+				res.status(403).json({
+					success: false,
+					data: null,
+					message:
+						"This recording session is full and can't accept more participants right now.",
+				});
+				return;
+			}
+		}
+
+		const errorMessage =
+			error instanceof Error ? error.message : "Unknown error";
+		res.status(500).json({
+			success: false,
+			data: null,
+			message: `Failed to join space: ${errorMessage}!`,
+		});
+	}
+}
+
+export async function leaveSpaceController(
+	req: AuthenticatedRequest,
+	res: Response,
+): Promise<void> {
+	try {
+		const spaceId = req.params.spaceId as string | undefined;
+		const { participantSessionId } = req.body;
+
+		if (!spaceId) {
+			res
+				.status(400)
+				.json({ success: false, data: null, message: "Space ID is required!" });
+			return;
+		}
+
+		let userId: string | undefined;
+
+		if (req.user) {
+			const user = await findOrCreateUser(req.user);
+			userId = user.id;
+		}
+
+		if (
+			!userId &&
+			(!participantSessionId || typeof participantSessionId !== "string")
+		) {
+			res.status(400).json({
+				success: false,
+				data: null,
+				message: "Participant session ID is required for guest users!",
+			});
+			return;
+		}
+
+		const participant = await leaveSpace({
+			spaceId,
+			participantSessionId: participantSessionId?.trim(),
+			userId,
+		});
+
+		res.status(200).json({
+			success: true,
+			data: toPublicParticipant(participant),
+			message: "Left space successfully!",
+		});
+	} catch (error: unknown) {
+		if (error instanceof Error) {
+			if (error.message === "PARTICIPANT_NOT_FOUND") {
+				res.status(404).json({
+					success: false,
+					data: null,
+					message: "Participant not found in this space!",
+				});
+				return;
+			}
+			if (error.message === "PARTICIPANT_ALREADY_LEFT") {
+				res.status(400).json({
+					success: false,
+					data: null,
+					message: "You have already left this space!",
+				});
+				return;
+			}
+		}
+
+		const errorMessage =
+			error instanceof Error ? error.message : "Unknown error";
+		res.status(500).json({
+			success: false,
+			data: null,
+			message: `Failed to leave space: ${errorMessage}!`,
+		});
+	}
+}
+
+export async function getParticipantsController(
+	req: AuthenticatedRequest,
+	res: Response,
+): Promise<void> {
+	try {
+		const spaceId = req.params.spaceId as string | undefined;
+		const { active } = req.query;
+
+		if (!spaceId) {
+			res
+				.status(400)
+				.json({ success: false, data: null, message: "Space ID is required!" });
+			return;
+		}
+
+		// Parse active query param (defaults to true)
+		const activeOnly = active !== "false";
+
+		const participants = await getSpaceParticipants(spaceId, activeOnly);
+
+		res.status(200).json({
+			success: true,
+			data: {
+				participants: participants.map(toPublicParticipant),
+				count: participants.length,
+			},
+			message: "Participants retrieved successfully!",
+		});
+	} catch (error: unknown) {
+		if (error instanceof Error && error.message === "SPACE_NOT_FOUND") {
+			res
+				.status(404)
+				.json({ success: false, data: null, message: "Space not found!" });
+			return;
+		}
+
+		const errorMessage =
+			error instanceof Error ? error.message : "Unknown error";
+		res.status(500).json({
+			success: false,
+			data: null,
+			message: `Failed to get participants: ${errorMessage}!`,
+		});
+	}
+}
+
+export async function updateRoleController(
+	req: AuthenticatedRequest,
+	res: Response,
+): Promise<void> {
+	try {
+		if (!req.user) {
+			res.status(401).json({
+				success: false,
+				data: null,
+				message: "Authentication required!",
+			});
+			return;
+		}
+
+		const spaceId = req.params.spaceId as string | undefined;
+		const participantId = req.params.participantId as string | undefined;
+		const { role } = req.body;
+
+		if (!spaceId) {
+			res
+				.status(400)
+				.json({ success: false, data: null, message: "Space ID is required!" });
+			return;
+		}
+
+		if (!participantId) {
+			res.status(400).json({
+				success: false,
+				data: null,
+				message: "Participant ID is required!",
+			});
+			return;
+		}
+
+		if (!role || !["CO_HOST", "GUEST"].includes(role)) {
+			res.status(400).json({
+				success: false,
+				data: null,
+				message: "Role must be CO_HOST or GUEST!",
+			});
+			return;
+		}
+
+		// Verify user is the host
+		const user = await findOrCreateUser(req.user);
+		const isHost = await isUserHost(spaceId, user.id);
+
+		if (!isHost) {
+			res.status(403).json({
+				success: false,
+				data: null,
+				message: "Only the host can update participant roles!",
+			});
+			return;
+		}
+
+		// Verify participant belongs to this space
+		const participant = await getParticipantById(participantId);
+		if (!participant || participant.spaceId !== spaceId) {
+			res.status(404).json({
+				success: false,
+				data: null,
+				message: "Participant not found in this space!",
+			});
+			return;
+		}
+
+		const updatedParticipant = await updateParticipantRole(participantId, role);
+
+		res.status(200).json({
+			success: true,
+			data: toPublicParticipant(updatedParticipant),
+			message: "Participant role updated successfully!",
+		});
+	} catch (error: unknown) {
+		if (error instanceof Error) {
+			if (error.message === "PARTICIPANT_NOT_FOUND") {
+				res.status(404).json({
+					success: false,
+					data: null,
+					message: "Participant not found!",
+				});
+				return;
+			}
+			if (error.message === "CANNOT_CHANGE_HOST_ROLE") {
+				res.status(400).json({
+					success: false,
+					data: null,
+					message: "Cannot change the host's role!",
+				});
+				return;
+			}
+		}
+
+		const errorMessage =
+			error instanceof Error ? error.message : "Unknown error";
+		res.status(500).json({
+			success: false,
+			data: null,
+			message: `Failed to update role: ${errorMessage}!`,
+		});
+	}
+}
+
+export async function kickParticipantController(
+	req: AuthenticatedRequest,
+	res: Response,
+): Promise<void> {
+	try {
+		if (!req.user) {
+			res.status(401).json({
+				success: false,
+				data: null,
+				message: "Authentication required!",
+			});
+			return;
+		}
+
+		const spaceId = req.params.spaceId as string | undefined;
+		const participantId = req.params.participantId as string | undefined;
+
+		if (!spaceId) {
+			res
+				.status(400)
+				.json({ success: false, data: null, message: "Space ID is required!" });
+			return;
+		}
+
+		if (!participantId) {
+			res.status(400).json({
+				success: false,
+				data: null,
+				message: "Participant ID is required!",
+			});
+			return;
+		}
+
+		// Hosts and co-hosts can moderate (the host is protected from kicks below).
+		const user = await findOrCreateUser(req.user);
+		const canModerate = await isUserHostOrCoHost(spaceId, user.id);
+
+		if (!canModerate) {
+			res.status(403).json({
+				success: false,
+				data: null,
+				message: "Only hosts and co-hosts can kick participants!",
+			});
+			return;
+		}
+
+		// Verify participant belongs to this space
+		const participant = await getParticipantById(participantId);
+		if (!participant || participant.spaceId !== spaceId) {
+			res.status(404).json({
+				success: false,
+				data: null,
+				message: "Participant not found in this space!",
+			});
+			return;
+		}
+
+		const kickedParticipant = await kickParticipant(participantId);
+
+		res.status(200).json({
+			success: true,
+			data: toPublicParticipant(kickedParticipant),
+			message: "Participant kicked successfully!",
+		});
+	} catch (error: unknown) {
+		if (error instanceof Error) {
+			if (error.message === "PARTICIPANT_NOT_FOUND") {
+				res.status(404).json({
+					success: false,
+					data: null,
+					message: "Participant not found!",
+				});
+				return;
+			}
+			if (error.message === "CANNOT_KICK_HOST") {
+				res.status(400).json({
+					success: false,
+					data: null,
+					message: "Cannot kick the host!",
+				});
+				return;
+			}
+			if (error.message === "PARTICIPANT_ALREADY_LEFT") {
+				res.status(400).json({
+					success: false,
+					data: null,
+					message: "Participant has already left!",
+				});
+				return;
+			}
+		}
+
+		const errorMessage =
+			error instanceof Error ? error.message : "Unknown error";
+		res.status(500).json({
+			success: false,
+			data: null,
+			message: `Failed to kick participant: ${errorMessage}!`,
+		});
+	}
+}
+
+export async function stopParticipantTrackController(
+	req: AuthenticatedRequest,
+	res: Response,
+): Promise<void> {
+	try {
+		if (!req.user) {
+			res.status(401).json({
+				success: false,
+				data: null,
+				message: "Authentication required!",
+			});
+			return;
+		}
+
+		const spaceId = req.params.spaceId as string | undefined;
+		const participantId = req.params.participantId as string | undefined;
+		const { muted, source } = req.body;
+
+		if (!spaceId) {
+			res
+				.status(400)
+				.json({ success: false, data: null, message: "Space ID is required!" });
+			return;
+		}
+
+		if (!participantId) {
+			res.status(400).json({
+				success: false,
+				data: null,
+				message: "Participant ID is required!",
+			});
+			return;
+		}
+
+		if (source !== "camera" && source !== "microphone") {
+			res.status(400).json({
+				success: false,
+				data: null,
+				message: "Source must be camera or microphone!",
+			});
+			return;
+		}
+
+		if (typeof muted !== "boolean") {
+			res.status(400).json({
+				success: false,
+				data: null,
+				message: "Muted must be a boolean!",
+			});
+			return;
+		}
+
+		const user = await findOrCreateUser(req.user);
+		const canModerate = await isUserHostOrCoHost(spaceId, user.id);
+
+		if (!canModerate) {
+			res.status(403).json({
+				success: false,
+				data: null,
+				message: "Only hosts and co-hosts can moderate participants!",
+			});
+			return;
+		}
+
+		const participant = await getParticipantById(participantId);
+		if (!participant || participant.spaceId !== spaceId) {
+			res.status(404).json({
+				success: false,
+				data: null,
+				message: "Participant not found in this space!",
+			});
+			return;
+		}
+
+		const result = await stopParticipantTrack(participantId, source, muted);
+
+		res.status(200).json({
+			success: true,
+			data: result,
+			message: muted
+				? source === "camera"
+					? "Participant video stopped!"
+					: "Participant mic stopped!"
+				: source === "camera"
+					? "Participant video started!"
+					: "Participant mic started!",
+		});
+	} catch (error: unknown) {
+		if (error instanceof Error) {
+			if (error.message === "PARTICIPANT_NOT_FOUND") {
+				res.status(404).json({
+					success: false,
+					data: null,
+					message: "Participant not found!",
+				});
+				return;
+			}
+			if (error.message === "CANNOT_MODERATE_HOST") {
+				res.status(400).json({
+					success: false,
+					data: null,
+					message: "Cannot moderate the host!",
+				});
+				return;
+			}
+		}
+
+		const errorMessage =
+			error instanceof Error ? error.message : "Unknown error";
+		res.status(500).json({
+			success: false,
+			data: null,
+			message: `Failed to stop participant track: ${errorMessage}!`,
+		});
+	}
+}

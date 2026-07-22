@@ -1,0 +1,219 @@
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100;200;300;400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  The entire app runs on SIX colors. Everything else is one of these, optionally
+  with an opacity modifier (e.g. text-foreground/60, bg-muted, border-brand/40):
+
+    background    - the base canvas
+    foreground    - text / strong neutral
+    primary       - primary actions & emphasis (inverts with the theme)
+    muted         - secondary surfaces & subtle fills (used the most)
+    brand         - the accent (purple)
+    border        - borders
+
+  Legacy token names (call-*, secondary*, accent, destructive, …) are kept below
+  purely as aliases that resolve to one of the six, so nothing breaks.
+*/
+:root {
+  --radius: 0.625rem;
+
+  --background: #ffffff;
+  --foreground: #131313;
+  --primary: #f0f0f0;
+  --muted: #e2e2e2;
+  --brand: #8a9df0;
+  --border: #dcdcdc;
+
+  --selection-background: var(--foreground);
+  --selection-text: var(--background);
+}
+
+.dark {
+  --background: #080808;
+  --foreground: #f4f4f4;
+  --primary: #161616;
+  --muted: #252525;
+  --brand: #8a9df0;
+  --border: #252525;
+}
+
+@theme inline {
+  /* The seven */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-border: var(--border);
+
+  /* Legacy aliases - every old token collapses into one of the seven */
+  --color-primary-text: var(--background);
+  --color-primary-foreground: var(--background);
+  --color-primary-hover: var(--muted);
+  --color-primary-border: var(--border);
+  --color-primary-shadow: var(--muted);
+  --color-secondary: var(--background);
+  --color-secondary-text: var(--foreground);
+  --color-secondary-foreground: var(--foreground);
+  --color-secondary-hover: var(--muted);
+  --color-secondary-border: var(--border);
+  --color-secondary-shadow: var(--foreground);
+  --color-auth-border: var(--border);
+  --color-call-border: var(--border);
+  --color-call-background: var(--background);
+  --color-call-primary: var(--muted);
+  --color-selection-background: var(--foreground);
+  --color-selection-text: var(--background);
+  --color-card: var(--background);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--background);
+  --color-popover-foreground: var(--foreground);
+  --color-muted-foreground: var(--foreground);
+  --color-accent: var(--muted);
+  --color-accent-foreground: var(--foreground);
+  --color-destructive: var(--brand);
+  --color-input: var(--border);
+  --color-ring: var(--border);
+  --color-chart-1: var(--brand);
+  --color-chart-2: var(--brand);
+  --color-chart-3: var(--brand);
+  --color-chart-4: var(--brand);
+  --color-chart-5: var(--brand);
+  --color-sidebar: var(--background);
+  --color-sidebar-foreground: var(--foreground);
+  --color-sidebar-primary: var(--primary);
+  --color-sidebar-primary-foreground: var(--background);
+  --color-sidebar-accent: var(--muted);
+  --color-sidebar-accent-foreground: var(--foreground);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-ring: var(--border);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+::selection {
+  background-color: var(--selection-background);
+  color: var(--selection-text);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Public Sans", sans-serif;
+  }
+
+  /* Give all links and buttons a pointer cursor */
+  a,
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+
+  /* Keep the correct cursor for disabled controls */
+  button:disabled,
+  button[disabled],
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  /* Prevent default image dragging behavior */
+  img {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+    pointer-events: auto;
+  }
+}
+
+html {
+  overscroll-behavior: none;
+  scroll-behavior: smooth;
+}
+
+.btn {
+  @apply select-none px-3.5 py-2.5 border border-foreground shadow-inner shadow-secondary/40  cursor-pointer rounded-[14px] hover:bg-primary/80 duration-200 bg-primary/95 text-primary-text inline-flex items-center justify-center whitespace-nowrap  transition-all;
+}
+.btn-secondary {
+  @apply select-none px-3.5 py-2.5 cursor-pointer rounded-[14px] hover:bg-secondary-hover duration-200 bg-background border border-primary-border inline-flex items-center justify-center whitespace-nowrap  transition-all;
+}
+
+.font-poppins {
+  font-family: "Poppins", sans-serif;
+}
+
+.font-instrument-serif {
+  font-family: "Instrument Serif", serif;
+}
+
+/* Equalizer bars for the "now playing" track thumbnail marker. */
+@keyframes nowplaying {
+  0%,
+  100% {
+    height: 30%;
+  }
+  50% {
+    height: 100%;
+  }
+}
+.animate-nowplaying {
+  animation: nowplaying 850ms ease-in-out infinite;
+}
+
+/* Shiny loading skeleton: a soft base tint with a highlight sweeping across. */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: color-mix(in oklab, var(--color-foreground) 8%, transparent);
+}
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--color-foreground) 10%, transparent),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+.sin-screen {
+  @apply flex items-center justify-center  w-[300px] mx-auto;
+}
+.trans-btn {
+  @apply select-none border px-3 py-2 cursor-pointer hover:bg-secondary-hover transition duration-200 border-auth-border rounded-[14px];
+}
+.trans-btn-n {
+  @apply select-none border px-3 py-2 cursor-not-allowed  border-auth-border/50 text-foreground/50 rounded-[14px];
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}

@@ -1,0 +1,69 @@
+import type { LiveKitJoinConfig, Participant, Space } from "./spaceTypes";
+
+export interface JoinSpacePayload {
+  displayName: string;
+  participantSessionId: string;
+}
+
+export interface JoinSpaceResponse {
+  success: boolean;
+  data: {
+    participant: Participant;
+    space: Space;
+    livekit: LiveKitJoinConfig;
+    isRejoin: boolean;
+  };
+  message: string;
+}
+
+export interface LeaveSpacePayload {
+  participantSessionId: string;
+}
+
+export interface LeaveSpaceResponse {
+  success: boolean;
+  data: Participant;
+  message: string;
+}
+
+export interface ParticipantsListResponse {
+  success: boolean;
+  data: {
+    participants: Participant[];
+    count: number;
+  };
+  message: string;
+}
+
+export interface UpdateRolePayload {
+  role: "CO_HOST" | "GUEST";
+}
+
+export interface UpdateRoleResponse {
+  success: boolean;
+  data: Participant;
+  message: string;
+}
+
+export interface KickParticipantResponse {
+  success: boolean;
+  data: Participant;
+  message: string;
+}
+
+export type StopParticipantTrackSource = "camera" | "microphone";
+
+export interface StopParticipantTrackPayload {
+  source: StopParticipantTrackSource;
+  muted: boolean;
+}
+
+export interface StopParticipantTrackResponse {
+  success: boolean;
+  data: {
+    participantId: string;
+    source: StopParticipantTrackSource;
+    muted: boolean;
+  };
+  message: string;
+}
