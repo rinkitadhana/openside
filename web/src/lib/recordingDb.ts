@@ -150,15 +150,6 @@ export async function getAllChunks(): Promise<BufferedChunk[]> {
   );
 }
 
-/** Buffered chunks left over from a previous (crashed) session. */
-export async function getOrphanChunks(
-  activeSessionIds: string[],
-): Promise<BufferedChunk[]> {
-  const all = await getAllChunks();
-  const active = new Set(activeSessionIds);
-  return all.filter((chunk) => !active.has(chunk.spaceRecordingSessionId));
-}
-
 /**
  * Delete buffered chunks older than `maxAgeMs`. A chunk left behind by an ended
  * or crashed session can never upload - its participant is no longer active, so
@@ -182,16 +173,4 @@ export async function purgeStaleChunks(maxAgeMs: number): Promise<number> {
     stale.map((chunk) => promisifyRequest(store.delete(chunk.id))),
   );
   return stale.length;
-}
-
-export async function clearSession(
-  spaceRecordingSessionId: string,
-): Promise<void> {
-  const db = await openDb();
-  const store = tx(db, "readwrite");
-  const index = store.index("bySession");
-  const keys = await promisifyRequest(
-    index.getAllKeys(IDBKeyRange.only(spaceRecordingSessionId)),
-  );
-  await Promise.all(keys.map((key) => promisifyRequest(store.delete(key))));
 }

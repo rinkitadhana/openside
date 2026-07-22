@@ -8,6 +8,3 @@ export const pipController: {
   open?: () => void;
   close?: () => void;
 } = {};
-
-export const isDocumentPipSupported = (): boolean =>
-  typeof window !== "undefined" && "documentPictureInPicture" in window;

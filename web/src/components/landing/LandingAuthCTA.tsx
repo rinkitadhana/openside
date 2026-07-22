@@ -62,28 +62,6 @@ export const HeaderAuthCTA = memo(
 );
 HeaderAuthCTA.displayName = "HeaderAuthCTA";
 
-export const HeroAuthCTA = memo(({ onOpenAuth }: { onOpenAuth: OpenAuth }) => {
-  const { isSignedIn, isLoaded } = useAuth();
-
-  const handleClick = () => {
-    onOpenAuth("signup");
-  };
-
-  if (!isLoaded || isSignedIn) return null;
-
-  return (
-    <Button
-      size="lg"
-      className="group relative overflow-hidden rounded-full bg-foreground text-background hover:bg-foreground/90"
-      onClick={handleClick}
-    >
-      <span className="pointer-events-none absolute inset-0 -translate-x-full -skew-x-12 bg-gradient-to-r from-transparent via-background/40 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
-      Start Creating
-    </Button>
-  );
-});
-HeroAuthCTA.displayName = "HeroAuthCTA";
-
 // The pricing-card button. Reads Clerk auth itself so the check stays isolated
 // from the rest of the landing page. Signed out → open the auth modal. Signed in
 // → Pro starts a Polar checkout, everything else goes to the dashboard.

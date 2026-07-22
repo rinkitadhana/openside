@@ -5,7 +5,6 @@ import type {
   CreateSpacePayload,
   UpdateSpacePayload,
   ScheduleSpacePayload,
-  ActivateSpacePayload,
   Space,
   SpaceResponse,
   UserSpacesResponse,
@@ -67,30 +66,6 @@ export const useScheduleSpace = () => {
   return useMutation({
     mutationFn: async (payload: ScheduleSpacePayload) => {
       const { data } = await api.post<SpaceResponse>("/space/schedule", payload);
-      return data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["spaces"] });
-    },
-  });
-};
-
-// ============================================================================
-// Activate Space (start a scheduled meeting)
-// ============================================================================
-
-export const useActivateSpace = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ spaceId, participantSessionId }: ActivateSpacePayload) => {
-      // Activation provisions the LiveKit room, so allow the same headroom as
-      // create rather than the default client timeout.
-      const { data } = await api.post<SpaceResponse>(
-        `/space/${spaceId}/activate`,
-        { participantSessionId },
-        { timeout: 30000 }
-      );
       return data.data;
     },
     onSuccess: () => {

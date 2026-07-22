@@ -155,23 +155,6 @@ export async function getObjectBuffer(key: string): Promise<Buffer> {
 	return Buffer.concat(chunks);
 }
 
-/** Upload a buffer to R2 (used by finalization to store masters). */
-export async function putObject(
-	key: string,
-	body: Buffer,
-	contentType: string,
-): Promise<void> {
-	const r2 = await resolveR2ForKey(key);
-	await r2.client.send(
-		new PutObjectCommand({
-			Bucket: r2.bucket,
-			Key: key,
-			Body: body,
-			ContentType: contentType,
-		}),
-	);
-}
-
 /** Upload a local file stream to R2 without loading the whole file in memory. */
 export async function putFileObject(
 	key: string,

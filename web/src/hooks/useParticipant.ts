@@ -1,11 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axiosInstance";
 import type {
   JoinSpacePayload,
   JoinSpaceResponse,
-  LeaveSpacePayload,
-  LeaveSpaceResponse,
-  ParticipantsListResponse,
   UpdateRolePayload,
   UpdateRoleResponse,
   KickParticipantResponse,
@@ -32,58 +29,6 @@ export const useJoinSpace = (spaceId: string) => {
       queryClient.invalidateQueries({ queryKey: ["space", spaceId] });
       queryClient.invalidateQueries({ queryKey: ["participants", spaceId] });
     },
-  });
-};
-
-// ============================================================================
-// Leave Space
-// ============================================================================
-
-export const useLeaveSpace = (spaceId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (payload: LeaveSpacePayload) => {
-      const { data } = await api.post<LeaveSpaceResponse>(
-        `/participant/${spaceId}/leave`,
-        payload
-      );
-      return data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["space", spaceId] });
-      queryClient.invalidateQueries({ queryKey: ["participants", spaceId] });
-    },
-  });
-};
-
-// ============================================================================
-// Get Participants List
-// ============================================================================
-
-export const useGetParticipants = (
-  spaceId: string,
-  activeOnly: boolean = true,
-  enabled: boolean = true
-) => {
-  return useQuery({
-    queryKey: ["participants", spaceId, activeOnly],
-    queryFn: async () => {
-      try {
-        const { data } = await api.get<ParticipantsListResponse>(
-          `/participant/${spaceId}/list`,
-          {
-            params: { active: activeOnly },
-          }
-        );
-        return data.data;
-      } catch {
-        return null;
-      }
-    },
-    enabled: enabled && !!spaceId,
-    staleTime: 30000, // 30 seconds
-    retry: false,
   });
 };
 

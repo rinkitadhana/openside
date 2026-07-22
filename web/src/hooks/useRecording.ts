@@ -10,21 +10,12 @@ import type {
   StartSessionPayload,
   StopSessionPayload,
   CreateParticipantRecordingPayload,
-  UpdateParticipantRecordingPayload,
-  MarkRecordingCompletePayload,
-  CreateSegmentPayload,
   StartSessionResponse,
   StopSessionResponse,
   GetSessionResponse,
   GetActiveSessionResponse,
   GetSessionsListResponse,
   CreateParticipantRecordingResponse,
-  UpdateParticipantRecordingResponse,
-  GetParticipantRecordingResponse,
-  GetRecordingsListResponse,
-  MarkRecordingCompleteResponse,
-  CreateSegmentResponse,
-  GetSegmentsListResponse,
 } from "@/types/recordingTypes";
 
 // RecordingSession Hooks
@@ -332,139 +323,5 @@ export const useCreateParticipantRecording = () => {
         queryKey: ["session-recordings", data.recordingSessionId],
       });
     },
-  });
-};
-
-export const useUpdateParticipantRecording = (recordingId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (payload: UpdateParticipantRecordingPayload) => {
-      const { data } = await api.patch<UpdateParticipantRecordingResponse>(
-        `/recording/participant/${recordingId}`,
-        payload,
-      );
-      return data.data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: ["participant-recording", recordingId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["session-recordings", data.recordingSessionId],
-      });
-    },
-  });
-};
-
-export const useGetParticipantRecording = (
-  recordingId: string,
-  enabled: boolean = true,
-) => {
-  return useQuery({
-    queryKey: ["participant-recording", recordingId],
-    queryFn: async () => {
-      try {
-        const { data } = await api.get<GetParticipantRecordingResponse>(
-          `/recording/participant/${recordingId}`,
-        );
-        return data.data || null;
-      } catch {
-        return null;
-      }
-    },
-    enabled: enabled && !!recordingId,
-    staleTime: 30000,
-    retry: false,
-  });
-};
-
-export const useGetRecordingsBySession = (
-  sessionId: string,
-  enabled: boolean = true,
-) => {
-  return useQuery({
-    queryKey: ["session-recordings", sessionId],
-    queryFn: async () => {
-      try {
-        const { data } = await api.get<GetRecordingsListResponse>(
-          `/recording/session/${sessionId}/recordings`,
-        );
-        return data.data;
-      } catch {
-        return null;
-      }
-    },
-    enabled: enabled && !!sessionId,
-    staleTime: 30000,
-    retry: false,
-  });
-};
-
-export const useMarkRecordingComplete = (recordingId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (payload: MarkRecordingCompletePayload) => {
-      const { data } = await api.post<MarkRecordingCompleteResponse>(
-        `/recording/participant/${recordingId}/complete`,
-        payload,
-      );
-      return data.data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: ["participant-recording", recordingId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["session-recordings", data.recordingSessionId],
-      });
-    },
-  });
-};
-
-// RecordingSegment Hooks
-
-export const useCreateSegment = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (payload: CreateSegmentPayload) => {
-      const { data } = await api.post<CreateSegmentResponse>(
-        "/recording/segment",
-        payload,
-      );
-      return data.data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: ["recording-segments", data.participantRecordingId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["participant-recording", data.participantRecordingId],
-      });
-    },
-  });
-};
-
-export const useGetSegmentsByRecording = (
-  recordingId: string,
-  enabled: boolean = true,
-) => {
-  return useQuery({
-    queryKey: ["recording-segments", recordingId],
-    queryFn: async () => {
-      try {
-        const { data } = await api.get<GetSegmentsListResponse>(
-          `/recording/participant/${recordingId}/segments`,
-        );
-        return data.data;
-      } catch {
-        return null;
-      }
-    },
-    enabled: enabled && !!recordingId,
-    staleTime: 30000,
-    retry: false,
   });
 };
