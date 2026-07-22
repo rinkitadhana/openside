@@ -112,7 +112,7 @@ const Toggle = ({
     onClick={() => onChange(!checked)}
     className={cn(
       "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
-      checked ? "bg-emerald-500" : "bg-foreground/20",
+      checked ? "bg-success" : "bg-fg-faint",
       disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
     )}
   >
@@ -251,7 +251,7 @@ const ProfileSection = () => {
               </button>
             )}
           </div>
-          <p className="text-xs text-foreground/50">
+          <p className="text-xs text-fg-subtle">
             PNG, JPEG, WebP, or GIF. Up to 5 MB.
           </p>
           <input
@@ -276,7 +276,7 @@ const ProfileSection = () => {
             onKeyDown={(event) => {
               if (event.key === "Enter") saveName();
             }}
-            className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-foreground/40"
+            className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-fg-faint"
           />
           {nameDirty && (
             <button
@@ -298,7 +298,7 @@ const ProfileSection = () => {
           type="email"
           value={user?.email ?? ""}
           readOnly
-          className="cursor-not-allowed rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground/60 outline-none"
+          className="cursor-not-allowed rounded-md border border-border bg-muted px-3 py-2 text-sm text-fg-muted outline-none"
         />
       </label>
     </div>
@@ -384,7 +384,7 @@ const AppearanceSection = () => {
       {/* Theme */}
       <div className="rounded-lg border border-border bg-background p-5">
         <h3 className="text-base font-semibold text-foreground">Theme</h3>
-        <p className="mt-1 max-w-md text-sm text-foreground/60">
+        <p className="mt-1 max-w-md text-sm text-fg-muted">
           Choose how Openside looks. System follows your device setting.
         </p>
         <div className="mt-4 grid grid-cols-3 gap-3 sm:max-w-lg">
@@ -400,7 +400,7 @@ const AppearanceSection = () => {
                   "flex cursor-pointer flex-col gap-2.5 rounded-lg border p-2 text-left transition-colors",
                   selected
                     ? "border-brand ring-1 ring-brand"
-                    : "border-border hover:border-foreground/30",
+                    : "border-border hover:border-fg-faint",
                 )}
               >
                 <ThemePreview id={id} />
@@ -429,7 +429,7 @@ const AppearanceSection = () => {
       {/* Brand color */}
       <div className="rounded-lg border border-border bg-background p-5">
         <h3 className="text-base font-semibold text-foreground">Brand color</h3>
-        <p className="mt-1 max-w-md text-sm text-foreground/60">
+        <p className="mt-1 max-w-md text-sm text-fg-muted">
           Your accent color across the app. Pick a preset or set your own.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -491,7 +491,7 @@ const AppearanceSection = () => {
             <button
               type="button"
               onClick={() => applyBrandColor(null)}
-              className="ml-1 cursor-pointer text-xs font-medium text-foreground/50 hover:text-foreground"
+              className="ml-1 cursor-pointer text-xs font-medium text-fg-subtle hover:text-foreground"
             >
               Clear
             </button>
@@ -610,16 +610,16 @@ const PlanBillingSection = () => {
                 className={cn(
                   "rounded-full px-2.5 py-0.5 text-xs font-medium ring-1",
                   plan === "pro"
-                    ? "bg-emerald-500/10 text-emerald-500 ring-emerald-500/30"
+                    ? "bg-success/10 text-success ring-success/30"
                     : plan === "selfhost"
-                      ? "bg-sky-500/10 text-sky-500 ring-sky-500/30"
-                      : "bg-muted text-foreground/70 ring-border",
+                      ? "bg-info/10 text-info ring-info/30"
+                      : "bg-muted text-fg-muted ring-border",
                 )}
               >
                 {PLAN_LABELS[plan]}
               </span>
             </div>
-            <p className="mt-1 max-w-md text-sm text-foreground/60">
+            <p className="mt-1 max-w-md text-sm text-fg-muted">
               {PLAN_NOTES[plan]}
             </p>
           </div>
@@ -650,17 +650,17 @@ const PlanBillingSection = () => {
         {usage && usage.limit !== null ? (
           <div className="mt-4">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-foreground/70">
+              <span className="text-fg-muted">
                 {formatDuration(usage.used)} of {formatDuration(usage.limit)} used
               </span>
               <span
                 className={cn(
                   "font-medium",
                   usage.exhausted
-                    ? "text-red-500"
+                    ? "text-danger"
                     : usage.warning
-                      ? "text-yellow-500"
-                      : "text-foreground/70",
+                      ? "text-warning"
+                      : "text-fg-muted",
                 )}
               >
                 {formatDuration(usage.remaining ?? 0)} left
@@ -671,15 +671,15 @@ const PlanBillingSection = () => {
                 className={cn(
                   "h-full rounded-full transition-all",
                   usage.exhausted
-                    ? "bg-red-500"
+                    ? "bg-danger"
                     : usage.warning
-                      ? "bg-yellow-500"
+                      ? "bg-warning"
                       : "bg-foreground",
                 )}
                 style={{ width: `${percentUsed}%` }}
               />
             </div>
-            <p className="mt-2 text-xs text-foreground/50">
+            <p className="mt-2 text-xs text-fg-subtle">
               {usage.resets_at
                 ? `Resets on ${new Date(usage.resets_at).toLocaleDateString()}.`
                 : "This credit doesn't reset - upgrade to Pro for 20 hours every month."}
@@ -689,7 +689,7 @@ const PlanBillingSection = () => {
       </div>
 
       {plan === "pro" && (
-        <p className="text-sm text-foreground/50">
+        <p className="text-sm text-fg-subtle">
           To switch to self-host, cancel your current subscription first.
         </p>
       )}
@@ -700,7 +700,7 @@ const PlanBillingSection = () => {
         <h3 className="text-base font-semibold text-foreground">
           Self-host (bring your own keys)
         </h3>
-        <p className="mt-1 max-w-md text-sm text-foreground/60">
+        <p className="mt-1 max-w-md text-sm text-fg-muted">
           Run recordings on your own LiveKit and Cloudflare R2. Free and
           unlimited - your keys, your bill. Keys are validated on save and stored
           encrypted; they're never shown again.
@@ -712,25 +712,25 @@ const PlanBillingSection = () => {
           <div className="mt-4 flex flex-col gap-3">
             <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
               <div className="flex justify-between gap-2 sm:block">
-                <dt className="text-foreground/50">LiveKit URL</dt>
+                <dt className="text-fg-subtle">LiveKit URL</dt>
                 <dd className="truncate font-mono text-foreground">
                   {selfHost.livekitUrl}
                 </dd>
               </div>
               <div className="flex justify-between gap-2 sm:block">
-                <dt className="text-foreground/50">LiveKit API key</dt>
+                <dt className="text-fg-subtle">LiveKit API key</dt>
                 <dd className="font-mono text-foreground">
                   {selfHost.livekitApiKey}
                 </dd>
               </div>
               <div className="flex justify-between gap-2 sm:block">
-                <dt className="text-foreground/50">R2 bucket</dt>
+                <dt className="text-fg-subtle">R2 bucket</dt>
                 <dd className="truncate font-mono text-foreground">
                   {selfHost.r2Bucket}
                 </dd>
               </div>
               <div className="flex justify-between gap-2 sm:block">
-                <dt className="text-foreground/50">R2 access key</dt>
+                <dt className="text-fg-subtle">R2 access key</dt>
                 <dd className="font-mono text-foreground">
                   {selfHost.r2AccessKeyId}
                 </dd>
@@ -741,8 +741,8 @@ const PlanBillingSection = () => {
                 className={cn(
                   "rounded-full px-2.5 py-0.5 text-xs font-medium ring-1",
                   selfHost.enabled
-                    ? "bg-emerald-500/10 text-emerald-500 ring-emerald-500/30"
-                    : "bg-muted text-foreground/60 ring-border",
+                    ? "bg-success/10 text-success ring-success/30"
+                    : "bg-muted text-fg-muted ring-border",
                 )}
               >
                 {selfHost.enabled ? "Active" : "Disabled"}
@@ -775,7 +775,7 @@ const PlanBillingSection = () => {
                   })
                 }
                 disabled={deleteSelfHost.isPending}
-                className="cursor-pointer rounded-md border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-500/10 disabled:opacity-50"
+                className="cursor-pointer rounded-md border border-danger/30 px-3 py-1.5 text-xs font-medium text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
               >
                 Remove
               </button>
@@ -786,7 +786,7 @@ const PlanBillingSection = () => {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {SELFHOST_FIELDS.map(({ key, label, placeholder, secret }) => (
                 <label key={key} className="flex flex-col gap-1 text-sm">
-                  <span className="text-foreground/70">{label}</span>
+                  <span className="text-fg-muted">{label}</span>
                   <input
                     type={secret ? "password" : "text"}
                     value={form[key]}
@@ -796,7 +796,7 @@ const PlanBillingSection = () => {
                     placeholder={placeholder}
                     required
                     autoComplete="off"
-                    className="rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-foreground outline-none transition-colors focus:border-foreground/40"
+                    className="rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-foreground outline-none transition-colors focus:border-fg-faint"
                   />
                 </label>
               ))}
@@ -879,7 +879,7 @@ const RecordingSection = () => {
     <div className="flex flex-col gap-6">
       <div className="rounded-lg border border-border bg-background p-5">
         <h3 className="text-base font-semibold text-foreground">Recording mode</h3>
-        <p className="mt-1 max-w-md text-sm text-foreground/60">
+        <p className="mt-1 max-w-md text-sm text-fg-muted">
           Audio-only recordings skip video capture and produce lossless WAV and MP3 downloads.
         </p>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:max-w-md">
@@ -890,8 +890,8 @@ const RecordingSection = () => {
             const selected = recordingMode === value;
             return <button key={value} type="button" aria-pressed={selected} disabled={updateRecording.isPending}
               onClick={() => updateRecording.mutate({ recordingMode: value as "VIDEO_AND_AUDIO" | "AUDIO_ONLY" }, { onError: () => toast.error("Couldn't update recording mode.") })}
-              className={cn("flex flex-col items-start gap-0.5 rounded-lg border p-3 text-left transition-colors disabled:opacity-60", selected ? "border-brand ring-1 ring-brand" : "border-border hover:border-foreground/30")}>
-              <span className="text-sm font-medium text-foreground">{label}</span><span className="text-xs text-foreground/55">{hint}</span>
+              className={cn("flex flex-col items-start gap-0.5 rounded-lg border p-3 text-left transition-colors disabled:opacity-60", selected ? "border-brand ring-1 ring-brand" : "border-border hover:border-fg-faint")}>
+              <span className="text-sm font-medium text-foreground">{label}</span><span className="text-xs text-fg-muted">{hint}</span>
             </button>;
           })}
         </div>
@@ -900,7 +900,7 @@ const RecordingSection = () => {
       {/* Frame rate - applies to every participant when you host a session. */}
       <div className="rounded-lg border border-border bg-background p-5">
         <h3 className="text-base font-semibold text-foreground">Frame rate</h3>
-        <p className="mt-1 max-w-md text-sm text-foreground/60">
+        <p className="mt-1 max-w-md text-sm text-fg-muted">
           The frame rate your recordings capture at. When you host, this applies
           to everyone in the session so all tracks stay in sync.
         </p>
@@ -929,7 +929,7 @@ const RecordingSection = () => {
                   selected
                     ? "border-brand ring-1 ring-brand"
                     : "border-border",
-                  !locked && !selected && "hover:border-foreground/30",
+                  !locked && !selected && "hover:border-fg-faint",
                   locked ? "cursor-not-allowed" : "cursor-pointer",
                 )}
               >
@@ -938,18 +938,18 @@ const RecordingSection = () => {
                     {label}
                   </span>
                   {recommended && (
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-foreground/60">
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-fg-muted">
                       Default
                     </span>
                   )}
                 </span>
-                <span className="text-xs text-foreground/55">{hint}</span>
+                <span className="text-xs text-fg-muted">{hint}</span>
               </button>
             );
           })}
         </div>
         {isDemo && (
-          <p className="mt-2 text-xs text-yellow-500">
+          <p className="mt-2 text-xs text-warning">
             Demo records at 24 FPS. Upgrade to Pro to record at 30 FPS.
           </p>
         )}
@@ -957,7 +957,7 @@ const RecordingSection = () => {
 
       <div className="rounded-lg border border-border bg-background p-5">
         <h3 className="text-base font-semibold text-foreground">Video resolution</h3>
-        <p className="mt-1 max-w-md text-sm text-foreground/60">
+        <p className="mt-1 max-w-md text-sm text-fg-muted">
           Caps camera capture height for recordings you host.
         </p>
         <div className="mt-4 grid grid-cols-3 gap-3 sm:max-w-md">
@@ -967,19 +967,19 @@ const RecordingSection = () => {
               <button key={value} type="button" aria-pressed={selected}
                 disabled={isDemo || updateRecording.isPending}
                 onClick={() => updateRecording.mutate({ videoResolution: value }, { onError: () => toast.error("Couldn't update video resolution.") })}
-                className={cn("flex flex-col items-start gap-0.5 rounded-lg border p-3 text-left transition-colors disabled:opacity-60", selected ? "border-brand ring-1 ring-brand" : "border-border", !isDemo && !selected && "hover:border-foreground/30", isDemo ? "cursor-not-allowed" : "cursor-pointer")}>
-                <span className="flex w-full items-center justify-between"><span className="text-sm font-medium text-foreground">{label}</span>{isDemo && selected ? <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-foreground/60">Demo</span> : recommended && <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-foreground/60">Default</span>}</span>
-                <span className="text-xs text-foreground/55">{hint}</span>
+                className={cn("flex flex-col items-start gap-0.5 rounded-lg border p-3 text-left transition-colors disabled:opacity-60", selected ? "border-brand ring-1 ring-brand" : "border-border", !isDemo && !selected && "hover:border-fg-faint", isDemo ? "cursor-not-allowed" : "cursor-pointer")}>
+                <span className="flex w-full items-center justify-between"><span className="text-sm font-medium text-foreground">{label}</span>{isDemo && selected ? <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-fg-muted">Demo</span> : recommended && <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-fg-muted">Default</span>}</span>
+                <span className="text-xs text-fg-muted">{hint}</span>
               </button>
             );
           })}
         </div>
-        {isDemo && <p className="mt-2 text-xs text-yellow-500">Demo records at 720p. Upgrade to Pro to change this.</p>}
+        {isDemo && <p className="mt-2 text-xs text-warning">Demo records at 720p. Upgrade to Pro to change this.</p>}
       </div>
 
       <div className="rounded-lg border border-border bg-background p-5">
         <h3 className="text-base font-semibold text-foreground">Audio sample rate</h3>
-        <p className="mt-1 max-w-md text-sm text-foreground/60">
+        <p className="mt-1 max-w-md text-sm text-fg-muted">
           Requested for the lossless PCM recording master. Your device may use a different actual rate.
         </p>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:max-w-sm">
@@ -989,18 +989,18 @@ const RecordingSection = () => {
               <button key={value} type="button" aria-pressed={selected}
                 disabled={isDemo || updateRecording.isPending}
                 onClick={() => updateRecording.mutate({ audioSampleRate: value }, { onError: () => toast.error("Couldn't update audio sample rate.") })}
-                className={cn("flex items-center justify-between rounded-lg border p-3 text-left transition-colors disabled:opacity-60", selected ? "border-brand ring-1 ring-brand" : "border-border", !isDemo && !selected && "hover:border-foreground/30", isDemo ? "cursor-not-allowed" : "cursor-pointer")}>
-                <span className="text-sm font-medium text-foreground">{label}</span>{isDemo && selected ? <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-foreground/60">Demo</span> : recommended && <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-foreground/60">Default</span>}
+                className={cn("flex items-center justify-between rounded-lg border p-3 text-left transition-colors disabled:opacity-60", selected ? "border-brand ring-1 ring-brand" : "border-border", !isDemo && !selected && "hover:border-fg-faint", isDemo ? "cursor-not-allowed" : "cursor-pointer")}>
+                <span className="text-sm font-medium text-foreground">{label}</span>{isDemo && selected ? <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-fg-muted">Demo</span> : recommended && <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-fg-muted">Default</span>}
               </button>
             );
           })}
         </div>
-        {isDemo && <p className="mt-2 text-xs text-yellow-500">Demo requests 44.1 kHz PCM. Upgrade to Pro to change this.</p>}
+        {isDemo && <p className="mt-2 text-xs text-warning">Demo requests 44.1 kHz PCM. Upgrade to Pro to change this.</p>}
       </div>
 
       <div className="rounded-lg border border-border bg-background p-5">
         <h3 className="text-base font-semibold text-foreground">Noise reduction</h3>
-        <p className="mt-1 max-w-md text-sm text-foreground/60">
+        <p className="mt-1 max-w-md text-sm text-fg-muted">
           These controls affect only the recorded PCM master, not your live call.
         </p>
         <div className="mt-4 flex flex-col gap-4">
@@ -1016,7 +1016,7 @@ const RecordingSection = () => {
           ))}
         </div>
         {noiseReductionEnabled && (
-          <p className="mt-3 text-xs text-yellow-500">Applied while recording, can't be removed later.</p>
+          <p className="mt-3 text-xs text-warning">Applied while recording, can't be removed later.</p>
         )}
       </div>
 
@@ -1026,13 +1026,13 @@ const RecordingSection = () => {
             <h3 className="text-base font-semibold text-foreground">
               Cloud backup
             </h3>
-            <p className="mt-1 max-w-md text-sm text-foreground/60">
+            <p className="mt-1 max-w-md text-sm text-fg-muted">
               When on, each recording also gets a server-side cloud backup as a
               safety net if a local upload fails. Off by default. When off, no
               cloud recording is made - only the local capture.
             </p>
             {!cloudBackupAllowed && (
-              <p className="mt-2 text-xs text-yellow-500">
+              <p className="mt-2 text-xs text-warning">
                 Cloud backup is available on Pro and self-host plans.
               </p>
             )}
@@ -1066,7 +1066,7 @@ const DashboardSettingsPage = () => {
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
       <div>
         <h1 className="text-xl font-semibold text-foreground">Settings</h1>
-        <p className="text-sm text-foreground/60">
+        <p className="text-sm text-fg-muted">
           Manage your profile, plan, and recording preferences.
         </p>
       </div>
@@ -1083,7 +1083,7 @@ const DashboardSettingsPage = () => {
                 "flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 section === id
                   ? "bg-muted text-foreground"
-                  : "text-foreground/70 hover:bg-muted hover:text-foreground",
+                  : "text-fg-muted hover:bg-muted hover:text-foreground",
               )}
             >
               <Icon className="size-4" />

@@ -64,7 +64,7 @@ const OutputThumb = ({ output }: { output: FinalOutput }) => {
   // No poster → camera-off style: the person's round profile picture, or their
   // first initial when they have no picture, falling back to the record icon.
   return (
-    <div className="relative flex h-full w-full items-center justify-center bg-foreground/10">
+    <div className="relative flex h-full w-full items-center justify-center bg-muted">
       {name || avatar ? (
         <span className="flex aspect-square h-1/3 min-h-8 max-w-[80%] shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand text-lg font-semibold text-white">
           {avatar && !avatarFailed ? (
@@ -80,7 +80,7 @@ const OutputThumb = ({ output }: { output: FinalOutput }) => {
           )}
         </span>
       ) : (
-        <PiRecordFill className="size-12 animate-pulse text-foreground/25" />
+        <PiRecordFill className="size-12 animate-pulse text-fg-faint" />
       )}
     </div>
   );
@@ -169,7 +169,7 @@ const ProjectRetentionNote = ({ spaceId }: { spaceId: string }) => {
 
   return (
     <span
-      className="inline-flex items-center gap-1.5 whitespace-nowrap text-foreground/45"
+      className="inline-flex items-center gap-1.5 whitespace-nowrap text-fg-subtle"
       title="Recordings auto-delete when they reach your plan's retention window."
     >
       <span>·</span>
@@ -238,7 +238,7 @@ const ProjectCard = ({
             onOpen(space);
           }
         }}
-        className="flex cursor-pointer flex-col gap-3 overflow-hidden rounded-xl border border-call-border bg-call-primary p-3 text-left transition-opacity hover:opacity-80"
+        className="flex cursor-pointer flex-col gap-3 overflow-hidden rounded-xl border border-border bg-primary p-3 text-left transition-opacity hover:opacity-80"
       >
         <ProjectThumbnail spaceId={space.id} />
 
@@ -247,7 +247,7 @@ const ProjectCard = ({
             <p className="truncate text-sm font-semibold text-foreground">
               {space.title || "Untitled space"}
             </p>
-            <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-foreground/45">
+            <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-fg-subtle">
               <span className="whitespace-nowrap">
                 {recordingLabel(sessionCount)}
               </span>
@@ -268,10 +268,10 @@ const ProjectCard = ({
                   type="button"
                   onClick={(event) => event.stopPropagation()}
                   className={cn(
-                    "flex size-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-call-background hover:text-foreground",
+                    "flex size-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-background hover:text-foreground",
                     menuOpen
-                      ? "bg-call-background text-foreground"
-                      : "text-foreground/45",
+                      ? "bg-background text-foreground"
+                      : "text-fg-subtle",
                   )}
                 >
                   <FiMoreVertical className="size-5" />
@@ -287,7 +287,7 @@ const ProjectCard = ({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => void handleDelete()}
-                  className="text-red-500 focus:bg-red-500/10 focus:text-red-500 [&_svg]:!text-red-500"
+                  className="text-danger focus:bg-danger/10 focus:text-danger [&_svg]:!text-danger"
                 >
                   <FiTrash2 />
                   Delete
@@ -321,7 +321,7 @@ const ProjectCard = ({
                 if (event.key === "Escape") setRenaming(false);
               }}
               placeholder="Project name"
-              className="mt-4 w-full rounded-md border border-border bg-primary px-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30"
+              className="mt-4 w-full rounded-md border border-border bg-primary px-3 py-2 text-sm text-foreground outline-none focus:border-fg-faint"
             />
             <div className="mt-5 flex justify-end gap-2">
               <button

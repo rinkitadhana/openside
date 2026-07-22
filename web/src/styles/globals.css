@@ -7,50 +7,90 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
-  The entire app runs on SIX colors. Everything else is one of these, optionally
-  with an opacity modifier (e.g. text-foreground/60, bg-muted, border-brand/40):
+  NEUTRALS - a four-step surface ramp plus one border, per theme:
 
     background    - the base canvas
+    primary       - raised surface (cards, panels, inputs)
+    muted         - subtle fill (hover states, chips, track backgrounds)
+    border        - hairlines; always one step past `muted` so a bordered
+                    muted element still reads as an edge in BOTH themes
     foreground    - text / strong neutral
-    primary       - primary actions & emphasis (inverts with the theme)
-    muted         - secondary surfaces & subtle fills (used the most)
-    brand         - the accent (periwinkle by default, user-overridable)
-    border        - borders
+
+  TEXT - never hand-pick an opacity for text. Four opaque tiers, each mixed
+  toward the canvas so it stays consistent on any surface:
+
+    text-foreground   - titles, primary copy
+    text-fg-muted     - secondary copy, active icons
+    text-fg-subtle    - metadata, labels, inactive icons
+    text-fg-faint     - separators, placeholders, disabled
+
+  ACCENTS - `brand` is the single decorative accent (user-overridable). Status
+  meaning goes through the semantic four, which are tuned per theme so they
+  hold contrast on white and don't glow on black:
+
+    success | warning | danger | info
+
+    solid fill        bg-danger  + text-white
+    tinted badge      bg-danger/10 text-danger ring-1 ring-danger/25
+    quiet control     text-danger hover:bg-danger/10
 
   Legacy token names (call-*, secondary*, accent, destructive, …) are kept below
-  purely as aliases that resolve to one of the six, so nothing breaks.
+  purely as aliases that resolve to one of the above, so nothing breaks.
 */
 :root {
   --radius: 0.625rem;
 
   --background: #ffffff;
-  --foreground: #131313;
-  --primary: #f0f0f0;
-  --muted: #e2e2e2;
+  --foreground: #131316;
+  --primary: #f5f5f7;
+  --muted: #ebebf0;
+  --border: #dededf;
   --brand: #8a9df0;
-  --border: #dcdcdc;
+
+  /* Darker/denser than their dark-theme twins so they carry on white. */
+  --success: #0d9163;
+  --warning: #b25e09;
+  --danger: #d92d20;
+  --info: #0369a1;
 
   --selection-background: var(--foreground);
   --selection-text: var(--background);
 }
 
 .dark {
-  --background: #080808;
-  --foreground: #f4f4f4;
-  --primary: #161616;
-  --muted: #252525;
+  --background: #0a0a0b;
+  --foreground: #f4f4f5;
+  --primary: #141417;
+  --muted: #1f1f23;
+  --border: #2b2b31;
   --brand: #8a9df0;
-  --border: #252525;
+
+  /* Lifted and desaturated: saturated mid-tones vibrate on a black canvas. */
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --info: #38bdf8;
 }
 
 @theme inline {
-  /* The seven */
+  /* Neutrals */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-muted: var(--muted);
-  --color-brand: var(--brand);
   --color-border: var(--border);
+
+  /* Text tiers - opaque, so they read the same on every surface */
+  --color-fg-muted: color-mix(in oklab, var(--foreground) 68%, var(--background));
+  --color-fg-subtle: color-mix(in oklab, var(--foreground) 48%, var(--background));
+  --color-fg-faint: color-mix(in oklab, var(--foreground) 30%, var(--background));
+
+  /* Accents */
+  --color-brand: var(--brand);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
 
   /* Legacy aliases - every old token collapses into one of the seven */
   --color-primary-text: var(--background);
@@ -74,12 +114,12 @@
   --color-card-foreground: var(--foreground);
   --color-popover: var(--background);
   --color-popover-foreground: var(--foreground);
-  --color-muted-foreground: var(--foreground);
+  --color-muted-foreground: var(--color-fg-muted);
   --color-accent: var(--muted);
   --color-accent-foreground: var(--foreground);
-  --color-destructive: var(--brand);
+  --color-destructive: var(--danger);
   --color-input: var(--border);
-  --color-ring: var(--border);
+  --color-ring: var(--brand);
   --color-chart-1: var(--brand);
   --color-chart-2: var(--brand);
   --color-chart-3: var(--brand);

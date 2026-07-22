@@ -133,7 +133,7 @@ const QuickActions = () => {
         >
           What will you create today?
         </h2>
-        <p className="mt-3 text-sm text-foreground/50">
+        <p className="mt-3 text-sm text-fg-subtle">
           Pick where you want to start.
         </p>
       </div>
@@ -159,12 +159,12 @@ const QuickActions = () => {
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-medium text-foreground">
             Upcoming sessions
-            <span className="ml-2 font-normal text-foreground/40">{todayLabel}</span>
+            <span className="ml-2 font-normal text-fg-subtle">{todayLabel}</span>
           </h3>
           <button
             type="button"
             onClick={() => navigate("/dashboard/calendar")}
-            className="flex items-center gap-1 text-xs font-medium text-foreground/60 transition-colors hover:text-foreground cursor-pointer"
+            className="flex items-center gap-1 text-xs font-medium text-fg-muted transition-colors hover:text-foreground cursor-pointer"
           >
             View all
             <ChevronRight size={14} />
@@ -174,7 +174,7 @@ const QuickActions = () => {
         {isLoading ? (
           <UpcomingSessionsSkeleton />
         ) : upcoming.length === 0 ? (
-          <div className="flex h-20 items-center justify-center rounded-lg border border-dashed border-border text-sm text-foreground/40">
+          <div className="flex h-20 items-center justify-center rounded-lg border border-dashed border-border text-sm text-fg-subtle">
             No upcoming recordings scheduled
           </div>
         ) : (
@@ -194,12 +194,12 @@ const QuickActions = () => {
                     <span className="block truncate text-sm font-medium text-foreground">
                       {space.title || "Untitled recording"}
                     </span>
-                    <span className="block truncate text-xs text-foreground/50">
+                    <span className="block truncate text-xs text-fg-subtle">
                       {formatWhen(space.scheduledFor!)}
                     </span>
                   </span>
                 </span>
-                <ChevronRight size={16} className="shrink-0 text-foreground/40" />
+                <ChevronRight size={16} className="shrink-0 text-fg-subtle" />
               </button>
             ))}
           </div>

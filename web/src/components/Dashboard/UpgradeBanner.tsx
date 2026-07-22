@@ -29,7 +29,7 @@ const UpgradeBanner = () => {
         <Sparkles size={16} className="shrink-0 text-brand" />
         <p className="min-w-0 truncate text-sm text-foreground">
           <span className="font-medium">Subscribe to Pro</span>
-          <span className="text-foreground/50">
+          <span className="text-fg-subtle">
             {" "}
             - 20 hrs/mo, no watermark, 4K, cloud backup, and 30-day retention.
           </span>

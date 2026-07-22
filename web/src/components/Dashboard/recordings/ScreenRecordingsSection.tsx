@@ -36,8 +36,8 @@ const StatusBadge = ({ status }: { status: ScreenRecording["status"] }) => {
       className={cn(
         "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.7rem] font-medium",
         processing
-          ? "bg-amber-400/15 text-amber-500"
-          : "bg-red-400/15 text-red-400",
+          ? "bg-warning/15 text-warning"
+          : "bg-danger/15 text-danger",
       )}
     >
       {processing ? (
@@ -92,8 +92,8 @@ const ScreenThumbnail = ({ rec }: { rec: ScreenRecording }) => {
   // Plain gray + icon underneath; the poster/video paints on top once ready. The
   // same state covers loading, failure, and "no thumbnail" - nothing flashes.
   return (
-    <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-lg bg-foreground/10">
-      <FiMonitor className="size-8 text-foreground/25" />
+    <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-lg bg-muted">
+      <FiMonitor className="size-8 text-fg-faint" />
       {poster ? (
         <img
           src={poster}
@@ -129,7 +129,7 @@ const ScreenRecordingCard = ({ rec }: { rec: ScreenRecording }) => {
     <button
       type="button"
       onClick={() => navigate(`/dashboard/project/screen/${rec.id}`)}
-      className="flex flex-col gap-3 rounded-xl border border-call-border bg-call-primary p-3 text-left transition-colors hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20"
+      className="flex flex-col gap-3 rounded-xl border border-border bg-primary p-3 text-left transition-colors hover:border-fg-faint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
     >
       <div className="relative w-full">
         <ScreenThumbnail rec={rec} />
@@ -145,7 +145,7 @@ const ScreenRecordingCard = ({ rec }: { rec: ScreenRecording }) => {
           {rec.title || "Untitled recording"}
         </p>
         {recordedAt && (
-          <p className="flex items-center gap-1 text-xs text-foreground/45">
+          <p className="flex items-center gap-1 text-xs text-fg-subtle">
             <FiClock className="size-3" />
             Recorded {recordedAt}
           </p>
@@ -156,11 +156,11 @@ const ScreenRecordingCard = ({ rec }: { rec: ScreenRecording }) => {
 };
 
 const ScreenRecordingCardSkeleton = () => (
-  <div className="flex flex-col gap-3 rounded-xl border border-call-border bg-call-primary p-3">
-    <div className="aspect-video animate-pulse rounded-lg bg-foreground/10" />
+  <div className="flex flex-col gap-3 rounded-xl border border-border bg-primary p-3">
+    <div className="aspect-video animate-pulse rounded-lg bg-muted" />
     <div className="space-y-2 px-1 pb-1">
-      <div className="h-3.5 w-3/4 animate-pulse rounded bg-foreground/10" />
-      <div className="h-3 w-1/2 animate-pulse rounded bg-foreground/10" />
+      <div className="h-3.5 w-3/4 animate-pulse rounded bg-muted" />
+      <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
     </div>
   </div>
 );
@@ -188,7 +188,7 @@ const ScreenRecordingsSection = ({
           Screen recordings
         </h2>
         {!isLoading && (
-          <span className="rounded-full bg-call-primary px-2.5 py-0.5 text-[0.7rem] font-medium text-foreground/55 ring-1 ring-call-border">
+          <span className="rounded-full bg-muted px-2.5 py-0.5 text-[0.7rem] font-medium text-fg-muted ring-1 ring-border">
             {recordings.length}
           </span>
         )}
@@ -211,10 +211,10 @@ const ScreenRecordingsSection = ({
                 Math.min(count + RECORDINGS_PER_PAGE, recordings.length),
               )
             }
-            className="rounded-md border border-call-border bg-call-primary px-4 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70"
+            className="rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70"
           >
             Show more
-            <span className="ml-1.5 text-foreground/45">
+            <span className="ml-1.5 text-fg-subtle">
               ({remainingRecordings} more)
             </span>
           </button>

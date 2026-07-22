@@ -170,7 +170,7 @@ const RowThumbnail = ({
           )}
         </span>
       ) : (
-        <FallbackIcon className="size-5 text-foreground/60" />
+        <FallbackIcon className="size-5 text-fg-muted" />
       )}
 
       {/* Selected → a steady now-playing scrim. Playable but idle → a play glyph
@@ -213,10 +213,10 @@ const DownloadItem = ({
     {busy ? (
       <FiLoader className="size-3.5 animate-spin" />
     ) : (
-      <LuDownload className="size-3.5 text-foreground/60" />
+      <LuDownload className="size-3.5 text-fg-muted" />
     )}
     {name}
-    <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-foreground/55">
+    <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-fg-muted">
       {format}
     </span>
   </button>
@@ -392,8 +392,8 @@ const OutputCard = ({
       aria-pressed={canPlay ? selected : undefined}
       className={`group flex items-center gap-3 rounded-lg border px-2.5 py-2 transition-colors ${
         selected
-          ? "border-foreground/25 bg-muted"
-          : "border-border bg-primary hover:border-foreground/20"
+          ? "border-fg-faint bg-muted"
+          : "border-border bg-primary hover:border-fg-faint"
       } ${canPlay ? "cursor-pointer" : ""}`}
     >
       <RowThumbnail
@@ -409,23 +409,23 @@ const OutputCard = ({
         </p>
         {/* Always show the status so users know where the recording stands; on
             a ready track, follow it with the useful stats. */}
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-foreground/45">
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-fg-subtle">
           <span
             className={`inline-flex items-center gap-1.5 whitespace-nowrap font-medium ${
               isReady
-                ? "text-emerald-500"
+                ? "text-success"
                 : isFailed
-                  ? "text-red-400"
-                  : "text-amber-500"
+                  ? "text-danger"
+                  : "text-warning"
             }`}
           >
             <span
               className={`size-1.5 rounded-full ${
                 isReady
-                  ? "bg-emerald-500"
+                  ? "bg-success"
                   : isFailed
-                    ? "bg-red-400"
-                    : "bg-amber-500"
+                    ? "bg-danger"
+                    : "bg-warning"
               }`}
             />
             {statusLabel(output.status)}
@@ -433,20 +433,20 @@ const OutputCard = ({
           {isReady && (
             <>
               <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                <span className="text-foreground/25">·</span>
+                <span className="text-fg-faint">·</span>
                 <span className="tabular-nums">
                   {formatDuration(output.durationMs)}
                 </span>
               </span>
               {hasVideo && qualityLabel(output) && (
                 <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                  <span className="text-foreground/25">·</span>
+                  <span className="text-fg-faint">·</span>
                   <span className="tabular-nums">{qualityLabel(output)}</span>
                 </span>
               )}
               {recordedAt && (
                 <span className="hidden items-center gap-1.5 whitespace-nowrap sm:inline-flex">
-                  <span className="text-foreground/25">·</span>
+                  <span className="text-fg-faint">·</span>
                   <span>{recordedAt}</span>
                 </span>
               )}
@@ -455,8 +455,8 @@ const OutputCard = ({
                   className="inline-flex items-center gap-1.5 whitespace-nowrap"
                   title="This recording auto-deletes when it reaches your plan's retention window."
                 >
-                  <span className="text-foreground/25">·</span>
-                  <span className="text-amber-500/80">
+                  <span className="text-fg-faint">·</span>
+                  <span className="text-warning/80">
                     deletes in {deletesIn}
                   </span>
                 </span>
@@ -477,7 +477,7 @@ const OutputCard = ({
             {downloading ? (
               <FiLoader className="size-4 animate-spin" />
             ) : (
-              <LuDownload className="size-4 text-foreground/60" />
+              <LuDownload className="size-4 text-fg-muted" />
             )}
             {downloading ? "Preparing" : "Download"}
           </button>
@@ -488,7 +488,7 @@ const OutputCard = ({
         >
           {videoItems.length > 0 && (
             <>
-              <p className="px-2 pt-1 pb-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-foreground/40">
+              <p className="px-2 pt-1 pb-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-fg-subtle">
                 Video
               </p>
               {videoItems.map((item) => (
@@ -508,7 +508,7 @@ const OutputCard = ({
 
           {audioItems.length > 0 && (
             <>
-              <p className="px-2 pt-1.5 pb-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-foreground/40">
+              <p className="px-2 pt-1.5 pb-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-fg-subtle">
                 Audio
               </p>
               {audioItems.map((item) => (

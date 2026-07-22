@@ -87,7 +87,7 @@ const EventPill = ({
     className={`flex w-full items-center gap-1.5 truncate rounded border px-1.5 py-2 text-left text-xs leading-tight transition-colors hover:bg-muted cursor-pointer ${statusStyles()}`}
   >
     {event.status === "SCHEDULED" ? (
-      <BsFillRecordCircleFill size={12} className="shrink-0 text-red-500" />
+      <BsFillRecordCircleFill size={12} className="shrink-0 text-danger" />
     ) : (
       <MdOutlineVideoLabel size={13} className="shrink-0 opacity-70" />
     )}
@@ -322,7 +322,7 @@ const DashboardCalendarPage = () => {
                   className={`flex h-full items-center rounded px-3 text-sm font-medium capitalize transition-colors cursor-pointer ${
                     view === option
                       ? "bg-brand text-white"
-                      : "text-foreground/60 hover:bg-foreground/5 hover:text-foreground"
+                      : "text-fg-muted hover:bg-muted hover:text-foreground"
                   }`}
                 >
                   {option}
@@ -351,13 +351,13 @@ const DashboardCalendarPage = () => {
                     className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="size-9 shrink-0 rounded-md bg-foreground/10 animate-pulse" />
+                      <div className="size-9 shrink-0 rounded-md bg-muted animate-pulse" />
                       <div className="flex flex-col gap-1.5">
-                        <div className="h-3.5 w-32 rounded bg-foreground/10 animate-pulse" />
-                        <div className="h-3 w-24 rounded bg-foreground/10 animate-pulse" />
+                        <div className="h-3.5 w-32 rounded bg-muted animate-pulse" />
+                        <div className="h-3 w-24 rounded bg-muted animate-pulse" />
                       </div>
                     </div>
-                    <div className="h-5 w-16 shrink-0 rounded-full bg-foreground/10 animate-pulse" />
+                    <div className="h-5 w-16 shrink-0 rounded-full bg-muted animate-pulse" />
                   </div>
                 ))}
               </div>
@@ -373,7 +373,7 @@ const DashboardCalendarPage = () => {
                     Upcoming
                   </h2>
                   {upcomingEvents.length === 0 ? (
-                    <p className="px-1 py-2 text-sm text-foreground/50">
+                    <p className="px-1 py-2 text-sm text-fg-subtle">
                       No upcoming recording sessions.
                     </p>
                   ) : (
@@ -389,7 +389,7 @@ const DashboardCalendarPage = () => {
                     </h2>
                     {pastMonths.map((month) => (
                       <div key={month.key} className="flex flex-col gap-1.5">
-                        <h3 className="px-1 text-xs font-medium text-foreground/50">
+                        <h3 className="px-1 text-xs font-medium text-fg-subtle">
                           {month.label}
                         </h3>
                         {month.events.map(renderRow)}
@@ -415,7 +415,7 @@ const DashboardCalendarPage = () => {
                 {WEEKDAYS.map((day) => (
                   <div
                     key={day}
-                    className="px-2 py-2 text-center text-xs font-medium text-foreground/70"
+                    className="px-2 py-2 text-center text-xs font-medium text-fg-muted"
                   >
                     {day}
                   </div>
@@ -445,14 +445,14 @@ const DashboardCalendarPage = () => {
                         } ${isLastRow ? "" : "border-b"}`}
                       >
                         <div className="flex items-center px-0.5">
-                          <div className="size-8 rounded-full bg-foreground/10 animate-pulse" />
+                          <div className="size-8 rounded-full bg-muted animate-pulse" />
                         </div>
                         <div className="flex flex-1 flex-col gap-1">
                           {index % 3 === 0 && (
-                            <div className="h-6 w-full rounded bg-foreground/10 animate-pulse" />
+                            <div className="h-6 w-full rounded bg-muted animate-pulse" />
                           )}
                           {index % 5 === 0 && (
-                            <div className="h-6 w-4/5 rounded bg-foreground/10 animate-pulse" />
+                            <div className="h-6 w-4/5 rounded bg-muted animate-pulse" />
                           )}
                         </div>
                       </div>
@@ -492,7 +492,7 @@ const DashboardCalendarPage = () => {
                             ? "bg-brand text-white"
                             : inMonth
                             ? "text-foreground"
-                            : "text-foreground/60"
+                            : "text-fg-muted"
                         } ${isPast && !isToday ? "opacity-40" : ""}`}
                       >
                         {day.getDate()}

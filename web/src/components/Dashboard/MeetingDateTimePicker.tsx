@@ -206,7 +206,7 @@ const MeetingDateTimePicker = ({
                           ? "bg-primary font-semibold text-background"
                           : inMonth
                           ? "text-foreground hover:bg-primary"
-                          : "text-foreground/40 hover:bg-primary"
+                          : "text-fg-subtle hover:bg-primary"
                       }`}
                     >
                       {day.getDate()}

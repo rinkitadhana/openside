@@ -97,7 +97,7 @@ const DashboardSidebar = ({ isOpen, onNavigate }: DashboardSidebarProps) => {
           target="_blank"
           rel="noreferrer"
           title="Report issue"
-          className="flex h-10 items-center overflow-hidden rounded-md border border-yellow-500/30 bg-yellow-500/10 text-sm font-medium text-yellow-700 transition-colors hover:bg-yellow-500/20 dark:text-yellow-500"
+          className="flex h-10 items-center overflow-hidden rounded-md border border-warning/30 bg-warning/10 text-sm font-medium text-warning transition-colors hover:bg-warning/20"
         >
           <span
             className={`flex shrink-0 items-center justify-center ${
@@ -160,7 +160,7 @@ const DashboardSidebar = ({ isOpen, onNavigate }: DashboardSidebarProps) => {
               )}
               <ChevronDown
                 size={16}
-                className="mr-3 shrink-0 text-foreground/60 transition-transform duration-200 group-data-[state=open]:rotate-180"
+                className="mr-3 shrink-0 text-fg-muted transition-transform duration-200 group-data-[state=open]:rotate-180"
               />
             </button>
           </DropdownMenuTrigger>
@@ -171,10 +171,10 @@ const DashboardSidebar = ({ isOpen, onNavigate }: DashboardSidebarProps) => {
             className="w-40 rounded-lg border-border bg-background p-1.5 shadow-sm"
           >
             <DropdownMenuItem
-              className="h-9 cursor-pointer rounded-md px-2.5 text-red-500 focus:bg-red-500/10 focus:text-red-500 dark:text-red-500 dark:focus:text-red-500"
+              className="h-9 cursor-pointer rounded-md px-2.5 text-danger focus:bg-danger/10 focus:text-danger"
               onClick={logout}
             >
-              <LogOut className="h-4 w-4 text-red-500" />
+              <LogOut className="h-4 w-4 text-danger" />
               <span>Logout</span>
             </DropdownMenuItem>
           </DropdownMenuContent>

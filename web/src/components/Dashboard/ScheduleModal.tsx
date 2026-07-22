@@ -136,7 +136,7 @@ const ScheduleModal = ({ open, onClose }: ScheduleModalProps) => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Untitled Recording"
-              className="min-w-0 flex-1 bg-transparent text-lg font-semibold text-foreground outline-none placeholder:text-foreground/25"
+              className="min-w-0 flex-1 bg-transparent text-lg font-semibold text-foreground outline-none placeholder:text-fg-faint"
             />
           </div>
 
@@ -164,7 +164,7 @@ const ScheduleModal = ({ open, onClose }: ScheduleModalProps) => {
                     type="button"
                     onClick={() => removeInvitee(email)}
                     aria-label={`Remove ${email}`}
-                    className="text-foreground/40 hover:text-foreground cursor-pointer"
+                    className="text-fg-subtle hover:text-foreground cursor-pointer"
                   >
                     <X size={13} />
                   </button>
@@ -185,7 +185,7 @@ const ScheduleModal = ({ open, onClose }: ScheduleModalProps) => {
                 }}
                 onBlur={commitInvitee}
                 placeholder={invitees.length ? "" : "Invite people by email"}
-                className="h-7 min-w-[120px] flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-foreground/35"
+                className="h-7 min-w-[120px] flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-fg-faint"
               />
             </div>
 
@@ -200,7 +200,7 @@ const ScheduleModal = ({ open, onClose }: ScheduleModalProps) => {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add a description"
                 rows={3}
-                className="min-w-0 flex-1 resize-y bg-transparent text-sm leading-relaxed text-foreground outline-none placeholder:text-foreground/35"
+                className="min-w-0 flex-1 resize-y bg-transparent text-sm leading-relaxed text-foreground outline-none placeholder:text-fg-faint"
               />
             </div>
           </div>
@@ -210,7 +210,7 @@ const ScheduleModal = ({ open, onClose }: ScheduleModalProps) => {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border border-border bg-transparent px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+              className="rounded-md border border-border bg-transparent px-3 py-2 text-sm font-medium text-fg-muted transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
             >
               Cancel
             </button>

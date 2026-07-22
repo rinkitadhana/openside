@@ -115,7 +115,7 @@ const RecordingComments = ({
       <div className="flex items-center gap-2">
         <h3 className="text-sm font-semibold text-foreground">Comments</h3>
         {!isLoading && comments.length > 0 && (
-          <span className="rounded-full bg-call-primary px-2 py-0.5 text-[0.7rem] font-medium text-foreground/55 ring-1 ring-call-border">
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[0.7rem] font-medium text-fg-muted ring-1 ring-border">
             {comments.length}
           </span>
         )}
@@ -123,15 +123,15 @@ const RecordingComments = ({
 
       <div className="flex min-h-[120px] flex-1 flex-col gap-3 overflow-y-auto">
         {isLoading ? (
-          <div className="flex flex-1 items-center justify-center text-foreground/45">
+          <div className="flex flex-1 items-center justify-center text-fg-subtle">
             <FiLoader className="size-4 animate-spin" />
           </div>
         ) : comments.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center">
-            <span className="flex size-9 items-center justify-center rounded-full bg-call-background text-foreground/40">
+            <span className="flex size-9 items-center justify-center rounded-full bg-background text-fg-subtle">
               <FiMessageSquare className="size-4" />
             </span>
-            <p className="text-xs text-foreground/45">
+            <p className="text-xs text-fg-subtle">
               No comments yet. Start the conversation.
             </p>
           </div>
@@ -144,7 +144,7 @@ const RecordingComments = ({
                   <span className="truncate text-xs font-semibold text-foreground">
                     {comment.authorName}
                   </span>
-                  <span className="shrink-0 text-[0.7rem] text-foreground/40">
+                  <span className="shrink-0 text-[0.7rem] text-fg-subtle">
                     {formatWhen(comment.createdAt)}
                   </span>
                   {onDelete && canDelete?.(comment) && (
@@ -152,13 +152,13 @@ const RecordingComments = ({
                       type="button"
                       onClick={() => onDelete(comment.id)}
                       title="Delete comment"
-                      className="ml-auto shrink-0 text-foreground/30 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100"
+                      className="ml-auto shrink-0 text-fg-faint opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"
                     >
                       <FiTrash2 className="size-3.5" />
                     </button>
                   )}
                 </div>
-                <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-foreground/75">
+                <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-fg-muted">
                   {comment.body}
                 </p>
               </div>
@@ -167,14 +167,14 @@ const RecordingComments = ({
         )}
       </div>
 
-      <div className="flex flex-col gap-2 border-t border-call-border pt-3">
+      <div className="flex flex-col gap-2 border-t border-border pt-3">
         {askForName && (
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
             maxLength={80}
             placeholder="Your name"
-            className="w-full rounded-md border border-border bg-primary px-2.5 py-1.5 text-sm text-foreground outline-none focus:border-foreground/30"
+            className="w-full rounded-md border border-border bg-primary px-2.5 py-1.5 text-sm text-foreground outline-none focus:border-fg-faint"
           />
         )}
         <textarea
@@ -190,7 +190,7 @@ const RecordingComments = ({
           rows={3}
           maxLength={2000}
           placeholder="Add a comment…"
-          className="w-full resize-none rounded-md border border-border bg-primary px-2.5 py-2 text-sm text-foreground outline-none focus:border-foreground/30"
+          className="w-full resize-none rounded-md border border-border bg-primary px-2.5 py-2 text-sm text-foreground outline-none focus:border-fg-faint"
         />
         <button
           type="button"
