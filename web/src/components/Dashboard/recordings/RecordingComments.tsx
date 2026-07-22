@@ -49,7 +49,7 @@ const Avatar = ({ comment }: { comment: RecordingComment }) => {
   const initial = (comment.authorName.trim()[0] || "?").toUpperCase();
 
   return (
-    <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-purple-500 text-xs font-semibold text-white">
+    <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand text-xs font-semibold text-white">
       {avatar && !failed ? (
         <img
           src={avatar}

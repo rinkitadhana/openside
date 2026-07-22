@@ -54,7 +54,7 @@ const SECTIONS: { id: SectionId; label: string; icon: typeof UserIcon }[] = [
 ];
 
 const BRAND_PRESETS = [
-  "#8b5cf6", // violet (app default family)
+  "#8b5cf6", // violet
   "#6366f1", // indigo
   "#3b82f6", // blue
   "#0ea5e9", // sky
@@ -481,7 +481,7 @@ const AppearanceSection = () => {
             )}
             <input
               type="color"
-              value={brandColor || "#8b5cf6"}
+              value={brandColor || "#8a9df0"}
               onChange={(event) => applyBrandColor(event.target.value)}
               className="absolute inset-0 cursor-pointer opacity-0"
             />

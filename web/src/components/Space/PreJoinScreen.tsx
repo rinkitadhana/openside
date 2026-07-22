@@ -882,7 +882,7 @@ const PreJoinScreen = ({
                     disabled={isLoading || !stream}
                     className={`shrink-0 flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium select-none cursor-pointer transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 ${
                       isTestingMic
-                        ? "bg-purple-400/20 text-foreground"
+                        ? "bg-brand/20 text-foreground"
                         : "bg-primary text-foreground/80 hover:bg-primary/60"
                     }`}
                   >
@@ -951,7 +951,7 @@ const PreJoinScreen = ({
                       onClick={toggleSpeakerTest}
                       className={`shrink-0 flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium select-none cursor-pointer transition-all duration-200 ${
                         isTestingSpeaker
-                          ? "bg-purple-400/20 text-foreground"
+                          ? "bg-brand/20 text-foreground"
                           : "bg-primary text-foreground/80 hover:bg-primary/60"
                       }`}
                     >
@@ -972,7 +972,7 @@ const PreJoinScreen = ({
                     onClick={() => setHeadphonesChoice(true)}
                     className={`flex-1 py-2 rounded-lg text-sm font-medium select-none cursor-pointer transition-all duration-200 ${
                       usingHeadphones
-                        ? "bg-purple-400/20 text-foreground"
+                        ? "bg-brand/20 text-foreground"
                         : "bg-primary text-foreground/60 hover:bg-primary/60"
                     }`}
                   >
@@ -983,7 +983,7 @@ const PreJoinScreen = ({
                     onClick={() => setHeadphonesChoice(false)}
                     className={`flex-1 py-2 rounded-lg text-sm font-medium select-none cursor-pointer transition-all duration-200 ${
                       !usingHeadphones
-                        ? "bg-purple-400/20 text-foreground"
+                        ? "bg-brand/20 text-foreground"
                         : "bg-primary text-foreground/60 hover:bg-primary/60"
                     }`}
                   >
@@ -1020,7 +1020,7 @@ const PreJoinScreen = ({
                   joinSpace.isPending ||
                   !spaceData?.id
                 }
-                className="py-2.5 w-full select-none text-center bg-purple-400/80 hover:bg-purple-400/60 font-medium disabled:bg-purple-400/40 disabled:text-foreground/40 disabled:cursor-not-allowed text-sm rounded-lg cursor-pointer transition-all duration-200"
+                className="py-2.5 w-full select-none text-center bg-brand/80 hover:bg-brand/60 font-medium disabled:bg-brand/40 disabled:text-foreground/40 disabled:cursor-not-allowed text-sm rounded-lg cursor-pointer transition-all duration-200"
               >
                 <span>Join Call</span>
               </button>

@@ -156,7 +156,7 @@ const RowThumbnail = ({
       ) : name || avatar ? (
         // Camera-off style: a centered round profile picture, or the person's
         // first initial when they have no picture.
-        <span className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-purple-500 text-sm font-semibold text-white">
+        <span className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-brand text-sm font-semibold text-white">
           {avatar && !avatarFailed ? (
             <img
               src={avatar}

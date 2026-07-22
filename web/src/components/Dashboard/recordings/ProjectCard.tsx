@@ -66,7 +66,7 @@ const OutputThumb = ({ output }: { output: FinalOutput }) => {
   return (
     <div className="relative flex h-full w-full items-center justify-center bg-foreground/10">
       {name || avatar ? (
-        <span className="flex aspect-square h-1/3 min-h-8 max-w-[80%] shrink-0 items-center justify-center overflow-hidden rounded-full bg-purple-500 text-lg font-semibold text-white">
+        <span className="flex aspect-square h-1/3 min-h-8 max-w-[80%] shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand text-lg font-semibold text-white">
           {avatar && !avatarFailed ? (
             <img
               src={avatar}

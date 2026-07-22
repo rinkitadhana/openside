@@ -14,7 +14,7 @@
     foreground    - text / strong neutral
     primary       - primary actions & emphasis (inverts with the theme)
     muted         - secondary surfaces & subtle fills (used the most)
-    brand         - the accent (purple)
+    brand         - the accent (periwinkle by default, user-overridable)
     border        - borders
 
   Legacy token names (call-*, secondary*, accent, destructive, …) are kept below

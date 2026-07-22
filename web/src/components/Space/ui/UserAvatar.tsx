@@ -57,7 +57,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
           </div>
         ) : (
           <div
-            className={`rounded-full bg-purple-500  flex items-center justify-center font-semibold text-white w-[40%] min-w-[120px] aspect-square max-w-[120px] ${className}`}
+            className={`rounded-full bg-brand  flex items-center justify-center font-semibold text-white w-[40%] min-w-[120px] aspect-square max-w-[120px] ${className}`}
             style={{ fontSize: "clamp(1.5rem, 5vw, 3.5rem)" }}
           >
             {getInitials(name)}

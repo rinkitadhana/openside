@@ -6,7 +6,7 @@
  * The value comes from the cached ["get-me"] user, which profile edits update
  * optimistically, so changing the brand color in Settings recolors the app
  * immediately. Clearing it (null) removes the override and falls back to the
- * default purple defined in globals.css (which keeps its light/dark variants).
+ * default brand color defined in globals.css (which keeps its light/dark variants).
  */
 
 import { useEffect } from "react";
