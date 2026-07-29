@@ -25,7 +25,11 @@ import path from "node:path";
 import { prisma } from "../db/index.ts";
 import { ffmpegPath } from "../lib/ffmpeg-path.ts";
 import { enqueueFinalize, isQueueConfigured } from "../lib/queue.ts";
-import { describeSegmentGaps, findSegmentGaps } from "../lib/segment-gaps.ts";
+import {
+	describeSegmentGaps,
+	findSegmentGaps,
+	waitForLateSegments,
+} from "../lib/segment-gaps.ts";
 import { escapeFilterPath, watermarkFontPath } from "../lib/watermark-font.ts";
 import { sessionNeedsWatermark } from "./entitlements-service.ts";
 import { getObjectBuffer, putFileObject } from "./storage-service.ts";
@@ -173,11 +177,28 @@ async function stitchMaster(
 	watermark: boolean,
 ): Promise<MasterInfo | null> {
 	if (rec.segments.length === 0) {
-		await prisma.participantRecording.update({
-			where: { id: rec.id },
-			data: { status: "FAILED", processingError: "No segments uploaded" },
-		});
-		return null;
+		// The client can mark a recording "complete" with 0 segments if its very
+		// last chunk (often its only chunk, for a take under 5s) was still being
+		// persisted when it checked whether its upload queue had drained. Give
+		// that straggler a few seconds to actually land before condemning the
+		// track - re-checking straight from the DB rather than trusting the
+		// (possibly stale) `rec.segments` this finalize pass was claimed with.
+		const lateSegments = await waitForLateSegments(rec.id, () =>
+			prisma.recordingSegment.findMany({
+				where: { participantRecordingId: rec.id },
+				select: { sequenceNumber: true, assetKey: true, durationMs: true },
+				orderBy: { sequenceNumber: "asc" },
+			}),
+		);
+		if (lateSegments.length > 0) {
+			rec = { ...rec, segments: lateSegments };
+		} else {
+			await prisma.participantRecording.update({
+				where: { id: rec.id },
+				data: { status: "FAILED", processingError: "No segments uploaded" },
+			});
+			return null;
+		}
 	}
 
 	await prisma.participantRecording.update({

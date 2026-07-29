@@ -141,6 +141,13 @@ export default function useChunkUploader(
 ): UseChunkUploaderReturn {
   const queueRef = useRef<QueueItem[]>([]);
   const processingRef = useRef(false);
+  // Counts enqueue() calls that haven't pushed onto queueRef yet (still
+  // awaiting the IndexedDB write). Incremented synchronously the instant
+  // enqueue() is invoked, so waitUntilDrained() can't see a false "empty"
+  // queue for a chunk that's mid-persist - the race a sub-5s recording hits
+  // when its only chunk is enqueued (fire-and-forget) right as `.stop()`
+  // resolves and the caller immediately checks drained state.
+  const pendingEnqueuesRef = useRef(0);
   // Uploaded sequence numbers per recording (a Set, not a counter, so a chunk
   // that gets queued twice - e.g. the enqueue/resumeOrphans race - can never
   // inflate the count and desync expectedSegments at completion time).
@@ -286,40 +293,45 @@ export default function useChunkUploader(
 
   const enqueue = useCallback(
     async (input: EnqueueChunkInput) => {
-      const buffered: BufferedChunk = {
-        id: buildChunkId(input.participantRecordingId, input.sequenceNumber),
-        uploadScope: endpoints.scope,
-        spaceId: input.spaceId,
-        spaceRecordingSessionId: input.spaceRecordingSessionId,
-        recordingSessionId: input.recordingSessionId,
-        participantRecordingId: input.participantRecordingId,
-        participantSessionId: input.participantSessionId,
-        trackType: input.trackType,
-        sequenceNumber: input.sequenceNumber,
-        startMs: input.startMs,
-        durationMs: input.durationMs,
-        mimeType: input.mimeType,
-        blob: input.blob,
-        createdAt: Date.now(),
-        sampleRate: input.sampleRate,
-        bitDepth: input.bitDepth,
-        channelCount: input.channelCount,
-      };
-
-      // Persist to disk FIRST - survives a crash even before upload.
+      pendingEnqueuesRef.current += 1;
       try {
-        await putChunk(buffered);
-      } catch (error) {
-        console.error("[ChunkUploader] failed to buffer chunk to IndexedDB:", error);
-      }
+        const buffered: BufferedChunk = {
+          id: buildChunkId(input.participantRecordingId, input.sequenceNumber),
+          uploadScope: endpoints.scope,
+          spaceId: input.spaceId,
+          spaceRecordingSessionId: input.spaceRecordingSessionId,
+          recordingSessionId: input.recordingSessionId,
+          participantRecordingId: input.participantRecordingId,
+          participantSessionId: input.participantSessionId,
+          trackType: input.trackType,
+          sequenceNumber: input.sequenceNumber,
+          startMs: input.startMs,
+          durationMs: input.durationMs,
+          mimeType: input.mimeType,
+          blob: input.blob,
+          createdAt: Date.now(),
+          sampleRate: input.sampleRate,
+          bitDepth: input.bitDepth,
+          channelCount: input.channelCount,
+        };
 
-      // A resumeOrphans pass can race the putChunk await above and queue this
-      // chunk from IndexedDB before we get here - never queue the id twice.
-      if (!queueRef.current.some((item) => item.id === buffered.id)) {
-        queueRef.current.push({ ...buffered, attempts: 0 });
+        // Persist to disk FIRST - survives a crash even before upload.
+        try {
+          await putChunk(buffered);
+        } catch (error) {
+          console.error("[ChunkUploader] failed to buffer chunk to IndexedDB:", error);
+        }
+
+        // A resumeOrphans pass can race the putChunk await above and queue this
+        // chunk from IndexedDB before we get here - never queue the id twice.
+        if (!queueRef.current.some((item) => item.id === buffered.id)) {
+          queueRef.current.push({ ...buffered, attempts: 0 });
+        }
+        syncPending();
+        void processQueue();
+      } finally {
+        pendingEnqueuesRef.current -= 1;
       }
-      syncPending();
-      void processQueue();
     },
     [endpoints.scope, processQueue, syncPending],
   );
@@ -369,7 +381,11 @@ export default function useChunkUploader(
       const start = Date.now();
       return new Promise((resolve) => {
         const check = () => {
-          if (queueRef.current.length === 0 && !processingRef.current) {
+          if (
+            pendingEnqueuesRef.current === 0 &&
+            queueRef.current.length === 0 &&
+            !processingRef.current
+          ) {
             resolve(true);
             return;
           }

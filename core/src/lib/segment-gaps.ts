@@ -9,6 +9,32 @@
  *    footage is still recoverable, so we keep it and only flag the seam.
  */
 
+/**
+ * A recording can be marked complete with zero segments in hand: the client
+ * reports `expectedSegments: 0` when its last (often only, for a <5s take)
+ * chunk was still mid-upload at the moment it checked whether its queue was
+ * drained. That segment usually lands in the DB a moment later, but
+ * finalization can be triggered before it does. Before condemning a
+ * zero-segment track as FAILED, give that in-flight chunk a short window to
+ * actually arrive and re-check straight from the DB.
+ */
+export async function waitForLateSegments<
+	T extends { sequenceNumber: number },
+>(
+	participantRecordingId: string,
+	fetchSegments: () => Promise<T[]>,
+	{ attempts = 4, delayMs = 1500 }: { attempts?: number; delayMs?: number } = {},
+): Promise<T[]> {
+	for (let attempt = 0; attempt < attempts; attempt++) {
+		if (attempt > 0) {
+			await new Promise((resolve) => setTimeout(resolve, delayMs));
+		}
+		const segments = await fetchSegments();
+		if (segments.length > 0) return segments;
+	}
+	return [];
+}
+
 export interface SegmentGaps {
 	/** Sequence numbers missing between the first and last chunk we received. */
 	interiorMissing: number[];
