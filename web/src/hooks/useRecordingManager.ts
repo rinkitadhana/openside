@@ -598,12 +598,11 @@ export default function useRecordingManager(
         return;
       }
 
-      if (!stream || stream.getTracks().length === 0) {
-        pendingRecordingStartRef.current = data;
-        beginningRef.current = false;
-        setError("Recording is active. Turn on your mic or camera to be captured.");
-        setRecordingState("recording");
-        return;
+      // Camera and mic can both be off at start - record anyway with an empty
+      // stream. The participant may turn one on mid-session; until then the
+      // capture is blank, which is on them to handle.
+      if (!stream) {
+        stream = new MediaStream();
       }
 
       if (audioOnly && stream.getAudioTracks().length === 0) {
