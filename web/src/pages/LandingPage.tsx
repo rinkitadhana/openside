@@ -127,7 +127,7 @@ const selfHostPoints = [
     icon: Server,
     title: "Run it on your own infra",
     description:
-      "Connect your own LiveKit and Cloudflare R2, and your recordings are stored entirely on infrastructure you control.",
+      "Connect your own LiveKit and Cloudflare R2, and recordings are stored entirely on infrastructure you control.",
   },
   {
     icon: KeyRound,
@@ -950,7 +950,7 @@ const LandingPage = () => {
         >
           <motion.h1
             variants={riseVariants}
-            className="max-w-3xl text-2xl font-semibold leading-[1.2] text-foreground sm:text-[2rem]"
+            className="font-bricolage max-w-4xl text-3xl font-semibold leading-[1.2] text-foreground sm:text-[2.5rem]"
           >
             Record high quality podcasts, interviews, and videos right from your
             browser
@@ -982,7 +982,7 @@ const LandingPage = () => {
         <div className="mx-auto max-w-5xl">
           <div className="max-w-xl">
             <p className="text-sm font-medium text-[#131313]/60">Features</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#131313] sm:text-3xl">
+            <h2 className="font-bricolage mt-2 text-2xl font-semibold tracking-tight text-[#131313] sm:text-3xl">
               Record, download, and share in one place.
             </h2>
             <p className="mt-3 text-base leading-7 text-[#131313]/70">
@@ -1000,7 +1000,7 @@ const LandingPage = () => {
                 <div className="flex size-11 items-center justify-center rounded-xl bg-[#eaeaea] text-[#131313]">
                   <Icon className="size-5" />
                 </div>
-                <h3 className="mt-5 text-lg font-semibold tracking-tight text-[#131313]">
+                <h3 className="font-bricolage mt-5 text-lg font-semibold tracking-tight text-[#131313]">
                   {title}
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-[#131313]/65">
@@ -1032,7 +1032,7 @@ const LandingPage = () => {
         <div className="mx-auto max-w-5xl">
           <div className="max-w-xl">
             <p className="text-sm font-medium text-[#131313]/60">Privacy</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#131313] sm:text-3xl">
+            <h2 className="font-bricolage mt-2 text-2xl font-semibold tracking-tight text-[#131313] sm:text-3xl">
               Your recordings stay yours.
             </h2>
             <p className="mt-3 text-base leading-7 text-[#131313]/70">
@@ -1043,7 +1043,7 @@ const LandingPage = () => {
 
           <div className="mt-12 grid gap-6 lg:grid-cols-2">
             <div className="rounded-2xl border border-[#dcdcdc] bg-[#ffffff] p-6 sm:p-8">
-              <h3 className="text-lg font-semibold tracking-tight text-[#131313]">
+              <h3 className="font-bricolage text-lg font-semibold tracking-tight text-[#131313]">
                 Your recordings
               </h3>
               <p className="mt-1 text-sm leading-6 text-[#131313]/60">
@@ -1056,7 +1056,7 @@ const LandingPage = () => {
                       <Icon className="size-5" />
                     </div>
                     <div>
-                      <h4 className="text-base font-medium text-[#131313]">
+                      <h4 className="font-bricolage text-base font-medium text-[#131313]">
                         {title}
                       </h4>
                       <p className="mt-1 text-sm leading-6 text-[#131313]/65">
@@ -1069,7 +1069,7 @@ const LandingPage = () => {
             </div>
 
             <div className="rounded-2xl border border-[#dcdcdc] bg-[#ffffff] p-6 sm:p-8">
-              <h3 className="text-lg font-semibold tracking-tight text-[#131313]">
+              <h3 className="font-bricolage text-lg font-semibold tracking-tight text-[#131313]">
                 Self-hosting and keys
               </h3>
               <p className="mt-1 text-sm leading-6 text-[#131313]/60">
@@ -1082,7 +1082,7 @@ const LandingPage = () => {
                       <Icon className="size-5" />
                     </div>
                     <div>
-                      <h4 className="text-base font-medium text-[#131313]">
+                      <h4 className="font-bricolage text-base font-medium text-[#131313]">
                         {title}
                       </h4>
                       <p className="mt-1 text-sm leading-6 text-[#131313]/65">
@@ -1104,7 +1104,7 @@ const LandingPage = () => {
         <div className="mx-auto max-w-5xl">
           <div className="max-w-xl">
             <p className="text-sm font-medium text-[#131313]/60">Pricing</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#131313] sm:text-3xl">
+            <h2 className="font-bricolage mt-2 text-2xl font-semibold tracking-tight text-[#131313] sm:text-3xl">
               Simple pricing that scales with you.
             </h2>
             <p className="mt-3 text-base leading-7 text-[#131313]/70">
@@ -1124,7 +1124,7 @@ const LandingPage = () => {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold tracking-tight">
+                  <h3 className="font-bricolage text-lg font-semibold tracking-tight">
                     {plan.name}
                   </h3>
                   {plan.featured && (
@@ -1188,7 +1188,7 @@ const LandingPage = () => {
             <p className="text-sm font-medium text-[#131313]/60">
               FAQ
             </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#131313] sm:text-3xl">
+            <h2 className="font-bricolage mt-2 text-2xl font-semibold tracking-tight text-[#131313] sm:text-3xl">
               Everything you need to know before you record.
             </h2>
           </div>
