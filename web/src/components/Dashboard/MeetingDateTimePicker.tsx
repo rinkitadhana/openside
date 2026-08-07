@@ -138,7 +138,7 @@ const MeetingDateTimePicker = ({
   };
 
   const fieldClass =
-    "flex items-center gap-2 rounded-lg bg-primary/60 px-3 py-3 text-sm text-foreground transition-colors hover:bg-primary cursor-pointer";
+    "flex items-center gap-2 rounded-lg border border-border bg-primary px-3 py-3 text-sm text-foreground cursor-pointer";
 
   return (
     <div className="flex flex-wrap items-stretch gap-2">

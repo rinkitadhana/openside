@@ -128,7 +128,7 @@ const ScheduleModal = ({ open, onClose }: ScheduleModalProps) => {
         className="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm cursor-default animate-in fade-in duration-200"
       />
       <div className="fixed left-1/2 top-1/2 z-[110] w-[min(520px,calc(100%-1.5rem))] -translate-x-1/2 -translate-y-1/2">
-        <div className="rounded-xl border border-border bg-background/70 shadow-2xl shadow-black/30 animate-in fade-in zoom-in-95 duration-200">
+        <div className="rounded-xl border border-border bg-background shadow-2xl shadow-black/30 animate-in fade-in zoom-in-95 duration-200">
           {/* Header: the title field doubles as the heading */}
           <div className="flex items-start gap-3 px-5 pt-5">
             <input
@@ -152,7 +152,7 @@ const ScheduleModal = ({ open, onClose }: ScheduleModalProps) => {
             />
 
             {/* Invitees */}
-            <div className="flex items-center gap-2 overflow-x-auto rounded-lg bg-primary/60 px-3 py-3 transition-colors focus-within:bg-primary scrollbar-hide">
+            <div className="flex items-center gap-2 overflow-x-auto rounded-lg border border-border bg-primary px-3 py-3 scrollbar-hide">
               <Users size={16} className="shrink-0 text-foreground" />
               {invitees.map((email) => (
                 <span
@@ -190,7 +190,7 @@ const ScheduleModal = ({ open, onClose }: ScheduleModalProps) => {
             </div>
 
             {/* Description */}
-            <div className="flex items-start gap-2.5 rounded-lg bg-primary/60 px-3 py-3 transition-colors focus-within:bg-primary">
+            <div className="flex items-start gap-2.5 rounded-lg border border-border bg-primary px-3 py-3">
               <AlignLeft
                 size={16}
                 className="mt-0.5 shrink-0 text-foreground"
