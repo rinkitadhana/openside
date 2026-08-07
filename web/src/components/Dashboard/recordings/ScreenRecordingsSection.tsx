@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiClock, FiLoader, FiMonitor } from "react-icons/fi";
+import { FiChevronDown, FiClock, FiLoader, FiMonitor } from "react-icons/fi";
 import {
   useScreenOutputUrl,
   type ScreenOutputKind,
@@ -211,12 +211,13 @@ const ScreenRecordingsSection = ({
                 Math.min(count + RECORDINGS_PER_PAGE, recordings.length),
               )
             }
-            className="rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70"
+            className="flex items-center gap-1.5 rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70"
           >
             Show more
-            <span className="ml-1.5 text-fg-subtle">
+            <span className="text-fg-subtle">
               ({remainingRecordings} more)
             </span>
+            <FiChevronDown size={14} />
           </button>
         </div>
       )}
