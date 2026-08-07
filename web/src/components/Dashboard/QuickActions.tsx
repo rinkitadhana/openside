@@ -126,15 +126,6 @@ const QuickActions = () => {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-2 py-6 md:py-12">
-      <div className="mb-8 text-center md:mb-12">
-        <h2 className="font-bricolage text-3xl font-semibold text-foreground sm:text-4xl">
-          What will you create today?
-        </h2>
-        <p className="mt-3 text-sm text-fg-subtle">
-          Pick where you want to start.
-        </p>
-      </div>
-
       <div className="mx-auto grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {actions.map((action) => (
           <ActionCard
