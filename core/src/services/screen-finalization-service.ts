@@ -32,7 +32,11 @@ import {
 } from "../lib/segment-gaps.ts";
 import { escapeFilterPath, watermarkFontPath } from "../lib/watermark-font.ts";
 import { sessionNeedsWatermark } from "./entitlements-service.ts";
-import { getObjectBuffer, putFileObject } from "./storage-service.ts";
+import {
+	deleteObjects,
+	getObjectBuffer,
+	putFileObject,
+} from "./storage-service.ts";
 
 /** Bottom-right "openside.pro" badge burned into DEMO masters only. Points
  *  drawtext at a bundled font so it renders on the deploy image (no system
@@ -504,6 +508,9 @@ export async function finalizeScreenSession(sessionId: string): Promise<void> {
 		});
 
 		const masters: Partial<Record<Role, MasterInfo>> = {};
+		const recByRole: Partial<
+			Record<Role, (typeof session.participantRecordings)[number]>
+		> = {};
 		for (const rec of session.participantRecordings) {
 			try {
 				const master = await stitchMaster(
@@ -513,7 +520,10 @@ export async function finalizeScreenSession(sessionId: string): Promise<void> {
 					tmp,
 					watermark,
 				);
-				if (master) masters[master.role] = master;
+				if (master) {
+					masters[master.role] = master;
+					recByRole[master.role] = rec;
+				}
 			} catch (error) {
 				const message = errorMessage(error);
 				console.error(
@@ -548,21 +558,6 @@ export async function finalizeScreenSession(sessionId: string): Promise<void> {
 		);
 
 		const outputs: Record<string, { key: string; durationMs: number }> = {};
-		if (masters.screen)
-			outputs.screen = {
-				key: masters.screen.key,
-				durationMs: masters.screen.durationMs,
-			};
-		if (masters.screen)
-			outputs.screenAligned = {
-				key: masters.screen.key,
-				durationMs: masters.screen.durationMs,
-			};
-		if (masters.camera)
-			outputs.camera = {
-				key: masters.camera.key,
-				durationMs: masters.camera.durationMs,
-			};
 
 		// "Both" composite - produce it whenever both tracks exist unless the
 		// saved layout explicitly says this was not a screen+camera recording.
@@ -571,9 +566,10 @@ export async function finalizeScreenSession(sessionId: string): Promise<void> {
 			masters.camera &&
 			(comp.layout === undefined || comp.layout === "screen-camera");
 
+		let both: { key: string; durationMs: number } | null = null;
 		if (shouldComposeBoth && masters.screen && masters.camera) {
 			try {
-				const both = await composeBoth(
+				both = await composeBoth(
 					masters.screen,
 					masters.camera,
 					comp,
@@ -582,7 +578,6 @@ export async function finalizeScreenSession(sessionId: string): Promise<void> {
 					tmp,
 					watermark,
 				);
-				if (both) outputs.both = both;
 			} catch (error) {
 				// The quality path can fail or hit the timeout on long/high-res
 				// recordings. Retry once in fast mode so the user still gets a
@@ -592,7 +587,7 @@ export async function finalizeScreenSession(sessionId: string): Promise<void> {
 					error,
 				);
 				try {
-					const both = await composeBoth(
+					both = await composeBoth(
 						masters.screen,
 						masters.camera,
 						comp,
@@ -602,7 +597,6 @@ export async function finalizeScreenSession(sessionId: string): Promise<void> {
 						watermark,
 						true,
 					);
-					if (both) outputs.both = both;
 				} catch (retryError) {
 					console.error(
 						`[ScreenFinalize] fast composite also failed for ${sessionId}:`,
@@ -614,6 +608,58 @@ export async function finalizeScreenSession(sessionId: string): Promise<void> {
 			console.log(
 				`[ScreenFinalize] ${sessionId} skipping both: layout=${comp.layout ?? "missing"} hasScreen=${Boolean(masters.screen)} hasCamera=${Boolean(masters.camera)}`,
 			);
+		}
+
+		if (both && masters.screen && masters.camera) {
+			outputs.both = both;
+
+			// The combined video is the only output we keep - the separate screen
+			// and camera masters (and their raw chunks) served only as inputs to
+			// the composite, so drop them immediately instead of storing three
+			// copies of the same recording.
+			const screenRec = recByRole.screen;
+			const cameraRec = recByRole.camera;
+			const staleKeys = [
+				masters.screen.key,
+				masters.camera.key,
+				...(screenRec?.segments.map((s) => s.assetKey) ?? []),
+				...(cameraRec?.segments.map((s) => s.assetKey) ?? []),
+			];
+			await deleteObjects(staleKeys).catch((error) => {
+				console.error(
+					`[ScreenFinalize] failed to delete split screen/camera assets for ${sessionId} (combined output is safe):`,
+					error,
+				);
+			});
+			const staleRecIds = [screenRec?.id, cameraRec?.id].filter(
+				(id): id is string => Boolean(id),
+			);
+			if (staleRecIds.length > 0) {
+				await prisma.participantRecording.updateMany({
+					where: { id: { in: staleRecIds } },
+					data: { mergedFileKey: null },
+				});
+			}
+		} else {
+			// No combined output (single track, or the composite failed) - fall
+			// back to keeping whatever separate masters exist so the recording is
+			// still viewable.
+			if (masters.screen) {
+				outputs.screen = {
+					key: masters.screen.key,
+					durationMs: masters.screen.durationMs,
+				};
+				outputs.screenAligned = {
+					key: masters.screen.key,
+					durationMs: masters.screen.durationMs,
+				};
+			}
+			if (masters.camera) {
+				outputs.camera = {
+					key: masters.camera.key,
+					durationMs: masters.camera.durationMs,
+				};
+			}
 		}
 
 		if (Object.keys(outputs).length === 0) {
