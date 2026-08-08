@@ -19,6 +19,44 @@ const formatMessageTime = (sentAt: string) =>
     minute: "2-digit",
   }).format(new Date(sentAt));
 
+const COMMON_TLDS =
+  "com|org|net|edu|gov|mil|io|co|dev|app|ai|so|sh|gg|me|tv|us|uk|ca|in|de|fr|jp|cn|au|nz|info|biz|xyz|pro|live|chat|link|page|site|online|tech|cloud|store|design|studio|art|news|shop|club|email|team|world|today|life|fun|games|tools|works|zone|space|city|network|systems|ly|to|it|es|nl|se|no|fi|dk|ch|at|be|pl|ru|br|mx|kr|tw|hk|sg|id|vn|th|ph|za|ar|cl";
+
+const URL_REGEX_SOURCE = `\\bhttps?:\\/\\/[^\\s]+|(?<!@)\\b(?:www\\.)?[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\\.(?:${COMMON_TLDS})(?:\\/[^\\s]*)?\\b`;
+
+const renderMessageWithLinks = (text: string) => {
+  const regex = new RegExp(URL_REGEX_SOURCE, "gi");
+  const nodes: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text)) !== null) {
+    const matchedText = match[0];
+    if (match.index > lastIndex) {
+      nodes.push(text.slice(lastIndex, match.index));
+    }
+    const href = /^https?:\/\//i.test(matchedText)
+      ? matchedText
+      : `https://${matchedText}`;
+    nodes.push(
+      <a
+        key={match.index}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="break-all text-blue-500 underline-offset-2 hover:underline"
+      >
+        {matchedText}
+      </a>
+    );
+    lastIndex = match.index + matchedText.length;
+  }
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+  return nodes;
+};
+
 const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
   const { localSenderId, messages, sendError, sendMessage } = useLiveKitChat();
   const [draft, setDraft] = useState("");
@@ -161,7 +199,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
                           : "rounded-bl-sm bg-muted text-foreground"
                       }`}
                     >
-                      {message.message}
+                      {renderMessageWithLinks(message.message)}
                     </div>
                     <div className="mt-1 flex items-center gap-2 px-0.5 text-[0.7rem] text-foreground/45">
                       <span className="truncate font-medium">
