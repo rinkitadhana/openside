@@ -1348,7 +1348,7 @@ const LandingPage = () => {
           >
             <p className="text-sm font-medium text-[#131313]/60">Use cases</p>
             <h2 className="font-bricolage mt-2 text-2xl font-semibold tracking-tight text-[#131313] sm:text-3xl">
-              Built for anyone who needs more than a screen-share.
+              Built for how you actually work.
             </h2>
             <p className="mt-3 text-base leading-7 text-[#131313]/70">
               From solo creators to compliance-sensitive teams, here is who
