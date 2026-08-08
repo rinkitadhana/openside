@@ -14,7 +14,12 @@ const DashboardWelcome = () => {
     <div className="mx-auto w-full max-w-5xl px-2">
       <h1 className="text-2xl font-medium tracking-tight text-foreground">
         {greetingForHour(new Date().getHours())}
-        {firstName ? `, ${firstName}` : ""}
+        {firstName ? (
+          <>
+            {", "}
+            <span className="font-bricolage">{firstName}</span>
+          </>
+        ) : null}
       </h1>
       <p className="mt-1 text-sm text-fg-subtle">
         Ready to record? Start a new session or catch up on what's already
