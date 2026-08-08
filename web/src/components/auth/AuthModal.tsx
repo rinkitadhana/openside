@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { FcGoogle } from "react-icons/fc";
 import {
-  MdEmail,
   MdLockOutline,
   MdOutlineVisibility,
   MdOutlineVisibilityOff,

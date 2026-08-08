@@ -1538,7 +1538,6 @@ const LandingPage = () => {
 
                 <PricingCTA
                   label={plan.cta}
-                  featured={plan.featured}
                   isPro={plan.name === "Pro"}
                   onOpenAuth={openAuth}
                   className={`mt-auto w-full cursor-pointer rounded-lg px-4 py-2.5 text-sm font-medium text-[#ffffff] transition-colors disabled:cursor-not-allowed disabled:opacity-70 ${

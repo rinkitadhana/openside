@@ -92,13 +92,11 @@ StartRecordingCTA.displayName = "StartRecordingCTA";
 export const PricingCTA = memo(
   ({
     label,
-    featured,
     isPro,
     className,
     onOpenAuth,
   }: {
     label: string;
-    featured: boolean;
     isPro: boolean;
     className: string;
     onOpenAuth: OpenAuth;
