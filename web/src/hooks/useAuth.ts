@@ -52,7 +52,8 @@ const isSessionExists = (code?: string) => code === "session_exists";
 export function useAuth() {
   const { signIn, isLoaded, setActive } = useSignIn();
   const { signUp, isLoaded: isSignUpLoaded } = useSignUp();
-  const { signOut } = useClerk();
+  const clerk = useClerk();
+  const { signOut } = clerk;
   const { isSignedIn } = useClerkAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -76,10 +77,30 @@ export function useAuth() {
     });
   };
 
+  // setActive()'s promise can resolve before Clerk's client-side session
+  // state (clerk.session/clerk.user) has actually finished propagating - in
+  // production this uses a custom Clerk domain that syncs cookies across an
+  // extra round trip, unlike the shared dev domain. Navigating too early
+  // races ProtectedRoute, which reads a still-stale "signed out" state and
+  // bounces straight back to "/". Poll the live Clerk client (not a React
+  // snapshot) until the session is actually active before routing.
+  const waitForActiveSession = async (
+    timeoutMs = 4000,
+    intervalMs = 50
+  ): Promise<boolean> => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (clerk.session?.status === "active" && clerk.user) return true;
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+    return false;
+  };
+
   const activateSession = async (sessionId: string | null) => {
     if (!sessionId || !setActive) return false;
 
     await setActive({ session: sessionId });
+    await waitForActiveSession();
     await queryClient.invalidateQueries({ queryKey: ["get-me"] });
     navigate("/dashboard/home", { replace: true });
     return true;
