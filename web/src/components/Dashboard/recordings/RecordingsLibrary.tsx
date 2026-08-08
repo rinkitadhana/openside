@@ -9,6 +9,7 @@ import {
   FiFolder,
   FiLink,
   FiLoader,
+  FiMoreHorizontal,
   FiMoreVertical,
   FiShare2,
   FiTrash2,
@@ -108,7 +109,7 @@ const TrackPlayer = ({ output }: { output: FinalOutput | null }) => {
     output?.mimeType === "video/mp4" ? "mp4" : "webm";
   const { data: url } = useInlineOutputUrl(output?.id ?? "", format, !!output);
   return (
-    <div className="relative aspect-video w-full max-w-2xl self-start overflow-hidden rounded-lg bg-black ring-1 ring-border">
+    <div className="relative aspect-video w-full max-w-4xl self-start overflow-hidden rounded-xl bg-black ring-1 ring-border">
       {!output ? (
         <div className="flex h-full flex-col items-center justify-center gap-2 text-white/45">
           <FiVideo className="size-6" />
@@ -202,7 +203,7 @@ const SpaceRecordingShareDialog = ({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[460px] rounded-xl border border-border bg-background p-6 shadow-2xl"
+        className="w-full max-w-[460px] rounded-2xl border border-border bg-background p-6 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         <h2 id="share-space-recording-title" className="text-lg font-semibold text-foreground">
@@ -220,12 +221,12 @@ const SpaceRecordingShareDialog = ({
                 readOnly
                 value={url}
                 onFocus={(event) => event.currentTarget.select()}
-                className="min-w-0 flex-1 rounded-md border border-border bg-primary px-3 py-2 text-sm text-fg-muted outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-border bg-primary px-3 py-2 text-sm text-fg-muted outline-none"
               />
               <button
                 type="button"
                 onClick={() => void copy()}
-                className="flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-foreground px-3 text-sm font-semibold text-background transition-opacity hover:opacity-85"
+                className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-foreground px-3 text-sm font-semibold text-background transition-opacity hover:opacity-85"
               >
                 {copied ? <FiCheck className="size-4" /> : <FiCopy className="size-4" />}
                 {copied ? "Copied" : "Copy"}
@@ -236,26 +237,26 @@ const SpaceRecordingShareDialog = ({
                 type="button"
                 onClick={() => unshare.mutate(session.id)}
                 disabled={unshare.isPending}
-                className="flex items-center gap-1.5 rounded-md border border-danger/25 bg-danger/10 px-3.5 py-2 text-sm font-medium text-danger transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex items-center gap-1.5 rounded-lg border border-danger/25 bg-danger/10 px-3.5 py-2 text-sm font-medium text-danger transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {unshare.isPending && <FiLoader className="size-4 animate-spin" />}
                 Stop sharing
               </button>
-              <button type="button" onClick={onClose} className="rounded-md border border-border bg-primary px-3.5 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70">
+              <button type="button" onClick={onClose} className="rounded-lg border border-border bg-primary px-3.5 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70">
                 Done
               </button>
             </div>
           </>
         ) : (
           <div className="mt-6 flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="rounded-md border border-border bg-primary px-3.5 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70">
+            <button type="button" onClick={onClose} className="rounded-lg border border-border bg-primary px-3.5 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70">
               Cancel
             </button>
             <button
               type="button"
               onClick={() => share.mutate(session.id)}
               disabled={share.isPending}
-              className="flex items-center gap-1.5 rounded-md bg-foreground px-3.5 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex items-center gap-1.5 rounded-lg bg-foreground px-3.5 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {share.isPending ? <FiLoader className="size-4 animate-spin" /> : <FiLink className="size-4" />}
               Create link
@@ -332,7 +333,7 @@ const RecordingBlock = ({
       id={`recording-session-${id}`}
       className={`flex flex-col gap-4 ${showDivider ? "mt-6 border-t border-border pt-12" : ""}`}
     >
-      <div className="flex w-full max-w-2xl flex-col gap-3 rounded-xl border border-border bg-primary p-3">
+      <div className="flex w-full max-w-4xl flex-col gap-3 rounded-2xl border border-border bg-primary p-3">
         <TrackPlayer output={activeOutput} />
         <div className="flex w-full items-center justify-between gap-2 px-0.5 pb-0.5">
           <p className="min-w-0 truncate text-base font-semibold text-foreground">
@@ -343,7 +344,7 @@ const RecordingBlock = ({
               <button
                 type="button"
                 onClick={onShare}
-                className={`flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-opacity hover:opacity-70 ${shareToken ? "border-success/25 bg-success/10 text-success" : "border-border bg-muted text-foreground"}`}
+                className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-opacity hover:opacity-70 ${shareToken ? "border-success/25 bg-success/10 text-success" : "border-border bg-muted text-foreground"}`}
               >
                 <FiShare2 className="size-3.5" />
                 {shareToken ? "Shared" : "Share"}
@@ -444,8 +445,8 @@ const ProcessingTrackCard = ({
   const pct = estimateTrackProgress(track, now);
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-border bg-primary px-2.5 py-1.5">
-      <span className="relative flex aspect-[4/3] h-14 shrink-0 items-center justify-center overflow-hidden rounded bg-muted ring-1 ring-border">
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-primary px-2.5 py-1.5">
+      <span className="relative flex aspect-[4/3] h-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted ring-1 ring-border">
         {thumbnail ? (
           <img src={thumbnail} alt="" className="h-full w-full object-cover" />
         ) : avatar ? (
@@ -516,8 +517,8 @@ const ProcessingRecordingBlock = ({
     id={`recording-session-${id}`}
     className={`flex flex-col gap-4 ${showDivider ? "border-t border-border pt-6" : ""}`}
   >
-    <div className="flex w-full max-w-2xl flex-col gap-3 rounded-xl border border-border bg-primary p-3">
-      <div className="relative flex aspect-video w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-lg bg-black text-white/60 ring-1 ring-border">
+    <div className="flex w-full max-w-4xl flex-col gap-3 rounded-2xl border border-border bg-primary p-3">
+      <div className="relative flex aspect-video w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-xl bg-black text-white/60 ring-1 ring-border">
         <FiLoader className="size-6 animate-spin" />
         <span className="text-sm">Processing your recording…</span>
         <span className="px-6 text-center text-xs text-white/40">
@@ -534,7 +535,7 @@ const ProcessingRecordingBlock = ({
             <button
               type="button"
               onClick={onShare}
-              className={`flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-opacity hover:opacity-70 ${shareToken ? "border-success/25 bg-success/10 text-success" : "border-border bg-muted text-foreground"}`}
+              className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-opacity hover:opacity-70 ${shareToken ? "border-success/25 bg-success/10 text-success" : "border-border bg-muted text-foreground"}`}
             >
               <FiShare2 className="size-3.5" />
               {shareToken ? "Shared" : "Share"}
@@ -707,7 +708,7 @@ const SpaceOutputs = ({
 
   if (rows.length === 0 && processingBlocks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-primary/60 py-20 text-center">
+      <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-primary/60 py-20 text-center">
         <span className="flex size-12 items-center justify-center rounded-full bg-background text-fg-subtle">
           <FiVideo className="size-6" />
         </span>
@@ -821,37 +822,37 @@ const SpaceRecordingsSkeleton = () => (
 );
 
 const ProjectDetailSkeleton = () => (
-  <div className="flex flex-col gap-6 p-2">
-    <div className="h-9 w-28 animate-pulse rounded-md bg-muted" />
-    <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-6">
-      <div className="min-w-0 space-y-2">
-        <div className="h-6 w-52 animate-pulse rounded bg-muted" />
-        <div className="h-3 w-36 animate-pulse rounded bg-muted" />
+  <div className="flex flex-col gap-6 px-2 pb-2 pt-0">
+    <div className="-mx-6 -mt-4 flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="size-8 shrink-0 animate-pulse rounded-lg bg-muted" />
+        <div className="h-8 w-px bg-border" />
+        <div className="min-w-0 space-y-2">
+          <div className="h-6 w-52 animate-pulse rounded-md bg-muted" />
+          <div className="h-3 w-36 animate-pulse rounded-md bg-muted" />
+        </div>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <div className="h-9 w-24 animate-pulse rounded-md bg-muted" />
-        <div className="h-9 w-24 animate-pulse rounded-md bg-muted" />
-      </div>
+      <div className="size-9 shrink-0 animate-pulse rounded-lg bg-muted" />
     </div>
     <section className="flex flex-col gap-4">
-      <div className="flex w-full max-w-2xl flex-col gap-3 rounded-xl border border-border bg-primary p-3">
-        <div className="aspect-video w-full animate-pulse rounded-lg bg-muted" />
+      <div className="flex w-full max-w-4xl flex-col gap-3 rounded-2xl border border-border bg-primary p-3">
+        <div className="aspect-video w-full animate-pulse rounded-xl bg-muted" />
         <div className="flex items-center justify-between gap-2 px-0.5 pb-0.5">
-          <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-40 animate-pulse rounded-md bg-muted" />
           <div className="size-8 shrink-0 animate-pulse rounded-full bg-muted" />
         </div>
       </div>
-      <div className="h-4 w-16 animate-pulse rounded bg-muted" />
+      <div className="h-4 w-16 animate-pulse rounded-md bg-muted" />
       <div className="flex flex-col gap-2">
         {Array.from({ length: 3 }).map((_, index) => (
           <div
             key={index}
-            className="flex items-center gap-3 rounded-lg border border-border bg-primary px-2.5 py-1.5"
+            className="flex items-center gap-3 rounded-xl border border-border bg-primary px-2.5 py-1.5"
           >
-            <div className="aspect-[4/3] h-14 shrink-0 animate-pulse rounded bg-muted" />
+            <div className="aspect-[4/3] h-14 shrink-0 animate-pulse rounded-md bg-muted" />
             <div className="min-w-0 flex-1 space-y-2">
-              <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
-              <div className="h-3 w-1/4 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-1/3 animate-pulse rounded-md bg-muted" />
+              <div className="h-3 w-1/4 animate-pulse rounded-md bg-muted" />
             </div>
           </div>
         ))}
@@ -953,12 +954,12 @@ export const ProjectDetail = ({ spaceId }: { spaceId: string }) => {
         <button
           type="button"
           onClick={() => navigate("/dashboard/project")}
-          className="group flex h-9 w-fit items-center gap-2 rounded-md border border-border bg-muted px-3 text-sm font-medium text-foreground transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+          className="group flex h-9 w-fit items-center gap-2 rounded-lg border border-border bg-muted px-3 text-sm font-medium text-foreground transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
         >
           <FiChevronLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
           All projects
         </button>
-        <div className="rounded-xl border border-dashed border-border bg-primary/60 px-6 py-16 text-center">
+        <div className="rounded-2xl border border-dashed border-border bg-primary/60 px-6 py-16 text-center">
           <p className="text-sm font-medium text-foreground">
             {isSpaceError ? "Couldn't load this project" : "Project not found"}
           </p>
@@ -1031,60 +1032,66 @@ export const ProjectDetail = ({ spaceId }: { spaceId: string }) => {
 
   return (
     <>
-      <div className="flex flex-col gap-6 p-2">
-        <button
-          type="button"
-          onClick={() => navigate("/dashboard/project")}
-          className="group flex h-9 w-fit items-center gap-2 rounded-md border border-border bg-muted px-3 text-sm font-medium text-foreground transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-        >
-          <FiChevronLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
-          All projects
-        </button>
-        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-6">
-          <div className="min-w-0 space-y-1">
-            <h1 className="truncate text-xl font-semibold text-foreground">
-              {space.title || "Untitled space"}
-            </h1>
-            <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-fg-subtle">
-              <span>{recordingLabel(sessionCount)}</span>
-              {space.createdAt && (
-                <>
-                  <span>·</span>
-                  <span>Created {formatDay(space.createdAt)}</span>
-                </>
-              )}
-            </p>
+      <div className="flex flex-col gap-6 px-2 pb-2 pt-0">
+        <header className="-mx-6 -mt-4 flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard/project")}
+              aria-label="Back to all projects"
+              title="All projects"
+              className="-ml-1 flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-fg-muted hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+            >
+              <FiChevronLeft className="size-4" />
+            </button>
+            <span className="h-8 w-px shrink-0 bg-border" aria-hidden />
+            <div className="min-w-0 space-y-1">
+              <h1 className="truncate text-xl font-semibold leading-tight tracking-[-0.01em] text-foreground">
+                {space.title || "Untitled space"}
+              </h1>
+              <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-fg-subtle">
+                <span>{recordingLabel(sessionCount)}</span>
+                {space.createdAt && (
+                  <>
+                    <span>·</span>
+                    <span>Created {formatDay(space.createdAt)}</span>
+                  </>
+                )}
+              </p>
+            </div>
           </div>
           {canManage && (
-            <div
-              role="group"
-              aria-label="Project actions"
-              className="flex shrink-0 items-center gap-2"
-            >
-              <button
-                type="button"
-                onClick={openRename}
-                className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-muted px-3 text-sm font-medium text-foreground transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-              >
-                <FiEdit2 className="size-4" />
-                Rename
-              </button>
-              <button
-                type="button"
-                onClick={openDeleteConfirmation}
-                disabled={deleteSpace.isPending}
-                className="flex h-9 items-center gap-1.5 rounded-md border border-danger/25 bg-danger/10 px-3 text-sm font-medium text-danger transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {deleteSpace.isPending ? (
-                  <FiLoader className="size-4 animate-spin" />
-                ) : (
-                  <FiTrash2 className="size-4" />
-                )}
-                Delete
-              </button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Project options"
+                  disabled={deleteSpace.isPending}
+                  className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-fg-muted hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {deleteSpace.isPending ? (
+                    <FiLoader className="size-4 animate-spin" />
+                  ) : (
+                    <FiMoreHorizontal className="size-[18px]" />
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem onSelect={openRename}>
+                  <FiEdit2 />
+                  Rename project
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={openDeleteConfirmation}
+                  className="text-danger focus:bg-danger/10 focus:text-danger [&_svg]:!text-danger"
+                >
+                  <FiTrash2 />
+                  Delete project
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
-        </div>
+        </header>
         <SpaceOutputs
           outputs={outputs ?? []}
           sessions={sessions}
@@ -1112,7 +1119,7 @@ export const ProjectDetail = ({ spaceId }: { spaceId: string }) => {
           onClick={() => setRenaming(false)}
         >
           <div
-            className="w-full max-w-[380px] rounded-lg border border-border bg-background p-5 shadow-2xl"
+            className="w-full max-w-[380px] rounded-xl border border-border bg-background p-5 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <h2 className="text-base font-semibold text-foreground">
@@ -1127,13 +1134,13 @@ export const ProjectDetail = ({ spaceId }: { spaceId: string }) => {
                 if (event.key === "Escape") setRenaming(false);
               }}
               placeholder="Project name"
-              className="mt-4 w-full rounded-md border border-border bg-primary px-3 py-2 text-sm text-foreground outline-none focus:border-fg-faint"
+              className="mt-4 w-full rounded-lg border border-border bg-primary px-3 py-2 text-sm text-foreground outline-none focus:border-fg-faint"
             />
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setRenaming(false)}
-                className="rounded-md border border-border bg-primary px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary/85"
+                className="rounded-lg border border-border bg-primary px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary/85"
               >
                 Cancel
               </button>
@@ -1141,7 +1148,7 @@ export const ProjectDetail = ({ spaceId }: { spaceId: string }) => {
                 type="button"
                 onClick={submitRename}
                 disabled={!title.trim()}
-                className="rounded-md bg-foreground px-3.5 py-2 text-sm font-semibold text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg bg-foreground px-3.5 py-2 text-sm font-semibold text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Save
               </button>
@@ -1158,7 +1165,7 @@ export const ProjectDetail = ({ spaceId }: { spaceId: string }) => {
           onClick={() => setRecordingToRename(null)}
         >
           <div
-            className="w-full max-w-[380px] rounded-lg border border-border bg-background p-5 shadow-2xl"
+            className="w-full max-w-[380px] rounded-xl border border-border bg-background p-5 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <h2
@@ -1183,13 +1190,13 @@ export const ProjectDetail = ({ spaceId }: { spaceId: string }) => {
               }}
               maxLength={120}
               placeholder="Recording name"
-              className="mt-4 w-full rounded-md border border-border bg-primary px-3 py-2 text-sm text-foreground outline-none focus:border-fg-faint"
+              className="mt-4 w-full rounded-lg border border-border bg-primary px-3 py-2 text-sm text-foreground outline-none focus:border-fg-faint"
             />
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setRecordingToRename(null)}
-                className="rounded-md border border-border bg-primary px-3.5 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70"
+                className="rounded-lg border border-border bg-primary px-3.5 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70"
               >
                 Cancel
               </button>
@@ -1197,7 +1204,7 @@ export const ProjectDetail = ({ spaceId }: { spaceId: string }) => {
                 type="button"
                 onClick={submitRecordingRename}
                 disabled={!recordingToRename.title.trim()}
-                className="rounded-md bg-foreground px-3.5 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg bg-foreground px-3.5 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Save
               </button>
@@ -1215,7 +1222,7 @@ export const ProjectDetail = ({ spaceId }: { spaceId: string }) => {
           onClick={() => setRecordingToDelete(null)}
         >
           <div
-            className="w-full max-w-[420px] rounded-xl border border-border bg-background p-6 shadow-2xl"
+            className="w-full max-w-[420px] rounded-2xl border border-border bg-background p-6 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <h2
@@ -1238,14 +1245,14 @@ export const ProjectDetail = ({ spaceId }: { spaceId: string }) => {
               <button
                 type="button"
                 onClick={() => setRecordingToDelete(null)}
-                className="rounded-md border border-border bg-primary px-3.5 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70"
+                className="rounded-lg border border-border bg-primary px-3.5 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70"
               >
                 Keep recording
               </button>
               <button
                 type="button"
                 onClick={handleRecordingDelete}
-                className="rounded-md bg-danger px-3.5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-85"
+                className="rounded-lg bg-danger px-3.5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-85"
               >
                 Delete recording
               </button>
@@ -1265,7 +1272,7 @@ export const ProjectDetail = ({ spaceId }: { spaceId: string }) => {
           }}
         >
           <div
-            className="w-full max-w-[420px] rounded-xl border border-border bg-background p-6 shadow-2xl"
+            className="w-full max-w-[420px] rounded-2xl border border-border bg-background p-6 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <h2
@@ -1289,7 +1296,7 @@ export const ProjectDetail = ({ spaceId }: { spaceId: string }) => {
                 type="button"
                 onClick={() => setDeleteConfirmOpen(false)}
                 disabled={deleteSpace.isPending}
-                className="rounded-md border border-border bg-primary px-3.5 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg border border-border bg-primary px-3.5 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Keep project
               </button>
@@ -1297,7 +1304,7 @@ export const ProjectDetail = ({ spaceId }: { spaceId: string }) => {
                 type="button"
                 onClick={() => void handleDelete()}
                 disabled={deleteSpace.isPending}
-                className="flex min-w-28 items-center justify-center gap-2 rounded-md bg-danger px-3.5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex min-w-28 items-center justify-center gap-2 rounded-lg bg-danger px-3.5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {deleteSpace.isPending && (
                   <FiLoader className="size-4 animate-spin" />
@@ -1403,7 +1410,7 @@ const RecordingsLibrary = () => {
                     ),
                   )
                 }
-                className="flex items-center gap-1.5 rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70"
+                className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-opacity hover:opacity-70"
               >
                 Show more
                 <span className="text-fg-subtle">

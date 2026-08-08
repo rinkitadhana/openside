@@ -1,7 +1,7 @@
 /**
  * User profile + recording preferences.
  *
- * Name, avatar, and brand color are user-editable in-app (email stays the
+ * Name and avatar are user-editable in-app (email stays the
  * Clerk login identity and is read-only). The first in-app edit sets
  * profileCustomized so the Clerk sync stops overwriting these values.
  *
@@ -28,14 +28,11 @@ const AVATAR_CONTENT_TYPES: Record<string, string> = {
 	"image/gif": "gif",
 };
 
-const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
-
 export interface PublicProfile {
 	id: string;
 	name: string;
 	email: string;
 	avatar: string | null;
-	brandColor: string | null;
 	plan: "DEMO" | "PRO";
 	cloudBackupEnabled: boolean;
 	targetFps: number;
@@ -53,7 +50,6 @@ type ProfileRow = {
 	email: string;
 	avatar: string | null;
 	avatarKey: string | null;
-	brandColor: string | null;
 	plan: "DEMO" | "PRO";
 	cloudBackupEnabled: boolean;
 	targetFps: number;
@@ -71,7 +67,6 @@ const PROFILE_SELECT = {
 	email: true,
 	avatar: true,
 	avatarKey: true,
-	brandColor: true,
 	plan: true,
 	cloudBackupEnabled: true,
 	targetFps: true,
@@ -96,7 +91,6 @@ export async function toPublicProfile(row: ProfileRow): Promise<PublicProfile> {
 		name: row.name,
 		email: row.email,
 		avatar,
-		brandColor: row.brandColor,
 		plan: row.plan,
 		cloudBackupEnabled: row.cloudBackupEnabled,
 		targetFps: row.targetFps,
@@ -143,7 +137,6 @@ export async function presignAvatarUpload(
 
 interface UpdateProfileInput {
 	name?: string;
-	brandColor?: string | null;
 	/** R2 key returned from presignAvatarUpload after the upload completed. */
 	avatarKey?: string | null;
 }
@@ -160,7 +153,6 @@ export async function updateProfile(
 	const data: {
 		profileCustomized: boolean;
 		name?: string;
-		brandColor?: string | null;
 		avatarKey?: string | null;
 		avatar?: string | null;
 	} = { profileCustomized: true };
@@ -170,17 +162,6 @@ export async function updateProfile(
 		if (!name) throw new Error("NAME_REQUIRED");
 		if (name.length > 60) throw new Error("NAME_TOO_LONG");
 		data.name = name;
-	}
-
-	if (input.brandColor !== undefined) {
-		if (input.brandColor === null || input.brandColor === "") {
-			data.brandColor = null;
-		} else {
-			if (!HEX_COLOR.test(input.brandColor)) {
-				throw new Error("INVALID_BRAND_COLOR");
-			}
-			data.brandColor = input.brandColor.toLowerCase();
-		}
 	}
 
 	if (input.avatarKey !== undefined) {

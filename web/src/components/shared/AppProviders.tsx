@@ -1,6 +1,5 @@
 import { ClerkProvider } from "@clerk/clerk-react";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
-import BrandColorSync from "@/components/shared/BrandColorSync";
 import ClerkTokenSync from "@/components/shared/ClerkTokenSync";
 import { QueryProvider } from "@/utils/QueryProvider";
 import { ToastHost } from "@/lib/toast";
@@ -37,7 +36,6 @@ VITE_API_SOCKET_URL=http://localhost:4000`}
       >
         <QueryProvider>
           <ClerkTokenSync />
-          <BrandColorSync />
           {children}
           <ToastHost />
         </QueryProvider>

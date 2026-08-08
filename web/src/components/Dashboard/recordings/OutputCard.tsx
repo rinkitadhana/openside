@@ -136,7 +136,7 @@ const RowThumbnail = ({
   const showStored = !!stored && !storedFailed;
 
   return (
-    <span className="relative flex aspect-[4/3] h-14 shrink-0 items-center justify-center overflow-hidden rounded bg-muted ring-1 ring-border">
+    <span className="relative flex aspect-[4/3] h-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted ring-1 ring-border">
       {showStored ? (
         <>
           {!storedLoaded && (
@@ -194,12 +194,14 @@ const RowThumbnail = ({
 const DownloadItem = ({
   name,
   format,
+  description,
   busy,
   disabled,
   onClick,
 }: {
   name: string;
   format: string;
+  description: string;
   busy: boolean;
   disabled: boolean;
   onClick: () => void;
@@ -208,7 +210,8 @@ const DownloadItem = ({
     type="button"
     disabled={disabled}
     onClick={onClick}
-    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-foreground transition hover:bg-primary disabled:cursor-not-allowed disabled:opacity-60"
+    aria-label={`${name}, ${format}. ${description}`}
+    className="group/download relative flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition hover:bg-primary focus-visible:bg-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
   >
     {busy ? (
       <FiLoader className="size-3.5 animate-spin" />
@@ -216,8 +219,14 @@ const DownloadItem = ({
       <LuDownload className="size-3.5 text-fg-muted" />
     )}
     {name}
-    <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-fg-muted">
+    <span className="ml-auto rounded-md bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-fg-muted">
       {format}
+    </span>
+    <span
+      role="tooltip"
+      className="pointer-events-none invisible absolute right-[calc(100%+0.75rem)] top-1/2 z-[70] w-56 -translate-y-1/2 rounded-lg border border-border bg-popover px-3 py-2 text-left text-xs font-normal leading-5 text-popover-foreground opacity-0 shadow-md group-hover/download:visible group-hover/download:opacity-100 group-focus-visible/download:visible group-focus-visible/download:opacity-100"
+    >
+      {description}
     </span>
   </button>
 );
@@ -277,11 +286,12 @@ const OutputCard = ({
 
   // Flat lists split into Video / Audio.
   const videoFormats: DownloadFormat[] = ["mp4"];
-  const audioFormats: DownloadFormat[] = ["mp3", "wav"];
+  const audioFormats: DownloadFormat[] = ["wav", "mp3"];
 
   type DownloadItem = {
     id: string;
     name: string;
+    description: string;
     output: FinalOutput;
     format: DownloadFormat;
   };
@@ -294,6 +304,7 @@ const OutputCard = ({
       videoItems.push({
         id: `${output.id}:${format}`,
         name: "Raw video",
+        description: "High-quality video recorded locally in the participant's browser.",
         output,
         format,
       });
@@ -309,6 +320,8 @@ const OutputCard = ({
     videoItems.push({
       id: `${alignedSource.id}:aligned:mp4`,
       name: "Aligned video",
+      description:
+        "Adds black padding when this track started late; otherwise it matches Raw video.",
       output: alignedSource,
       format: "mp4",
     });
@@ -327,6 +340,10 @@ const OutputCard = ({
       audioItems.push({
         id: `${output.id}:${format}`,
         name: format === "wav" ? "Raw audio" : "Compressed",
+        description:
+          format === "wav"
+            ? "Uncompressed 24-bit WAV captured from the participant's microphone."
+            : "Smaller MP3 version of this track's audio.",
         output,
         format,
       });
@@ -340,6 +357,7 @@ const OutputCard = ({
     videoItems.push({
       id: `${cloudOutput.id}:mp4`,
       name: "Cloud",
+      description: "Server-side video backup of this track from the live session.",
       output: cloudOutput,
       format: "mp4",
     });
@@ -347,6 +365,7 @@ const OutputCard = ({
       audioItems.push({
         id: `${cloudOutput.id}:mp3`,
         name: "Cloud",
+        description: "MP3 audio from the server-side backup of this track.",
         output: cloudOutput,
         format: "mp3",
       });
@@ -390,7 +409,7 @@ const OutputCard = ({
     <div
       onClick={canPlay ? onSelect : undefined}
       aria-pressed={canPlay ? selected : undefined}
-      className={`group flex items-center gap-3 rounded-lg border px-2.5 py-2 transition-colors ${
+      className={`group flex items-center gap-3 rounded-xl border px-2.5 py-2 transition-colors ${
         selected
           ? "border-fg-faint bg-muted"
           : "border-border bg-primary hover:border-fg-faint"
@@ -472,7 +491,7 @@ const OutputCard = ({
             type="button"
             disabled={!canDownload || !!downloading}
             onClick={(event) => event.stopPropagation()}
-            className="flex shrink-0 items-center gap-2 rounded-md border border-border bg-background px-3.5 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex shrink-0 items-center gap-2 rounded-lg border border-border bg-background px-3.5 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {downloading ? (
               <FiLoader className="size-4 animate-spin" />
@@ -484,7 +503,8 @@ const OutputCard = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="end"
-          className="w-52 rounded-lg border-border bg-background p-1.5"
+          className="w-52 overflow-visible rounded-xl border-border bg-background p-1.5"
+          style={{ overflow: "visible" }}
         >
           {videoItems.length > 0 && (
             <>
@@ -496,6 +516,7 @@ const OutputCard = ({
                   key={item.id}
                   name={item.name}
                   format={item.format}
+                  description={item.description}
                   busy={downloading === item.id}
                   disabled={!!downloading}
                   onClick={() =>
@@ -516,6 +537,7 @@ const OutputCard = ({
                   key={item.id}
                   name={item.name}
                   format={item.format}
+                  description={item.description}
                   busy={downloading === item.id}
                   disabled={!!downloading}
                   onClick={() =>

@@ -14,7 +14,6 @@ model User {
   email      String   @unique
   avatar     String? // Clerk imageUrl OR presigned URL derived from avatarKey
   avatarKey  String? // R2 object key for a user-uploaded avatar (avatars/{userId}/...)
-  brandColor String? // hex accent color chosen by the user (e.g. "#6366f1")
   plan       PlanType @default(DEMO)
   // Once the user edits their profile in-app, stop overwriting name/avatar from
   // Clerk on every sync — the in-app values become authoritative.

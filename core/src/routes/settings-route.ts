@@ -22,7 +22,7 @@ import {
 
 const router = express.Router();
 
-// Profile (name / avatar / brand color). Email is the Clerk login identity and
+// Profile (name / avatar). Email is the Clerk login identity and
 // is intentionally not editable here.
 
 router.patch(
@@ -41,8 +41,6 @@ router.patch(
 			const user = await findOrCreateUser(req.user);
 			const profile = await updateProfile(user.id, {
 				name: typeof req.body?.name === "string" ? req.body.name : undefined,
-				brandColor:
-					req.body?.brandColor === undefined ? undefined : req.body.brandColor,
 				avatarKey:
 					req.body?.avatarKey === undefined ? undefined : req.body.avatarKey,
 			});
@@ -52,12 +50,9 @@ router.patch(
 		} catch (error) {
 			const code =
 				error instanceof Error &&
-				[
-					"NAME_REQUIRED",
-					"NAME_TOO_LONG",
-					"INVALID_BRAND_COLOR",
-					"INVALID_AVATAR_KEY",
-				].includes(error.message)
+				["NAME_REQUIRED", "NAME_TOO_LONG", "INVALID_AVATAR_KEY"].includes(
+					error.message,
+				)
 					? error.message
 					: null;
 			if (code) {

@@ -1,8 +1,8 @@
 /**
  * Settings - sectioned: Profile, Plan & billing, Recording.
  *
- * Everything shown comes from the server. Profile edits (name, avatar, brand
- * color) and the recording preference use optimistic updates so the UI reacts
+ * Everything shown comes from the server. Profile edits (name and avatar) and
+ * the recording preference use optimistic updates so the UI reacts
  * instantly and rolls back on failure. Email is the Clerk login identity and is
  * read-only here. Secrets (self-host keys) are never shown back - only masked.
  */
@@ -15,7 +15,6 @@ import {
   Monitor,
   Moon,
   Palette,
-  Plus,
   Sun,
   Upload,
   User as UserIcon,
@@ -51,23 +50,6 @@ const SECTIONS: { id: SectionId; label: string; icon: typeof UserIcon }[] = [
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "billing", label: "Plan & billing", icon: CreditCard },
   { id: "recording", label: "Recording", icon: Video },
-];
-
-const BRAND_PRESETS = [
-  "#8b5cf6", // violet
-  "#6366f1", // indigo
-  "#3b82f6", // blue
-  "#0ea5e9", // sky
-  "#06b6d4", // cyan
-  "#14b8a6", // teal
-  "#10b981", // emerald
-  "#84cc16", // lime
-  "#f59e0b", // amber
-  "#f97316", // orange
-  "#ef4444", // red
-  "#f43f5e", // rose
-  "#ec4899", // pink
-  "#a855f7", // purple
 ];
 
 const PLAN_LABELS: Record<string, string> = {
@@ -128,12 +110,10 @@ const Toggle = ({
 const Avatar = ({
   src,
   name,
-  ring,
   size = 64,
 }: {
   src?: string | null;
   name?: string;
-  ring?: string | null;
   size?: number;
 }) => {
   const initials = (name || "U")
@@ -146,11 +126,10 @@ const Avatar = ({
 
   return (
     <span
-      className="flex items-center justify-center overflow-hidden rounded-full bg-muted text-lg font-semibold text-foreground"
+      className="flex items-center justify-center overflow-hidden rounded-full bg-muted text-lg font-semibold text-foreground ring-2 ring-brand"
       style={{
         width: size,
         height: size,
-        boxShadow: ring ? `0 0 0 2px ${ring}` : undefined,
       }}
     >
       {src ? (
@@ -218,7 +197,6 @@ const ProfileSection = () => {
         <Avatar
           src={user?.avatar}
           name={user?.name}
-          ring={user?.brandColor || null}
           size={72}
         />
         <div className="flex flex-col gap-2">
@@ -350,27 +328,7 @@ const ThemePreview = ({ id }: { id: string }) => {
 };
 
 const AppearanceSection = () => {
-  const { data: user } = useGetMe();
-  const updateProfile = useUpdateProfile();
   const { theme, resolvedTheme, setTheme } = useTheme();
-
-  const [brandColor, setBrandColor] = useState<string>("");
-
-  useEffect(() => {
-    setBrandColor(user?.brandColor ?? "");
-  }, [user?.brandColor]);
-
-  const applyBrandColor = (color: string | null) => {
-    setBrandColor(color ?? "");
-    updateProfile.mutate(
-      { brandColor: color },
-      { onError: () => toast.error("Couldn't update your brand color.") },
-    );
-  };
-
-  const isCustomBrand =
-    !!brandColor &&
-    !BRAND_PRESETS.some((c) => c.toLowerCase() === brandColor.toLowerCase());
 
   const activeTheme = theme === "system" ? "system" : resolvedTheme;
   const themeOptions: { id: string; label: string; icon: typeof Sun }[] = [
@@ -423,79 +381,6 @@ const AppearanceSection = () => {
               </button>
             );
           })}
-        </div>
-      </div>
-
-      {/* Brand color */}
-      <div className="rounded-lg border border-border bg-background p-5">
-        <h3 className="text-base font-semibold text-foreground">Brand color</h3>
-        <p className="mt-1 max-w-md text-sm text-fg-muted">
-          Your accent color across the app. Pick a preset or set your own.
-        </p>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          {BRAND_PRESETS.map((color) => {
-            const selected = brandColor.toLowerCase() === color.toLowerCase();
-            return (
-              <button
-                key={color}
-                type="button"
-                aria-label={`Use ${color}`}
-                onClick={() => applyBrandColor(color)}
-                className={cn(
-                  "flex size-8 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-110",
-                  selected &&
-                    "ring-2 ring-foreground ring-offset-2 ring-offset-background",
-                )}
-                style={{ backgroundColor: color }}
-              >
-                {selected && (
-                  <Check size={14} className="text-white drop-shadow-sm" />
-                )}
-              </button>
-            );
-          })}
-
-          {/* Custom color: shows your color when custom, else a rainbow prompt. */}
-          <label
-            title="Custom color"
-            aria-label="Pick a custom color"
-            className={cn(
-              "relative flex size-8 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-110",
-              isCustomBrand
-                ? "ring-2 ring-foreground ring-offset-2 ring-offset-background"
-                : "border border-dashed border-border",
-            )}
-            style={
-              isCustomBrand
-                ? { backgroundColor: brandColor }
-                : {
-                    background:
-                      "conic-gradient(from 0deg, #ef4444, #f59e0b, #84cc16, #10b981, #06b6d4, #6366f1, #a855f7, #ec4899, #ef4444)",
-                  }
-            }
-          >
-            {isCustomBrand ? (
-              <Check size={14} className="text-white drop-shadow-sm" />
-            ) : (
-              <Plus size={14} className="text-white drop-shadow-sm" />
-            )}
-            <input
-              type="color"
-              value={brandColor || "#0041aa"}
-              onChange={(event) => applyBrandColor(event.target.value)}
-              className="absolute inset-0 cursor-pointer opacity-0"
-            />
-          </label>
-
-          {brandColor && (
-            <button
-              type="button"
-              onClick={() => applyBrandColor(null)}
-              className="ml-1 cursor-pointer text-xs font-medium text-fg-subtle hover:text-foreground"
-            >
-              Clear
-            </button>
-          )}
         </div>
       </div>
     </div>

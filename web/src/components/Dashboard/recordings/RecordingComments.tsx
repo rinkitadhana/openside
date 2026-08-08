@@ -113,6 +113,9 @@ const RecordingComments = ({
     // header and the bottom, so the surrounding layout owns any divider.
     <section className="flex h-full min-h-0 flex-col gap-3 bg-background p-3">
       <div className="flex items-center gap-2">
+        <span className="flex size-6 items-center justify-center rounded-lg bg-muted text-fg-muted">
+          <FiMessageSquare className="size-3.5" />
+        </span>
         <h3 className="text-sm font-semibold text-foreground">Comments</h3>
         {!isLoading && comments.length > 0 && (
           <span className="rounded-full bg-muted px-2 py-0.5 text-[0.7rem] font-medium text-fg-muted ring-1 ring-border">
@@ -139,7 +142,7 @@ const RecordingComments = ({
           comments.map((comment) => (
             <div key={comment.id} className="group flex items-start gap-2.5">
               <Avatar comment={comment} />
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 rounded-xl bg-muted/60 px-3 py-2">
                 <div className="flex items-baseline gap-2">
                   <span className="truncate text-xs font-semibold text-foreground">
                     {comment.authorName}
@@ -174,33 +177,40 @@ const RecordingComments = ({
             onChange={(event) => setName(event.target.value)}
             maxLength={80}
             placeholder="Your name"
-            className="w-full rounded-md border border-border bg-primary px-2.5 py-1.5 text-sm text-foreground outline-none focus:border-fg-faint"
+            className="w-full rounded-lg border border-border bg-primary px-2.5 py-1.5 text-sm text-foreground outline-none focus:border-fg-faint"
           />
         )}
-        <textarea
-          value={body}
-          onChange={(event) => setBody(event.target.value)}
-          onKeyDown={(event) => {
-            // Enter posts; Shift+Enter starts a new line.
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              submit();
-            }
-          }}
-          rows={3}
-          maxLength={2000}
-          placeholder="Add a comment…"
-          className="w-full resize-none rounded-md border border-border bg-primary px-2.5 py-2 text-sm text-foreground outline-none focus:border-fg-faint"
-        />
-        <button
-          type="button"
-          onClick={submit}
-          disabled={!canPost}
-          className="flex h-9 items-center justify-center gap-1.5 rounded-md bg-foreground px-3 text-sm font-semibold text-background transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isPosting && <FiLoader className="size-4 animate-spin" />}
-          {isPosting ? "Posting…" : "Comment"}
-        </button>
+        <div className="flex flex-col gap-1.5 rounded-xl border border-border bg-primary p-2 transition-colors focus-within:border-fg-faint">
+          <textarea
+            value={body}
+            onChange={(event) => setBody(event.target.value)}
+            onKeyDown={(event) => {
+              // Enter posts; Shift+Enter starts a new line.
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                submit();
+              }
+            }}
+            rows={2}
+            maxLength={2000}
+            placeholder="Add a comment…"
+            className="w-full resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-fg-subtle"
+          />
+          <div className="flex items-center justify-end gap-2">
+            <span className="text-[0.7rem] text-fg-faint">
+              {body.length}/2000
+            </span>
+            <button
+              type="button"
+              onClick={submit}
+              disabled={!canPost}
+              className="flex h-7 items-center justify-center gap-1.5 rounded-lg bg-foreground px-2.5 text-xs font-semibold text-background transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isPosting && <FiLoader className="size-3.5 animate-spin" />}
+              {isPosting ? "Posting…" : "Comment"}
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   );

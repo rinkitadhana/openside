@@ -10,7 +10,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { FiClock, FiLoader, FiMonitor, FiVideo } from "react-icons/fi";
-import { LuDownload, LuLayoutGrid, LuMonitor, LuPlay, LuVideo } from "react-icons/lu";
+import { LuDownload, LuPlay } from "react-icons/lu";
 import PageTitle from "@/components/shared/PageTitle";
 import RecordingComments from "@/components/Dashboard/recordings/RecordingComments";
 import {
@@ -29,23 +29,6 @@ import {
   useSharedRecording,
 } from "@/hooks/useSharedRecording";
 import { useRealtimeRecordingComments } from "@/hooks/useRealtimeRecordingComments";
-
-const KIND_LABEL: Record<ScreenOutputKind, string> = {
-  both: "Screen + Camera",
-  screen: "Screen",
-  screenAligned: "Aligned screen",
-  camera: "Camera",
-};
-// "screenAligned" points at the same file as "screen" - showing both would
-// duplicate the track.
-const KIND_ORDER: ScreenOutputKind[] = ["both", "screen", "camera"];
-
-const KIND_ICON: Record<ScreenOutputKind, typeof LuVideo> = {
-  both: LuLayoutGrid,
-  screen: LuMonitor,
-  screenAligned: LuMonitor,
-  camera: LuVideo,
-};
 
 const formatDateTime = (value?: string | null) => {
   if (!value) return "";
@@ -90,47 +73,15 @@ const SharedPlayer = ({
   token: string;
   kind: ScreenOutputKind | null;
 }) => {
-  const { data: url } = useSharedOutputUrl(token, kind ?? undefined);
-  return (
-    <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black ring-1 ring-border">
-      {!kind ? (
-        <div className="flex h-full flex-col items-center justify-center gap-2 text-white/45">
-          <FiVideo className="size-6" />
-          <span className="text-sm">Nothing to play yet</span>
-        </div>
-      ) : url ? (
-        <video key={kind} src={url} controls playsInline className="h-full w-full" />
-      ) : (
-        <div className="flex h-full items-center justify-center gap-2 text-sm text-white/60">
-          <FiLoader className="size-4 animate-spin" /> Loading…
-        </div>
-      )}
-    </div>
-  );
-};
-
-const SharedTrackRow = ({
-  token,
-  kind,
-  selected,
-  onSelect,
-}: {
-  token: string;
-  kind: ScreenOutputKind;
-  selected: boolean;
-  onSelect: () => void;
-}) => {
   const [downloading, setDownloading] = useState(false);
-  const { data: thumbnailUrl } = useSharedOutputUrl(token, kind);
-  const KindIcon = KIND_ICON[kind];
+  const { data: url } = useSharedOutputUrl(token, kind ?? undefined);
 
-  const handleDownload = async (event: React.MouseEvent) => {
-    event.stopPropagation();
-    if (downloading) return;
+  const handleDownload = async () => {
+    if (!kind || downloading) return;
     setDownloading(true);
     try {
-      const url = await fetchSharedOutputUrl(token, kind, true);
-      triggerBrowserDownload(url);
+      const downloadUrl = await fetchSharedOutputUrl(token, kind, true);
+      triggerBrowserDownload(downloadUrl);
     } catch {
       // Download failed; the button simply re-enables.
     } finally {
@@ -139,55 +90,38 @@ const SharedTrackRow = ({
   };
 
   return (
-    <div
-      onClick={onSelect}
-      aria-pressed={selected}
-      className={`group flex cursor-pointer items-center gap-3 rounded-xl border px-2.5 py-2 transition-colors ${
-        selected
-          ? "border-foreground/25 bg-muted"
-          : "border-border bg-primary hover:border-foreground/20"
-      }`}
-    >
-      <span className="relative flex aspect-[4/3] h-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted ring-1 ring-border">
-        <KindIcon className="size-4 text-foreground/60" />
-        {thumbnailUrl && (
-          <video
-            src={thumbnailUrl}
-            muted
-            playsInline
-            preload="metadata"
-            aria-hidden
-            onLoadedMetadata={(event) => {
-              const video = event.currentTarget;
-              if (Number.isFinite(video.duration) && video.duration > 0.1) {
-                video.currentTime = 0.1;
-              }
-            }}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        )}
-        {!selected && (
-          <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-150 group-hover:bg-black/40 group-hover:opacity-100">
-            <LuPlay className="size-4 fill-white text-white" />
-          </span>
-        )}
-      </span>
-      <p className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
-        {KIND_LABEL[kind]}
-      </p>
-      <button
-        type="button"
-        disabled={downloading}
-        onClick={(event) => void handleDownload(event)}
-        className="flex shrink-0 items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {downloading ? (
-          <FiLoader className="size-4 animate-spin" />
+    <div className="w-full overflow-hidden rounded-2xl border border-border bg-primary p-3">
+      <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black ring-1 ring-border">
+        {!kind ? (
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-white/45">
+            <FiVideo className="size-6" />
+            <span className="text-sm">Nothing to play yet</span>
+          </div>
+        ) : url ? (
+          <video key={kind} src={url} controls playsInline className="h-full w-full" />
         ) : (
-          <LuDownload className="size-4 text-foreground/60" />
+          <div className="flex h-full items-center justify-center gap-2 text-sm text-white/60">
+            <FiLoader className="size-4 animate-spin" /> Loading…
+          </div>
         )}
-        {downloading ? "Preparing" : "Download"}
-      </button>
+      </div>
+      {kind && (
+        <div className="flex justify-end px-1 pb-1 pt-3">
+          <button
+            type="button"
+            disabled={downloading}
+            onClick={() => void handleDownload()}
+            className="flex shrink-0 items-center gap-2 rounded-lg bg-foreground px-3.5 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {downloading ? (
+              <FiLoader className="size-4 animate-spin" />
+            ) : (
+              <LuDownload className="size-4" />
+            )}
+            {downloading ? "Preparing" : "Download video"}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -410,9 +344,6 @@ const SharedSpaceTrackRow = ({
 
 const SharedRecordingPage = () => {
   const { token = "" } = useParams<{ token: string }>();
-  const [selectedKind, setSelectedKind] = useState<ScreenOutputKind | null>(
-    null,
-  );
   const [selectedSpaceTrackId, setSelectedSpaceTrackId] = useState<string | null>(
     null,
   );
@@ -459,12 +390,12 @@ const SharedRecordingPage = () => {
     );
   }
 
-  const kinds = KIND_ORDER.filter((kind) => rec.kinds.includes(kind));
   const spaceTracks = rec.tracks ?? [];
-  const activeKind =
-    selectedKind && kinds.includes(selectedKind)
-      ? selectedKind
-      : (kinds[0] ?? null);
+  const screenVideoKind: ScreenOutputKind | null = rec.kinds.includes("both")
+    ? "both"
+    : rec.kinds.includes("screen")
+      ? "screen"
+      : null;
   const recTitle = rec.title || "Untitled recording";
   const isProcessing = rec.status === "STOPPED" || rec.status === "PROCESSING";
   const isSpaceRecording = rec.source === "SPACE";
@@ -586,7 +517,7 @@ const SharedRecordingPage = () => {
                     )}
                   </section>
                 )
-              ) : kinds.length === 0 ? (
+              ) : !screenVideoKind ? (
                 <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl bg-black text-white/60 ring-1 ring-border">
                   {isProcessing ? (
                     <>
@@ -603,27 +534,7 @@ const SharedRecordingPage = () => {
                   )}
                 </div>
               ) : (
-                <section className="flex flex-col gap-4">
-                  <SharedPlayer token={token} kind={activeKind} />
-                  {kinds.length > 1 && (
-                    <>
-                      <h2 className="text-sm font-semibold text-foreground/80">
-                        Tracks
-                      </h2>
-                      <div className="flex flex-col gap-2">
-                        {kinds.map((kind) => (
-                          <SharedTrackRow
-                            key={kind}
-                            token={token}
-                            kind={kind}
-                            selected={kind === activeKind}
-                            onSelect={() => setSelectedKind(kind)}
-                          />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </section>
+                <SharedPlayer token={token} kind={screenVideoKind} />
               )}
             </div>
 

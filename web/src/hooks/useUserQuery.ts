@@ -7,7 +7,6 @@ export interface MeUser {
   name: string;
   email: string;
   avatar?: string | null;
-  brandColor?: string | null;
   plan?: "DEMO" | "PRO";
   cloudBackupEnabled?: boolean;
   /** User-level recording frame-rate preference (24 or 30); default 30. */

@@ -14,7 +14,6 @@ import { GET_ME_QUERY_KEY, type MeUser } from "@/hooks/useUserQuery";
 
 export interface ProfileUpdate {
   name?: string;
-  brandColor?: string | null;
   avatarKey?: string | null;
 }
 
@@ -50,7 +49,7 @@ const writeMe = (queryClient: QueryClient, user: MeUser) => {
   );
 };
 
-/** Update name / brand color / avatar. Optimistic. */
+/** Update name or avatar. Optimistic. */
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
 
@@ -67,7 +66,6 @@ export const useUpdateProfile = () => {
       // it into `avatar`. Callers pass a local preview via a separate flow.
       const patch: Partial<MeUser> = {};
       if (update.name !== undefined) patch.name = update.name;
-      if (update.brandColor !== undefined) patch.brandColor = update.brandColor;
       const rollback = await optimisticallyPatchMe(queryClient, patch);
       return { rollback };
     },
