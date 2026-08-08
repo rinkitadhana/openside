@@ -28,6 +28,7 @@ import {
 
 import { BsFillRecordCircleFill, BsFillTelephoneFill } from "react-icons/bs";
 import { FaGithub } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 import { FiUploadCloud, FiVideo } from "react-icons/fi";
 import { LuScreenShare } from "react-icons/lu";
 import { RiMicLine } from "react-icons/ri";
@@ -1314,62 +1315,100 @@ const LandingPage = () => {
         </motion.div>
       </section>
 
-      <footer className="relative overflow-hidden bg-[url('/img/landing/hero-bg.jpg')] bg-cover bg-top px-4 py-16 sm:px-6 sm:py-20">
+      <footer className="relative overflow-hidden bg-[url('/img/landing/hero-bg.jpg')] bg-cover bg-top px-4 py-20 sm:px-6 sm:py-24">
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
         <motion.div
-          className="relative mx-auto flex max-w-5xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between"
+          className="relative mx-auto grid max-w-5xl gap-12 sm:grid-cols-[1.4fr_1fr_1fr]"
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-100px" }}
           variants={riseVariants}
         >
           <div>
-            <Link to="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2.5">
               <img
                 src="/logo/logo-dark.png"
-                className="w-5 select-none"
+                className="w-7 select-none"
                 alt="Openside"
               />
-              <span className="text-base font-bold uppercase text-white">
+              <span className="font-bricolage text-xl font-bold uppercase text-white">
                 Openside
               </span>
             </Link>
-            <p className="mt-3 max-w-xs text-sm leading-6 text-white/70">
+            <p className="mt-4 max-w-xs text-base leading-7 text-white/70">
               Open-source, self-hostable recording studio for podcasts,
               meetings, and interviews.
             </p>
+            <div className="mt-5 flex items-center gap-2.5">
+              <a
+                href="https://github.com/rinkitadhana/openside"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub"
+                className="flex size-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition-colors hover:bg-white/15"
+              >
+                <FaGithub className="size-4" />
+              </a>
+              <a
+                href="https://x.com/damngruz"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="X (Twitter)"
+                className="flex size-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition-colors hover:bg-white/15"
+              >
+                <FaXTwitter className="size-4" />
+              </a>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/75 sm:justify-end">
-            <a href="#features" className="hover:text-white">
-              Features
-            </a>
-            <a href="#privacy" className="hover:text-white">
-              Privacy
-            </a>
-            <a href="#pricing" className="hover:text-white">
-              Pricing
-            </a>
-            <a
-              href="https://x.com/damngruz"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-white"
-            >
-              Contact us
-            </a>
-            <a
-              href="https://github.com/rinkitadhana/openside"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-white"
-            >
-              GitHub
-            </a>
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-white/50">
+              Product
+            </p>
+            <div className="mt-4 flex flex-col gap-3 text-base text-white/75">
+              <a href="#features" className="w-fit hover:text-white">
+                Features
+              </a>
+              <a href="#privacy" className="w-fit hover:text-white">
+                Privacy
+              </a>
+              <a href="#pricing" className="w-fit hover:text-white">
+                Pricing
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-white/50">
+              Company
+            </p>
+            <div className="mt-4 flex flex-col gap-3 text-base text-white/75">
+              <a
+                href="https://x.com/damngruz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-fit hover:text-white"
+              >
+                Contact us
+              </a>
+              <a
+                href="https://github.com/rinkitadhana/openside"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-fit hover:text-white"
+              >
+                GitHub
+              </a>
+            </div>
           </div>
         </motion.div>
-        <div className="relative mx-auto mt-8 max-w-5xl border-t border-white/20 pt-5 text-xs text-white/60">
-          © {new Date().getFullYear()} Openside. Open source under the MIT
-          License.
+        <div className="relative mx-auto mt-12 flex max-w-5xl flex-col gap-2 border-t border-white/20 pt-6 text-sm text-white/60 sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            © {new Date().getFullYear()} Openside. Open source under the MIT
+            License.
+          </p>
+          <p className="text-white/50">Built for creators who own their footage.</p>
         </div>
       </footer>
 
