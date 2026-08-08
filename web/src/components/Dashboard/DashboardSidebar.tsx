@@ -65,7 +65,7 @@ const DashboardSidebar = ({ isOpen, onNavigate }: DashboardSidebarProps) => {
             alt="Openside"
           />
         </span>
-        <span className="min-w-0 flex-1 truncate text-base font-semibold uppercase tracking-wide text-foreground">
+        <span className="min-w-0 flex-1 truncate text-base font-bold uppercase tracking-wide text-foreground">
           Openside
         </span>
       </div>

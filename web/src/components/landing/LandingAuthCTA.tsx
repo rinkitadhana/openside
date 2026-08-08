@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import { Loader2 } from "lucide-react";
+import { BsFillRecordCircleFill } from "react-icons/bs";
 
 import { Button } from "@/components/shared/ui/button";
 import type { AuthMode } from "@/components/auth/AuthModal";
@@ -23,7 +24,7 @@ export const HeaderAuthCTA = memo(
       return (
         <Button
           disabled
-          className="rounded-full bg-foreground text-background hover:bg-foreground/90"
+          className="w-[112px] rounded-full bg-foreground text-background hover:bg-foreground/90"
         >
           <Loader2 className="animate-spin" />
         </Button>
@@ -33,7 +34,7 @@ export const HeaderAuthCTA = memo(
     if (isSignedIn) {
       return (
         <Button
-          className="rounded-full bg-foreground text-background hover:bg-foreground/90"
+          className="w-[112px] rounded-full bg-foreground text-background hover:bg-foreground/90"
           asChild
         >
           <Link to="/dashboard/home">Dashboard</Link>
@@ -42,25 +43,48 @@ export const HeaderAuthCTA = memo(
     }
 
     return (
-      <>
-        <Button
-          variant="ghost"
-          className="hidden rounded-full hover:bg-muted sm:inline-flex"
-          onClick={() => onOpenAuth("signin")}
-        >
-          Sign in
-        </Button>
-        <Button
-          className="rounded-full bg-foreground text-background hover:bg-foreground/90"
-          onClick={() => onOpenAuth("signup")}
-        >
-          Start Creating
-        </Button>
-      </>
+      <Button
+        className="rounded-full bg-foreground text-background hover:bg-foreground/90"
+        onClick={() => onOpenAuth("signup")}
+      >
+        Get Started
+      </Button>
     );
   },
 );
 HeaderAuthCTA.displayName = "HeaderAuthCTA";
+
+// The hero's "Start Recording" button. Reads Clerk auth itself so the check
+// stays isolated from the rest of the (animated) hero. Signed in → straight to
+// the dashboard. Signed out → open the auth modal.
+export const StartRecordingCTA = memo(
+  ({ className, onOpenAuth }: { className: string; onOpenAuth: OpenAuth }) => {
+    const { isSignedIn, isLoaded } = useAuth();
+    const navigate = useNavigate();
+
+    const handleClick = () => {
+      if (!isLoaded) return;
+      if (isSignedIn) {
+        navigate("/dashboard/home");
+        return;
+      }
+      onOpenAuth("signup");
+    };
+
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={!isLoaded}
+        className={className}
+      >
+        <BsFillRecordCircleFill className="size-4 animate-pulse text-red-500" />
+        Start Recording
+      </button>
+    );
+  },
+);
+StartRecordingCTA.displayName = "StartRecordingCTA";
 
 // The pricing-card button. Reads Clerk auth itself so the check stays isolated
 // from the rest of the landing page. Signed out → open the auth modal. Signed in

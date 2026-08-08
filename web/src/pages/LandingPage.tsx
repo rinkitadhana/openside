@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 
 import { BsFillRecordCircleFill, BsFillTelephoneFill } from "react-icons/bs";
+import { FaGithub } from "react-icons/fa";
 import { FiUploadCloud, FiVideo } from "react-icons/fi";
 import { LuScreenShare } from "react-icons/lu";
 import { RiMicLine } from "react-icons/ri";
@@ -34,7 +35,11 @@ import { RiMicLine } from "react-icons/ri";
 import PageTitle from "@/components/shared/PageTitle";
 import SpaceBlueprint from "@/components/landing/SpaceBlueprint";
 import GithubStarButton from "@/components/landing/GithubStarButton";
-import { HeaderAuthCTA, PricingCTA } from "@/components/landing/LandingAuthCTA";
+import {
+  HeaderAuthCTA,
+  PricingCTA,
+  StartRecordingCTA,
+} from "@/components/landing/LandingAuthCTA";
 import AuthModal, { type AuthMode } from "@/components/auth/AuthModal";
 
 // Snappy easeOutExpo curve so things decelerate cleanly instead of drifting.
@@ -897,60 +902,64 @@ const LandingPage = () => {
         title="Home"
         description="Openside. Record, meet, and create together."
       />
-      <header className="fixed inset-x-0 top-0 z-20 bg-[#ffffff]">
-        <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link to="/" className="flex items-center gap-2">
-            <img
-              src="/logo/logo-light.png"
-              className="h-full w-[24px] select-none"
-              alt="Openside"
-            />
-            <span className="text-lg font-semibold uppercase">Openside</span>
-          </Link>
+      <main className="relative flex min-h-screen flex-col items-center justify-start overflow-hidden bg-[#ffffff] px-4 pt-24 sm:px-6 sm:pt-28">
+        <div className="absolute inset-0 z-0 bg-[url('/img/landing/hero-bg.jpg')] bg-cover bg-bottom" />
 
-          <nav
-            aria-label="Landing page navigation"
-            className="hidden items-center gap-2 text-sm font-medium text-[#131313]/70 md:flex"
-          >
-            <a
-              href="#features"
-              className="rounded-full px-3 py-2 transition-colors hover:bg-[#f0f0f0] hover:text-[#131313]"
+        <header className="absolute inset-x-0 top-0 z-20">
+          <nav className="mx-auto grid max-w-5xl grid-cols-[1fr_auto_1fr] items-center px-4 py-3 sm:px-0">
+            <Link to="/" className="flex items-center gap-2 justify-self-start">
+              <img
+                src="/logo/logo-dark.png"
+                className="h-full w-[24px] select-none"
+                alt="Openside"
+              />
+              <span className="text-lg font-bold uppercase text-white">
+                Openside
+              </span>
+            </Link>
+
+            <nav
+              aria-label="Landing page navigation"
+              className="hidden items-center gap-2 justify-self-center text-sm font-medium text-white/80 md:flex"
             >
-              Features
-            </a>
-            <a
-              href="#privacy"
-              className="rounded-full px-3 py-2 transition-colors hover:bg-[#f0f0f0] hover:text-[#131313]"
-            >
-              Privacy
-            </a>
-            <a
-              href="#pricing"
-              className="rounded-full px-3 py-2 transition-colors hover:bg-[#f0f0f0] hover:text-[#131313]"
-            >
-              Pricing
-            </a>
+              <a
+                href="#features"
+                className="rounded-full px-3 py-2 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                Features
+              </a>
+              <a
+                href="#privacy"
+                className="rounded-full px-3 py-2 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                Privacy
+              </a>
+              <a
+                href="#pricing"
+                className="rounded-full px-3 py-2 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                Pricing
+              </a>
+            </nav>
+
+            <div className="flex items-center justify-self-end gap-1.5 sm:gap-2">
+              <span className="hidden sm:inline-flex">
+                <GithubStarButton />
+              </span>
+              <HeaderAuthCTA onOpenAuth={openAuth} />
+            </div>
           </nav>
+        </header>
 
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <span className="hidden sm:inline-flex">
-              <GithubStarButton />
-            </span>
-            <HeaderAuthCTA onOpenAuth={openAuth} />
-          </div>
-        </nav>
-      </header>
-
-      <main className="relative flex flex-col items-center justify-start overflow-hidden bg-background px-4 pt-24 sm:px-6 sm:pt-28">
         <motion.section
           variants={containerVariants}
           initial="hidden"
           animate="show"
-          className="relative z-10 flex w-full max-w-5xl flex-col items-start gap-3 pt-10 pb-20 text-left sm:pt-12"
+          className="relative z-10 flex w-full max-w-5xl flex-col items-start gap-3 pt-6 pb-20 text-left sm:pt-8"
         >
           <motion.h1
             variants={riseVariants}
-            className="font-bricolage max-w-4xl text-3xl font-semibold leading-[1.2] text-foreground sm:text-[2.5rem]"
+            className="font-bricolage max-w-4xl text-3xl font-semibold leading-[1.2] text-white sm:text-[2.5rem]"
           >
             Record high quality podcasts, interviews, and videos right from your
             browser
@@ -958,11 +967,30 @@ const LandingPage = () => {
 
           <motion.p
             variants={riseVariants}
-            className="max-w-xl text-sm font-normal text-muted-foreground/80 sm:text-base"
+            className="max-w-xl text-sm font-normal text-white/80 sm:text-base"
           >
             Studio-quality recording, open-source at its core. Self-host it free
             or let us handle the infra.
           </motion.p>
+
+          <motion.div
+            variants={riseVariants}
+            className="mt-3 flex flex-wrap items-center gap-3"
+          >
+            <StartRecordingCTA
+              onOpenAuth={openAuth}
+              className="flex select-none items-center gap-2 rounded-full bg-white px-4.5 py-2.5 text-sm font-semibold text-[#131313] transition-colors hover:bg-white/90 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+            />
+            <a
+              href="https://github.com/rinkitadhana/openside"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex select-none cursor-pointer items-center gap-2 rounded-full bg-[#131313] px-4.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#131313]/90"
+            >
+              <FaGithub className="size-4" />
+              Star on GitHub
+            </a>
+          </motion.div>
 
           <div className="relative mt-8 w-full">
             <motion.div
@@ -980,7 +1008,13 @@ const LandingPage = () => {
         className="bg-[#ffffff] px-4 py-20 sm:px-6"
       >
         <div className="mx-auto max-w-5xl">
-          <div className="max-w-xl">
+          <motion.div
+            className="max-w-xl"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={riseVariants}
+          >
             <p className="text-sm font-medium text-[#131313]/60">Features</p>
             <h2 className="font-bricolage mt-2 text-2xl font-semibold tracking-tight text-[#131313] sm:text-3xl">
               Record, download, and share in one place.
@@ -989,12 +1023,19 @@ const LandingPage = () => {
               From capture to sharing, Openside handles the whole workflow so you
               can focus on the recording itself.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="mt-10 grid gap-6 sm:grid-cols-2">
+          <motion.div
+            className="mt-10 grid gap-6 sm:grid-cols-2"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={containerVariants}
+          >
             {features.map(({ icon: Icon, title, description }) => (
-              <article
+              <motion.article
                 key={title}
+                variants={riseVariants}
                 className="flex flex-col rounded-2xl border border-[#dcdcdc] bg-[#ffffff] p-6"
               >
                 <div className="flex size-11 items-center justify-center rounded-xl bg-[#eaeaea] text-[#131313]">
@@ -1022,15 +1063,21 @@ const LandingPage = () => {
                   {title === "Screen recorder" && <ScreenRecorderDemo />}
                   {title === "Share links and comments" && <CommentsDemo />}
                 </div>
-              </article>
+              </motion.article>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       <section id="privacy" className="bg-[#ffffff] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-5xl">
-          <div className="max-w-xl">
+          <motion.div
+            className="max-w-xl"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={riseVariants}
+          >
             <p className="text-sm font-medium text-[#131313]/60">Privacy</p>
             <h2 className="font-bricolage mt-2 text-2xl font-semibold tracking-tight text-[#131313] sm:text-3xl">
               Your recordings stay yours.
@@ -1039,10 +1086,19 @@ const LandingPage = () => {
               Two things matter here: keeping your recordings safe, and letting
               you run the whole thing yourself. Here is how each works.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="mt-12 grid gap-6 lg:grid-cols-2">
-            <div className="rounded-2xl border border-[#dcdcdc] bg-[#ffffff] p-6 sm:p-8">
+          <motion.div
+            className="mt-12 grid gap-6 lg:grid-cols-2"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={containerVariants}
+          >
+            <motion.div
+              variants={riseVariants}
+              className="rounded-2xl border border-[#dcdcdc] bg-[#ffffff] p-6 sm:p-8"
+            >
               <h3 className="font-bricolage text-lg font-semibold tracking-tight text-[#131313]">
                 Your recordings
               </h3>
@@ -1066,9 +1122,12 @@ const LandingPage = () => {
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
 
-            <div className="rounded-2xl border border-[#dcdcdc] bg-[#ffffff] p-6 sm:p-8">
+            <motion.div
+              variants={riseVariants}
+              className="rounded-2xl border border-[#dcdcdc] bg-[#ffffff] p-6 sm:p-8"
+            >
               <h3 className="font-bricolage text-lg font-semibold tracking-tight text-[#131313]">
                 Self-hosting and keys
               </h3>
@@ -1092,8 +1151,8 @@ const LandingPage = () => {
                   </li>
                 ))}
               </ul>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
@@ -1102,7 +1161,13 @@ const LandingPage = () => {
         className="bg-[#ffffff] px-4 py-20 sm:px-6"
       >
         <div className="mx-auto max-w-5xl">
-          <div className="max-w-xl">
+          <motion.div
+            className="max-w-xl"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={riseVariants}
+          >
             <p className="text-sm font-medium text-[#131313]/60">Pricing</p>
             <h2 className="font-bricolage mt-2 text-2xl font-semibold tracking-tight text-[#131313] sm:text-3xl">
               Simple pricing that scales with you.
@@ -1111,12 +1176,19 @@ const LandingPage = () => {
               Self-host it for free, or let us handle the infrastructure. No
               hidden fees, cancel anytime.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
+          <motion.div
+            className="mt-10 grid gap-6 md:grid-cols-3"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={containerVariants}
+          >
             {pricingPlans.map((plan) => (
-              <div
+              <motion.div
                 key={plan.name}
+                variants={riseVariants}
                 className={`flex flex-col rounded-2xl border p-6 text-[#131313] ${
                   plan.featured
                     ? "border-[#c7d4ff] bg-[#eef2ff] shadow-[0_12px_34px_rgba(66,80,138,0.14)] ring-1 ring-[#c7d4ff]"
@@ -1176,24 +1248,33 @@ const LandingPage = () => {
                       : "bg-[#131313] hover:bg-[#131313]/90"
                   }`}
                 />
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       <section id="faq" className="bg-[#ffffff] px-4 py-20 sm:px-6">
-        <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] md:gap-16">
-          <div>
+        <motion.div
+          className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] md:gap-16"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={containerVariants}
+        >
+          <motion.div variants={riseVariants}>
             <p className="text-sm font-medium text-[#131313]/60">
               FAQ
             </p>
             <h2 className="font-bricolage mt-2 text-2xl font-semibold tracking-tight text-[#131313] sm:text-3xl">
               Everything you need to know before you record.
             </h2>
-          </div>
+          </motion.div>
 
-          <div className="divide-y divide-[#dcdcdc] border-y border-[#dcdcdc]">
+          <motion.div
+            variants={riseVariants}
+            className="divide-y divide-[#dcdcdc] border-y border-[#dcdcdc]"
+          >
             {faqs.map(({ question, answer }, index) => {
               const isOpen = openFaq === index;
               return (
@@ -1229,12 +1310,18 @@ const LandingPage = () => {
                 </div>
               );
             })}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       <footer className="border-t border-[#dcdcdc] bg-[#ffffff] px-4 py-10 sm:px-6">
-        <div className="mx-auto flex max-w-5xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
+        <motion.div
+          className="mx-auto flex max-w-5xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={riseVariants}
+        >
           <div>
             <Link to="/" className="flex items-center gap-2">
               <img
@@ -1242,7 +1329,7 @@ const LandingPage = () => {
                 className="w-5 select-none"
                 alt="Openside"
               />
-              <span className="text-base font-semibold uppercase">
+              <span className="text-base font-bold uppercase">
                 Openside
               </span>
             </Link>
@@ -1279,7 +1366,7 @@ const LandingPage = () => {
               GitHub
             </a>
           </div>
-        </div>
+        </motion.div>
         <div className="mx-auto mt-8 max-w-5xl border-t border-[#dcdcdc] pt-5 text-xs text-[#131313]/50">
           © {new Date().getFullYear()} Openside. Open source under the MIT
           License.

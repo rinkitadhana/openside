@@ -344,6 +344,70 @@ export function useAuth() {
     }
   };
 
+  // Forgot-password flow: email a 6-digit code, then confirm it together with
+  // the new password. Mirrors the signup verify-code flow above.
+  const sendPasswordResetCode = async (email: string): Promise<EmailAuthResult> => {
+    if (!isLoaded || !signIn) {
+      return { ok: false, message: "Auth not ready yet." };
+    }
+
+    try {
+      await signIn.create({
+        strategy: "reset_password_email_code",
+        identifier: email,
+      });
+      return {
+        ok: true,
+        status: "verify_code",
+        message: "We sent a 6-digit code to your email.",
+      };
+    } catch (error: unknown) {
+      const clerkError = getClerkError(error);
+
+      if (isIdentifierNotFound(clerkError.code)) {
+        return {
+          ok: false,
+          message: "No account found with that email.",
+        };
+      }
+
+      return {
+        ok: false,
+        message: clerkError.message || "Unable to send a reset code.",
+      };
+    }
+  };
+
+  const resetPassword = async (
+    code: string,
+    password: string
+  ): Promise<EmailAuthResult> => {
+    if (!isLoaded || !signIn || !setActive) {
+      return { ok: false, message: "Auth not ready yet." };
+    }
+
+    try {
+      const attempt = await signIn.attemptFirstFactor({
+        strategy: "reset_password_email_code",
+        code,
+        password,
+      });
+
+      if (attempt.status === "complete") {
+        await activateSession(attempt.createdSessionId);
+        return { ok: true, status: "signed_in" };
+      }
+
+      return { ok: false, message: "That code didn't work. Please try again." };
+    } catch (error: unknown) {
+      const clerkError = getClerkError(error);
+      return {
+        ok: false,
+        message: clerkError.message || "Invalid or expired code.",
+      };
+    }
+  };
+
   const logout = async () => {
     // Leave the protected route first so ProtectedRoute never re-runs its
     // auth check (and flashes the "Authenticating..." loader) while signOut
@@ -362,6 +426,8 @@ export function useAuth() {
     loginWithEmailPassword,
     resendEmailVerification,
     verifyEmailCode,
+    sendPasswordResetCode,
+    resetPassword,
     logout,
   };
 }
