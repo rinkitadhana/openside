@@ -216,7 +216,7 @@ const InvitePanel = ({ roomCode, spaceId, onDismiss }: InvitePanelProps) => {
   };
 
   return (
-    <div className="relative flex h-full min-h-[180px] flex-col items-center justify-center gap-6 rounded-xl bg-primary p-4 sm:p-8">
+    <div className="relative flex h-full min-h-[180px] flex-col items-center justify-center gap-6 rounded-xl border border-border bg-primary p-4 sm:p-8">
       <button
         type="button"
         onClick={onDismiss}
@@ -697,7 +697,7 @@ const ParticipantFrame = ({
       onClick={onClick}
       role={onClick ? "button" : undefined}
       style={aspectRatio ? { aspectRatio } : undefined}
-      className={`group relative mx-auto min-h-0 overflow-hidden rounded-xl ${
+      className={`group relative mx-auto min-h-0 overflow-hidden rounded-xl border border-border ${
         aspectRatio ? "h-full w-fit max-w-full" : "h-full w-full"
       } ${
         showHandRaised
