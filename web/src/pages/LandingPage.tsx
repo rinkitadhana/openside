@@ -224,7 +224,7 @@ const landingLightTheme: CSSProperties & Record<`--${string}`, string> = {
   "--foreground": "#131313",
   "--primary": "#f0f0f0",
   "--muted": "#e2e2e2",
-  "--brand": "#2e75d1",
+  "--brand": "#0041aa",
   "--border": "#dcdcdc",
   "--selection-background": "#131313",
   "--selection-text": "#ffffff",
@@ -698,7 +698,7 @@ const ScreenRecorderDemo = () => {
       </div>
 
       {/* Recorded screen content. */}
-      <div className="relative aspect-[16/9] bg-gradient-to-br from-[#eaf2fb] to-[#d3e6f8]">
+      <div className="relative aspect-[16/9] bg-gradient-to-br from-[#ebf0f8] to-[#ccd9ee]">
         {/* Faux page content. */}
         <div className="absolute left-4 top-4 space-y-2">
           <div className="h-2.5 w-28 rounded-full bg-white/70" />
@@ -1048,7 +1048,7 @@ const LandingPage = () => {
                   {description}
                 </p>
                 <div
-                  className={`relative mt-6 flex aspect-[16/10] w-full items-center justify-center rounded-xl bg-gradient-to-br from-[#d3e6f8] via-[#eaf2fb] to-[#cfe1f7] px-5 ${
+                  className={`relative mt-6 flex aspect-[16/10] w-full items-center justify-center rounded-xl bg-gradient-to-br from-[#ccd9ee] via-[#ebf0f8] to-[#d3e0f5] px-5 ${
                     title === "High-quality local recording"
                       ? "overflow-hidden"
                       : ""
@@ -1108,7 +1108,7 @@ const LandingPage = () => {
               <ul className="mt-6 space-y-6">
                 {recordingPoints.map(({ icon: Icon, title, description }) => (
                   <li key={title} className="flex gap-4">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#cfe1f7]/45 text-[#1f5a9e]">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#d3e0f5]/45 text-[#0041aa]">
                       <Icon className="size-5" />
                     </div>
                     <div>
@@ -1137,7 +1137,7 @@ const LandingPage = () => {
               <ul className="mt-6 space-y-6">
                 {selfHostPoints.map(({ icon: Icon, title, description }) => (
                   <li key={title} className="flex gap-4">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#cfe1f7]/45 text-[#1f5a9e]">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#d3e0f5]/45 text-[#0041aa]">
                       <Icon className="size-5" />
                     </div>
                     <div>
@@ -1191,7 +1191,7 @@ const LandingPage = () => {
                 variants={riseVariants}
                 className={`flex flex-col rounded-2xl border p-6 text-[#131313] ${
                   plan.featured
-                    ? "border-[#cfe1f7] bg-[#eaf2fb] shadow-[0_12px_34px_rgba(31,90,158,0.14)] ring-1 ring-[#cfe1f7]"
+                    ? "border-[#d3e0f5] bg-[#ebf0f8] shadow-[0_12px_34px_rgba(0,65,170,0.14)] ring-1 ring-[#d3e0f5]"
                     : "border-[#dcdcdc] bg-[#ffffff]"
                 }`}
               >
@@ -1200,7 +1200,7 @@ const LandingPage = () => {
                     {plan.name}
                   </h3>
                   {plan.featured && (
-                    <span className="rounded-full bg-[#cfe1f7] px-2.5 py-1 text-xs font-medium text-[#13315c]">
+                    <span className="rounded-full bg-[#d3e0f5] px-2.5 py-1 text-xs font-medium text-[#0041aa]">
                       Popular
                     </span>
                   )}
@@ -1229,7 +1229,7 @@ const LandingPage = () => {
                     >
                       <Check
                         className={`mt-0.5 size-4 shrink-0 ${
-                          plan.featured ? "text-[#1f5a9e]" : "text-[#131313]"
+                          plan.featured ? "text-[#0041aa]" : "text-[#131313]"
                         }`}
                       />
                       <span className="text-[#131313]/75">{feature}</span>
@@ -1244,7 +1244,7 @@ const LandingPage = () => {
                   onOpenAuth={openAuth}
                   className={`mt-auto w-full cursor-pointer rounded-lg px-4 py-2.5 text-sm font-medium text-[#ffffff] transition-colors disabled:cursor-not-allowed disabled:opacity-70 ${
                     plan.featured
-                      ? "bg-[#1f5a9e] hover:bg-[#1f5a9e]/90"
+                      ? "bg-[#0041aa] hover:bg-[#0041aa]/90"
                       : "bg-[#131313] hover:bg-[#131313]/90"
                   }`}
                 />
@@ -1283,11 +1283,11 @@ const LandingPage = () => {
                     type="button"
                     onClick={() => setOpenFaq(isOpen ? null : index)}
                     aria-expanded={isOpen}
-                    className="group flex w-full cursor-pointer items-center justify-between gap-4 text-left text-base font-medium text-[#131313] transition-colors hover:text-[#1f5a9e]"
+                    className="group flex w-full cursor-pointer items-center justify-between gap-4 text-left text-base font-medium text-[#131313] transition-colors hover:text-[#0041aa]"
                   >
                     {question}
                     <span
-                      className={`text-xl font-normal text-[#131313]/55 transition-[transform,color] duration-300 group-hover:text-[#1f5a9e] ${
+                      className={`text-xl font-normal text-[#131313]/55 transition-[transform,color] duration-300 group-hover:text-[#0041aa] ${
                         isOpen ? "rotate-45" : ""
                       }`}
                     >
@@ -1314,9 +1314,9 @@ const LandingPage = () => {
         </motion.div>
       </section>
 
-      <footer className="border-t border-[#dcdcdc] bg-[#ffffff] px-4 py-10 sm:px-6">
+      <footer className="relative overflow-hidden bg-[url('/img/landing/hero-bg.jpg')] bg-cover bg-top px-4 py-16 sm:px-6 sm:py-20">
         <motion.div
-          className="mx-auto flex max-w-5xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between"
+          className="relative mx-auto flex max-w-5xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between"
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-100px" }}
@@ -1325,35 +1325,35 @@ const LandingPage = () => {
           <div>
             <Link to="/" className="flex items-center gap-2">
               <img
-                src="/logo/logo-light.png"
+                src="/logo/logo-dark.png"
                 className="w-5 select-none"
                 alt="Openside"
               />
-              <span className="text-base font-bold uppercase">
+              <span className="text-base font-bold uppercase text-white">
                 Openside
               </span>
             </Link>
-            <p className="mt-3 max-w-xs text-sm leading-6 text-[#131313]/60">
+            <p className="mt-3 max-w-xs text-sm leading-6 text-white/70">
               Open-source, self-hostable recording studio for podcasts,
               meetings, and interviews.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#131313]/65 sm:justify-end">
-            <a href="#features" className="hover:text-[#131313]">
+          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/75 sm:justify-end">
+            <a href="#features" className="hover:text-white">
               Features
             </a>
-            <a href="#privacy" className="hover:text-[#131313]">
+            <a href="#privacy" className="hover:text-white">
               Privacy
             </a>
-            <a href="#pricing" className="hover:text-[#131313]">
+            <a href="#pricing" className="hover:text-white">
               Pricing
             </a>
             <a
               href="https://x.com/damngruz"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-[#131313]"
+              className="hover:text-white"
             >
               Contact us
             </a>
@@ -1361,13 +1361,13 @@ const LandingPage = () => {
               href="https://github.com/rinkitadhana/openside"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-[#131313]"
+              className="hover:text-white"
             >
               GitHub
             </a>
           </div>
         </motion.div>
-        <div className="mx-auto mt-8 max-w-5xl border-t border-[#dcdcdc] pt-5 text-xs text-[#131313]/50">
+        <div className="relative mx-auto mt-8 max-w-5xl border-t border-white/20 pt-5 text-xs text-white/60">
           © {new Date().getFullYear()} Openside. Open source under the MIT
           License.
         </div>
