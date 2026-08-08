@@ -234,7 +234,7 @@ const landingLightTheme: CSSProperties & Record<`--${string}`, string> = {
 const containerVariants = {
   hidden: {},
   show: {
-    transition: { staggerChildren: 0.1, delayChildren: 0.05 },
+    transition: { staggerChildren: 0.18, delayChildren: 0.1 },
   },
 };
 
@@ -244,7 +244,7 @@ const riseVariants = {
     opacity: 1,
     y: 0,
     filter: "blur(0px)",
-    transition: { duration: 0.6, ease: EASE },
+    transition: { duration: 1, ease: EASE },
   },
 };
 
@@ -254,7 +254,7 @@ const boxVariants = {
     opacity: 1,
     scale: 1,
     y: 0,
-    transition: { duration: 0.8, ease: EASE },
+    transition: { duration: 1.2, ease: EASE },
   },
 };
 
@@ -1323,9 +1323,9 @@ const LandingPage = () => {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-100px" }}
-          variants={riseVariants}
+          variants={containerVariants}
         >
-          <div>
+          <motion.div variants={riseVariants}>
             <Link to="/" className="flex items-center gap-2.5">
               <img
                 src="/logo/logo-dark.png"
@@ -1360,9 +1360,9 @@ const LandingPage = () => {
                 <FaXTwitter className="size-4" />
               </a>
             </div>
-          </div>
+          </motion.div>
 
-          <div>
+          <motion.div variants={riseVariants}>
             <p className="text-sm font-semibold uppercase tracking-wide text-white/50">
               Product
             </p>
@@ -1377,9 +1377,9 @@ const LandingPage = () => {
                 Pricing
               </a>
             </div>
-          </div>
+          </motion.div>
 
-          <div>
+          <motion.div variants={riseVariants}>
             <p className="text-sm font-semibold uppercase tracking-wide text-white/50">
               Company
             </p>
@@ -1401,15 +1401,21 @@ const LandingPage = () => {
                 GitHub
               </a>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
-        <div className="relative mx-auto mt-12 flex max-w-5xl flex-col gap-2 border-t border-white/20 pt-6 text-sm text-white/60 sm:flex-row sm:items-center sm:justify-between">
+        <motion.div
+          className="relative mx-auto mt-12 flex max-w-5xl flex-col gap-2 border-t border-white/20 pt-6 text-sm text-white/60 sm:flex-row sm:items-center sm:justify-between"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={riseVariants}
+        >
           <p>
             © {new Date().getFullYear()} Openside. Open source under the MIT
             License.
           </p>
           <p className="text-white/50">Built for creators who own their footage.</p>
-        </div>
+        </motion.div>
       </footer>
 
       <AuthModal
