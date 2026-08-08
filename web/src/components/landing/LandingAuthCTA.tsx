@@ -24,7 +24,7 @@ export const HeaderAuthCTA = memo(
       return (
         <Button
           disabled
-          className="w-[112px] rounded-full bg-foreground text-background hover:bg-foreground/90"
+          className="w-[132px] rounded-full bg-foreground text-background hover:bg-foreground/90"
         >
           <Loader2 className="animate-spin" />
         </Button>
@@ -34,7 +34,7 @@ export const HeaderAuthCTA = memo(
     if (isSignedIn) {
       return (
         <Button
-          className="w-[112px] rounded-full bg-foreground text-background hover:bg-foreground/90"
+          className="w-[132px] rounded-full bg-foreground text-background hover:bg-foreground/90"
           asChild
         >
           <Link to="/dashboard/home">Dashboard</Link>
@@ -44,7 +44,7 @@ export const HeaderAuthCTA = memo(
 
     return (
       <Button
-        className="rounded-full bg-foreground text-background hover:bg-foreground/90"
+        className="w-[132px] rounded-full bg-foreground text-background hover:bg-foreground/90"
         onClick={() => onOpenAuth("signup")}
       >
         Get Started
