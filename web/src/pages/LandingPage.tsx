@@ -6,24 +6,34 @@ import {
   type ReactNode,
 } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   AudioLines,
+  Briefcase,
+  Bug,
   Check,
   Code2,
   Download,
   EyeOff,
+  GraduationCap,
+  Headphones,
   KeyRound,
   Layers,
   Link2,
   Lock,
+  Menu,
+  MessagesSquare,
   Mic,
   Monitor,
+  Podcast,
+  Presentation,
   Server,
   Share2,
   ShieldCheck,
   UploadCloud,
+  Users,
   Video,
+  X,
 } from "lucide-react";
 
 import { BsFillRecordCircleFill, BsFillTelephoneFill } from "react-icons/bs";
@@ -70,6 +80,65 @@ const features = [
     title: "Share links and comments",
     description:
       "Send each recording with its own link. People can leave comments on it, and you can disable or replace that link any time you want.",
+  },
+];
+
+const useCases = [
+  {
+    icon: Podcast,
+    title: "Podcasts",
+    description:
+      "Multi-host remote podcasts with a separate, studio-quality track for every guest.",
+    image: "/img/landing/usecase-podcasts.jpg",
+  },
+  {
+    icon: MessagesSquare,
+    title: "Interviews",
+    description:
+      "Video interviews and panel discussions, recorded locally so a bad connection never ruins the take.",
+    image: "/img/landing/usecase-interviews.jpg",
+  },
+  {
+    icon: Presentation,
+    title: "Product demos & tutorials",
+    description:
+      "Loom-style screen recordings for walkthroughs, onboarding, and course content.",
+    image: "/img/landing/usecase-demos.jpg",
+  },
+  {
+    icon: Briefcase,
+    title: "Client & consulting calls",
+    description:
+      "Record sessions with clients or stakeholders and share a private link when it's ready.",
+    image: "/img/landing/usecase-client-calls.jpg",
+  },
+  {
+    icon: Bug,
+    title: "Bug reports & async updates",
+    description:
+      "A quick screen recording that replaces a status meeting or a hard-to-explain bug.",
+    image: "/img/landing/usecase-bug-reports.jpg",
+  },
+  {
+    icon: Users,
+    title: "Team meetings",
+    description:
+      "Keep a record of standups and all-hands, with separate tracks if you need to review who said what.",
+    image: "/img/landing/usecase-team-meetings.jpg",
+  },
+  {
+    icon: Headphones,
+    title: "Voiceover & audio-only",
+    description:
+      "Just need audio? Record clean, uncompressed WAV or MP3 without touching video.",
+    image: "/img/landing/usecase-voiceover.jpg",
+  },
+  {
+    icon: GraduationCap,
+    title: "Courses & webinars",
+    description:
+      "Record lessons and cohort calls with the same screen recorder and multi-track setup you'd use for meetings.",
+    image: "/img/landing/usecase-courses.jpg",
   },
 ];
 
@@ -873,16 +942,133 @@ const CommentsDemo = () => {
   );
 };
 
+// Interactive showcase for "Use cases": a pill list of scenarios that drives
+// a single detail panel, auto-advancing like a slideshow but overridable by
+// clicking any pill (which resets the auto-advance timer).
+const UseCasesShowcase = ({ items }: { items: typeof useCases }) => {
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setActive((a) => (a + 1) % items.length);
+    }, 3800);
+    return () => clearTimeout(timer);
+  }, [active, items.length]);
+
+  const current = items[active];
+
+  return (
+    <div className="mt-10 grid grid-cols-1 gap-3 md:grid-cols-[0.9fr_1.3fr] md:gap-6">
+      <div className="flex gap-2 overflow-x-auto pb-2 md:flex-col md:overflow-visible md:pb-0">
+        {items.map(({ icon: ItemIcon, title }, i) => {
+          const isActive = i === active;
+          return (
+            <button
+              key={title}
+              type="button"
+              onClick={() => setActive(i)}
+              className={`group flex shrink-0 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-medium transition-colors md:shrink ${
+                isActive
+                  ? "border-[#0041aa] bg-[#0041aa]/[0.06] text-[#0041aa]"
+                  : "border-[#dcdcdc] bg-[#ffffff] text-[#131313]/70 hover:border-[#0041aa]/40 hover:text-[#131313]"
+              }`}
+            >
+              <span
+                className={`flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                  isActive
+                    ? "bg-[#0041aa] text-white"
+                    : "bg-[#eaeaea] text-[#131313]/70 group-hover:bg-[#dcdcdc]"
+                }`}
+              >
+                <ItemIcon className="size-4" />
+              </span>
+              <span className="whitespace-nowrap md:whitespace-normal">
+                {title}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="relative min-h-[30rem] overflow-hidden rounded-2xl border border-[#dcdcdc] sm:min-h-[34rem] md:min-h-[28rem]">
+        <AnimatePresence>
+          <motion.div
+            key={current.title}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: EASE }}
+            className="absolute inset-0 bg-cover bg-top"
+            style={{ backgroundImage: `url(${current.image})` }}
+          />
+        </AnimatePresence>
+
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/5 to-black/50" />
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={current.title}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.35, ease: EASE }}
+            className="relative flex h-full flex-col p-8 sm:p-10"
+          >
+            <h3 className="font-bricolage text-2xl font-semibold tracking-tight text-white">
+              {current.title}
+            </h3>
+            <p className="mt-3 max-w-md text-base leading-7 text-white/80">
+              {current.description}
+            </p>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Progress dashes for the current position in the auto-advance. */}
+        <div className="absolute bottom-8 left-8 z-10 flex gap-1.5 sm:left-10">
+          {items.map((item, i) => (
+            <span
+              key={item.title}
+              className={`h-1 rounded-full transition-all duration-300 ${
+                i === active ? "w-6 bg-white" : "w-1.5 bg-white/35"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Full-width horizontal line between stacked sections. Desktop-only chrome.
+const SectionDivider = () => (
+  <div className="hidden border-t border-[#dcdcdc] md:block" />
+);
+
 const LandingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>("signin");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Stable so the memoized auth CTAs don't re-render on every page render.
   const openAuth = useCallback((mode: AuthMode) => {
     setAuthMode(mode);
     setAuthOpen(true);
+  }, []);
+
+  // Closing the mobile menu re-renders the header in the same tick as the
+  // anchor click, which can race with the browser's native hash-scroll and
+  // silently drop it. Scroll explicitly on the next frame instead.
+  const handleMobileNavClick = useCallback((id: string) => {
+    setMobileMenuOpen(false);
+    window.history.pushState(null, "", `#${id}`);
+    requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
   }, []);
 
   // Surface the email-verification confirmation that used to live on /auth.
@@ -907,7 +1093,7 @@ const LandingPage = () => {
         <div className="absolute inset-0 z-0 bg-[url('/img/landing/hero-bg.jpg')] bg-cover bg-bottom" />
 
         <header className="absolute inset-x-0 top-0 z-20">
-          <nav className="mx-auto grid max-w-5xl grid-cols-[1fr_auto_1fr] items-center px-4 py-3 sm:px-0">
+          <nav className="mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center px-4 py-3 sm:px-0">
             <Link to="/" className="flex items-center gap-2 justify-self-start">
               <img
                 src="/logo/logo-dark.png"
@@ -921,13 +1107,19 @@ const LandingPage = () => {
 
             <nav
               aria-label="Landing page navigation"
-              className="hidden items-center gap-2 justify-self-center text-sm font-medium text-white/80 md:flex"
+              className="col-start-2 hidden items-center gap-2 justify-self-center text-sm font-medium text-white/80 md:flex"
             >
               <a
                 href="#features"
                 className="rounded-full px-3 py-2 transition-colors hover:bg-white/10 hover:text-white"
               >
                 Features
+              </a>
+              <a
+                href="#use-cases"
+                className="rounded-full px-3 py-2 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                Use cases
               </a>
               <a
                 href="#privacy"
@@ -943,13 +1135,94 @@ const LandingPage = () => {
               </a>
             </nav>
 
-            <div className="flex items-center justify-self-end gap-1.5 sm:gap-2">
+            <div className="col-start-3 flex items-center justify-self-end gap-1.5 sm:gap-2">
               <span className="hidden sm:inline-flex">
                 <GithubStarButton />
               </span>
-              <HeaderAuthCTA onOpenAuth={openAuth} />
+              <span className="hidden md:inline-flex">
+                <HeaderAuthCTA onOpenAuth={openAuth} />
+              </span>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen((open) => !open)}
+                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={mobileMenuOpen}
+                className="flex size-9 cursor-pointer items-center justify-center rounded-full text-white transition-colors hover:bg-white/10 md:hidden"
+              >
+                {mobileMenuOpen ? (
+                  <X className="size-5" />
+                ) : (
+                  <Menu className="size-5" />
+                )}
+              </button>
             </div>
           </nav>
+
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: EASE }}
+                className="overflow-hidden md:hidden"
+              >
+                <nav
+                  aria-label="Mobile navigation"
+                  className="mx-4 mb-3 flex flex-col gap-1 rounded-2xl bg-[#0041aa] p-3 shadow-[0_16px_40px_rgba(0,0,0,0.25)]"
+                >
+                  <a
+                    href="#features"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      handleMobileNavClick("features");
+                    }}
+                    className="rounded-xl px-4 py-3 text-sm font-medium text-white/85 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    Features
+                  </a>
+                  <a
+                    href="#use-cases"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      handleMobileNavClick("use-cases");
+                    }}
+                    className="rounded-xl px-4 py-3 text-sm font-medium text-white/85 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    Use cases
+                  </a>
+                  <a
+                    href="#privacy"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      handleMobileNavClick("privacy");
+                    }}
+                    className="rounded-xl px-4 py-3 text-sm font-medium text-white/85 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    Privacy
+                  </a>
+                  <a
+                    href="#pricing"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      handleMobileNavClick("pricing");
+                    }}
+                    className="rounded-xl px-4 py-3 text-sm font-medium text-white/85 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    Pricing
+                  </a>
+                  <div className="mt-1 flex items-center gap-2 border-t border-white/15 pt-3">
+                    <span className="sm:hidden">
+                      <GithubStarButton />
+                    </span>
+                    <span className="ml-auto">
+                      <HeaderAuthCTA onOpenAuth={openAuth} />
+                    </span>
+                  </div>
+                </nav>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </header>
 
         <motion.section
@@ -1004,10 +1277,8 @@ const LandingPage = () => {
         </motion.section>
       </main>
 
-      <section
-        id="features"
-        className="bg-[#ffffff] px-4 py-20 sm:px-6"
-      >
+      <div className="mx-auto max-w-6xl border-x-0 border-[#dcdcdc] md:border-x">
+        <section id="features" className="bg-[#ffffff] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-5xl">
           <motion.div
             className="max-w-xl"
@@ -1027,7 +1298,7 @@ const LandingPage = () => {
           </motion.div>
 
           <motion.div
-            className="mt-10 grid gap-6 sm:grid-cols-2"
+            className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2"
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, margin: "-100px" }}
@@ -1048,13 +1319,7 @@ const LandingPage = () => {
                 <p className="mt-2 text-sm leading-6 text-[#131313]/65">
                   {description}
                 </p>
-                <div
-                  className={`relative mt-6 flex aspect-[16/10] w-full items-center justify-center rounded-xl bg-gradient-to-br from-[#ccd9ee] via-[#ebf0f8] to-[#d3e0f5] px-5 ${
-                    title === "High-quality local recording"
-                      ? "overflow-hidden"
-                      : ""
-                  }`}
-                >
+                <div className="relative mt-6 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl bg-[url('/img/landing/feature-bg.jpg')] bg-cover bg-center px-5 sm:aspect-[16/10]">
                   {title === "High-quality local recording" && (
                     <LocalRecordingDemo />
                   )}
@@ -1069,6 +1334,40 @@ const LandingPage = () => {
           </motion.div>
         </div>
       </section>
+
+      <SectionDivider />
+
+      <section id="use-cases" className="bg-[#ffffff] px-4 py-20 sm:px-6">
+        <div className="mx-auto max-w-5xl">
+          <motion.div
+            className="max-w-xl"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={riseVariants}
+          >
+            <p className="text-sm font-medium text-[#131313]/60">Use cases</p>
+            <h2 className="font-bricolage mt-2 text-2xl font-semibold tracking-tight text-[#131313] sm:text-3xl">
+              Built for anyone who needs more than a screen-share.
+            </h2>
+            <p className="mt-3 text-base leading-7 text-[#131313]/70">
+              From solo creators to compliance-sensitive teams, here is who
+              records with Openside.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={riseVariants}
+          >
+            <UseCasesShowcase items={useCases} />
+          </motion.div>
+        </div>
+      </section>
+
+      <SectionDivider />
 
       <section id="privacy" className="bg-[#ffffff] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-5xl">
@@ -1090,7 +1389,7 @@ const LandingPage = () => {
           </motion.div>
 
           <motion.div
-            className="mt-12 grid gap-6 lg:grid-cols-2"
+            className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-2"
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, margin: "-100px" }}
@@ -1157,10 +1456,9 @@ const LandingPage = () => {
         </div>
       </section>
 
-      <section
-        id="pricing"
-        className="bg-[#ffffff] px-4 py-20 sm:px-6"
-      >
+      <SectionDivider />
+
+      <section id="pricing" className="bg-[#ffffff] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-5xl">
           <motion.div
             className="max-w-xl"
@@ -1180,7 +1478,7 @@ const LandingPage = () => {
           </motion.div>
 
           <motion.div
-            className="mt-10 grid gap-6 md:grid-cols-3"
+            className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3"
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, margin: "-100px" }}
@@ -1255,6 +1553,8 @@ const LandingPage = () => {
         </div>
       </section>
 
+      <SectionDivider />
+
       <section id="faq" className="bg-[#ffffff] px-4 py-20 sm:px-6">
         <motion.div
           className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] md:gap-16"
@@ -1314,6 +1614,7 @@ const LandingPage = () => {
           </motion.div>
         </motion.div>
       </section>
+      </div>
 
       <footer className="relative overflow-hidden bg-[url('/img/landing/hero-bg.jpg')] bg-cover bg-top px-4 py-20 sm:px-6 sm:py-24">
         <div className="absolute inset-0 bg-black/20" />
@@ -1369,6 +1670,9 @@ const LandingPage = () => {
             <div className="mt-4 flex flex-col gap-3 text-base text-white/75">
               <a href="#features" className="w-fit hover:text-white">
                 Features
+              </a>
+              <a href="#use-cases" className="w-fit hover:text-white">
+                Use cases
               </a>
               <a href="#privacy" className="w-fit hover:text-white">
                 Privacy
