@@ -224,7 +224,7 @@ const landingLightTheme: CSSProperties & Record<`--${string}`, string> = {
   "--foreground": "#131313",
   "--primary": "#f0f0f0",
   "--muted": "#e2e2e2",
-  "--brand": "#c7d4ff",
+  "--brand": "#2e75d1",
   "--border": "#dcdcdc",
   "--selection-background": "#131313",
   "--selection-text": "#ffffff",
@@ -698,7 +698,7 @@ const ScreenRecorderDemo = () => {
       </div>
 
       {/* Recorded screen content. */}
-      <div className="relative aspect-[16/9] bg-gradient-to-br from-[#eef2ff] to-[#dbe4ff]">
+      <div className="relative aspect-[16/9] bg-gradient-to-br from-[#eaf2fb] to-[#d3e6f8]">
         {/* Faux page content. */}
         <div className="absolute left-4 top-4 space-y-2">
           <div className="h-2.5 w-28 rounded-full bg-white/70" />
@@ -967,7 +967,7 @@ const LandingPage = () => {
 
           <motion.p
             variants={riseVariants}
-            className="max-w-xl text-sm font-normal text-white/80 sm:text-base"
+            className="-mt-1 max-w-xl text-sm font-normal text-white/80 sm:text-base"
           >
             Studio-quality recording, open-source at its core. Self-host it free
             or let us handle the infra.
@@ -1048,7 +1048,7 @@ const LandingPage = () => {
                   {description}
                 </p>
                 <div
-                  className={`relative mt-6 flex aspect-[16/10] w-full items-center justify-center rounded-xl bg-gradient-to-br from-[#dbe4ff] via-[#eef2ff] to-[#c7d4ff] px-5 ${
+                  className={`relative mt-6 flex aspect-[16/10] w-full items-center justify-center rounded-xl bg-gradient-to-br from-[#d3e6f8] via-[#eaf2fb] to-[#cfe1f7] px-5 ${
                     title === "High-quality local recording"
                       ? "overflow-hidden"
                       : ""
@@ -1108,7 +1108,7 @@ const LandingPage = () => {
               <ul className="mt-6 space-y-6">
                 {recordingPoints.map(({ icon: Icon, title, description }) => (
                   <li key={title} className="flex gap-4">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#c7d4ff]/45 text-[#42508a]">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#cfe1f7]/45 text-[#1f5a9e]">
                       <Icon className="size-5" />
                     </div>
                     <div>
@@ -1137,7 +1137,7 @@ const LandingPage = () => {
               <ul className="mt-6 space-y-6">
                 {selfHostPoints.map(({ icon: Icon, title, description }) => (
                   <li key={title} className="flex gap-4">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#c7d4ff]/45 text-[#42508a]">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#cfe1f7]/45 text-[#1f5a9e]">
                       <Icon className="size-5" />
                     </div>
                     <div>
@@ -1191,7 +1191,7 @@ const LandingPage = () => {
                 variants={riseVariants}
                 className={`flex flex-col rounded-2xl border p-6 text-[#131313] ${
                   plan.featured
-                    ? "border-[#c7d4ff] bg-[#eef2ff] shadow-[0_12px_34px_rgba(66,80,138,0.14)] ring-1 ring-[#c7d4ff]"
+                    ? "border-[#cfe1f7] bg-[#eaf2fb] shadow-[0_12px_34px_rgba(31,90,158,0.14)] ring-1 ring-[#cfe1f7]"
                     : "border-[#dcdcdc] bg-[#ffffff]"
                 }`}
               >
@@ -1200,7 +1200,7 @@ const LandingPage = () => {
                     {plan.name}
                   </h3>
                   {plan.featured && (
-                    <span className="rounded-full bg-[#c7d4ff] px-2.5 py-1 text-xs font-medium text-[#1f2547]">
+                    <span className="rounded-full bg-[#cfe1f7] px-2.5 py-1 text-xs font-medium text-[#13315c]">
                       Popular
                     </span>
                   )}
@@ -1229,7 +1229,7 @@ const LandingPage = () => {
                     >
                       <Check
                         className={`mt-0.5 size-4 shrink-0 ${
-                          plan.featured ? "text-[#42508a]" : "text-[#131313]"
+                          plan.featured ? "text-[#1f5a9e]" : "text-[#131313]"
                         }`}
                       />
                       <span className="text-[#131313]/75">{feature}</span>
@@ -1244,7 +1244,7 @@ const LandingPage = () => {
                   onOpenAuth={openAuth}
                   className={`mt-auto w-full cursor-pointer rounded-lg px-4 py-2.5 text-sm font-medium text-[#ffffff] transition-colors disabled:cursor-not-allowed disabled:opacity-70 ${
                     plan.featured
-                      ? "bg-[#42508a] hover:bg-[#42508a]/90"
+                      ? "bg-[#1f5a9e] hover:bg-[#1f5a9e]/90"
                       : "bg-[#131313] hover:bg-[#131313]/90"
                   }`}
                 />
@@ -1283,11 +1283,11 @@ const LandingPage = () => {
                     type="button"
                     onClick={() => setOpenFaq(isOpen ? null : index)}
                     aria-expanded={isOpen}
-                    className="group flex w-full cursor-pointer items-center justify-between gap-4 text-left text-base font-medium text-[#131313] transition-colors hover:text-[#42508a]"
+                    className="group flex w-full cursor-pointer items-center justify-between gap-4 text-left text-base font-medium text-[#131313] transition-colors hover:text-[#1f5a9e]"
                   >
                     {question}
                     <span
-                      className={`text-xl font-normal text-[#131313]/55 transition-[transform,color] duration-300 group-hover:text-[#42508a] ${
+                      className={`text-xl font-normal text-[#131313]/55 transition-[transform,color] duration-300 group-hover:text-[#1f5a9e] ${
                         isOpen ? "rotate-45" : ""
                       }`}
                     >

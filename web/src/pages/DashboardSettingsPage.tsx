@@ -481,7 +481,7 @@ const AppearanceSection = () => {
             )}
             <input
               type="color"
-              value={brandColor || "#8a9df0"}
+              value={brandColor || "#2e75d1"}
               onChange={(event) => applyBrandColor(event.target.value)}
               className="absolute inset-0 cursor-pointer opacity-0"
             />

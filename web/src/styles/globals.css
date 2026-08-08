@@ -46,7 +46,7 @@
   --primary: #f5f5f7;
   --muted: #ebebf0;
   --border: #dededf;
-  --brand: #8a9df0;
+  --brand: #2e75d1;
 
   /* Darker/denser than their dark-theme twins so they carry on white. */
   --success: #0d9163;
@@ -64,7 +64,7 @@
   --primary: #141417;
   --muted: #1f1f23;
   --border: #2b2b31;
-  --brand: #8a9df0;
+  --brand: #2e75d1;
 
   /* Lifted and desaturated: saturated mid-tones vibrate on a black canvas. */
   --success: #34d399;
