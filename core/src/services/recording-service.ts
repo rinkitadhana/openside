@@ -2155,6 +2155,10 @@ export async function markScreenRecordingComplete(
 	recordingId: string,
 	userId: string,
 	expectedSegments: number,
+	/** Largest frame size observed over the whole capture. A shared surface can
+	 *  RESIZE mid-recording (tab switch, window resize), so the dimensions
+	 *  snapshotted at start are not what finalization must encode to. */
+	observedSize?: { width?: number | null; height?: number | null },
 ) {
 	const recording = await prisma.participantRecording.findUnique({
 		where: { id: recordingId },
@@ -2162,6 +2166,8 @@ export async function markScreenRecordingComplete(
 			id: true,
 			uploadedSegments: true,
 			status: true,
+			width: true,
+			height: true,
 			segments: { select: { sequenceNumber: true } },
 			recordingSession: { select: { source: true, userId: true } },
 		},
@@ -2185,6 +2191,18 @@ export async function markScreenRecordingComplete(
 		actualUploadedSegments >= normalizedExpectedSegments &&
 		hasContiguousSegments(recording.segments, normalizedExpectedSegments);
 
+	// Keep the larger of (start snapshot, observed max) - never shrink, so the
+	// finalizer downscales a grown surface instead of cropping it.
+	const observedWidth = observedSize?.width ?? null;
+	const observedHeight = observedSize?.height ?? null;
+	const grew =
+		observedWidth !== null &&
+		observedHeight !== null &&
+		observedWidth > 0 &&
+		observedHeight > 0 &&
+		observedWidth * observedHeight >
+			(recording.width ?? 0) * (recording.height ?? 0);
+
 	const updatedRecording = await prisma.participantRecording.update({
 		where: { id: recordingId },
 		data: {
@@ -2192,6 +2210,7 @@ export async function markScreenRecordingComplete(
 			uploadedSegments: actualUploadedSegments,
 			isComplete,
 			status: isComplete ? "UPLOADED" : "UPLOADING",
+			...(grew ? { width: observedWidth, height: observedHeight } : {}),
 		},
 	});
 

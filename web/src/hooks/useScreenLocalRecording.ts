@@ -35,12 +35,20 @@ interface UseScreenLocalRecordingOptions {
   chunkIntervalMs?: number;
 }
 
+export interface TrackSize {
+  width: number;
+  height: number;
+}
+
 interface UseScreenLocalRecordingReturn {
   isRecording: boolean;
   recordingDurationMs: number;
   chunkCounts: Record<ScreenTrackType, number>;
   startRecording: (streams: ScreenStreams) => Promise<void>;
   stopRecording: () => Promise<void>;
+  /** Largest frame size seen on a video track over the whole take (see the
+   *  dimension sampler below). Valid until the next startRecording(). */
+  getMaxTrackSize: (trackType: ScreenTrackType) => TrackSize | null;
 }
 
 function getBestAudioMimeType() {
@@ -139,6 +147,48 @@ export default function useScreenLocalRecording(
   });
   const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Live video tracks + the largest frame size each has reported. A screen
+  // capture RESIZES mid-recording whenever the shared surface changes shape
+  // (switching tabs, resizing/maximizing the shared window, a display-scale
+  // change), and MediaRecorder encodes that as a mid-stream resolution switch.
+  // Finalization has to know the biggest geometry to normalize the master to,
+  // so we sample getSettings() instead of trusting the size at start.
+  // (Sampled, not event-driven: MediaStreamTrack has no reliable resize event.)
+  const videoTracksRef = useRef<Partial<Record<ScreenTrackType, MediaStreamTrack>>>({});
+  const maxSizeRef = useRef<Partial<Record<ScreenTrackType, TrackSize>>>({});
+  const sizeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const sampleTrackSizes = useCallback(() => {
+    for (const type of TRACK_TYPES) {
+      const track = videoTracksRef.current[type];
+      if (!track || track.readyState !== "live") continue;
+      const { width, height } = track.getSettings();
+      if (!width || !height) continue;
+      const current = maxSizeRef.current[type];
+      if (!current || width * height > current.width * current.height) {
+        maxSizeRef.current[type] = { width, height };
+      }
+    }
+  }, []);
+
+  const getMaxTrackSize = useCallback(
+    (trackType: ScreenTrackType): TrackSize | null =>
+      maxSizeRef.current[trackType] ?? null,
+    [],
+  );
+
+  useEffect(() => {
+    if (isRecording) {
+      sizeIntervalRef.current = setInterval(sampleTrackSizes, 1000);
+    } else if (sizeIntervalRef.current) {
+      clearInterval(sizeIntervalRef.current);
+      sizeIntervalRef.current = null;
+    }
+    return () => {
+      if (sizeIntervalRef.current) clearInterval(sizeIntervalRef.current);
+    };
+  }, [isRecording, sampleTrackSizes]);
+
   useEffect(() => {
     if (isRecording) {
       durationIntervalRef.current = setInterval(() => {
@@ -198,11 +248,15 @@ export default function useScreenLocalRecording(
         // Reset counters.
         sequenceRef.current = { combined: 0, camera: 0, audio: 0 };
         setChunkCounts({ combined: 0, camera: 0, audio: 0 });
+        videoTracksRef.current = {};
+        maxSizeRef.current = {};
 
         // 1. COMBINED (screen video + mic + system audio, mixed to one track)
         if (streams.combined && streams.combined.getVideoTracks().length > 0) {
           const s = mixAudioTracks(streams.combined, audioContextsRef.current);
-          const v = s.getVideoTracks()[0]?.getSettings() ?? {};
+          const screenTrack = s.getVideoTracks()[0];
+          if (screenTrack) videoTracksRef.current.combined = screenTrack;
+          const v = screenTrack?.getSettings() ?? {};
           const a = s.getAudioTracks()[0]?.getSettings() ?? {};
           const mime = getBestVideoMimeType();
           const bitrate = videoBitrateFor(v.width, v.height);
@@ -230,7 +284,9 @@ export default function useScreenLocalRecording(
         // 2. CAMERA (webcam video + mic audio)
         if (streams.camera && streams.camera.getVideoTracks().length > 0) {
           const s = streams.camera;
-          const v = s.getVideoTracks()[0]?.getSettings() ?? {};
+          const cameraTrack = s.getVideoTracks()[0];
+          if (cameraTrack) videoTracksRef.current.camera = cameraTrack;
+          const v = cameraTrack?.getSettings() ?? {};
           const a = s.getAudioTracks()[0]?.getSettings() ?? {};
           const hasAudio = s.getAudioTracks().length > 0;
           const mime = getBestVideoMimeType();
@@ -292,6 +348,7 @@ export default function useScreenLocalRecording(
           recorders[type]?.start(chunkIntervalMs);
         }
 
+        sampleTrackSizes();
         setRecordingDurationMs(0);
         setIsRecording(true);
         onRecordingStart?.(metadata);
@@ -313,7 +370,14 @@ export default function useScreenLocalRecording(
         throw err;
       }
     },
-    [isRecording, chunkIntervalMs, buildRecorder, onRecordingStart, onError],
+    [
+      isRecording,
+      chunkIntervalMs,
+      buildRecorder,
+      onRecordingStart,
+      onError,
+      sampleTrackSizes,
+    ],
   );
 
   const stopRecording = useCallback(async (): Promise<void> => {
@@ -328,6 +392,10 @@ export default function useScreenLocalRecording(
         return;
       }
 
+      // Last sample while the tracks are still live - a resize in the final
+      // second still has to make it into the finalizer's target geometry.
+      sampleTrackSizes();
+
       let stopped = 0;
       const onOneStopped = () => {
         stopped += 1;
@@ -337,6 +405,7 @@ export default function useScreenLocalRecording(
         recordersRef.current = {};
         audioContextsRef.current.forEach((c) => void c.close().catch(() => {}));
         audioContextsRef.current = [];
+        videoTracksRef.current = {};
         onRecordingStop?.({ ...sequenceRef.current });
         resolve();
       };
@@ -352,7 +421,7 @@ export default function useScreenLocalRecording(
         }
       }
     });
-  }, [isRecording, onRecordingStop]);
+  }, [isRecording, onRecordingStop, sampleTrackSizes]);
 
   return {
     isRecording,
@@ -360,5 +429,6 @@ export default function useScreenLocalRecording(
     chunkCounts,
     startRecording,
     stopRecording,
+    getMaxTrackSize,
   };
 }

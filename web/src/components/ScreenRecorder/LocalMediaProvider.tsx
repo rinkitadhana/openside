@@ -188,8 +188,17 @@ const LocalMediaProvider = ({ children }: { children: ReactNode }) => {
     // audio: true captures tab/system audio when the user grants it; mixed with
     // the mic into the screen ("combined") recording at record time.
     // Capture height is capped by the plan (demo 1080p, pro/self-host 4K).
+    //
+    // displaySurface "monitor": preselect the whole screen in the picker (the
+    // user can still choose a tab or window). A tab/window surface RESIZES
+    // whenever it changes shape - switching tabs, resizing or maximizing the
+    // window - which makes the capture track change resolution mid-recording;
+    // a monitor surface holds one geometry for the whole take. Finalization
+    // now normalizes resolution switches away, but the clean capture is still
+    // the better default (a resize otherwise costs letterbox bars).
     const stream = await navigator.mediaDevices.getDisplayMedia({
       video: {
+        displaySurface: "monitor",
         frameRate: { ideal: 60, max: 60 },
         height: { max: maxVideoHeightRef.current },
       },

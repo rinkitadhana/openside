@@ -177,7 +177,11 @@ export default function useScreenRecordingManager({
     },
   });
 
-  const { startRecording: startLocal, stopRecording: stopLocal } = recorder;
+  const {
+    startRecording: startLocal,
+    stopRecording: stopLocal,
+    getMaxTrackSize,
+  } = recorder;
 
   const beginRecording = useCallback(async () => {
     clearCountdown();
@@ -380,10 +384,19 @@ export default function useScreenRecordingManager({
       // Mark each recording complete with its final segment count.
       await Promise.allSettled(
         (Object.entries(recordingIdsRef.current) as [ScreenTrackType, string][]).map(
-          ([, recordingId]) =>
-            api.post(`/recording/screen/recording/${recordingId}/complete`, {
-              expectedSegments: uploader.getUploadedCount(recordingId),
-            }),
+          ([trackType, recordingId]) => {
+            // Report the LARGEST frame size seen, not the one snapshotted at
+            // start: a shared surface resizes mid-capture (tab switch, window
+            // resize), and finalization pins the master to this geometry.
+            const size = getMaxTrackSize(trackType);
+            return api.post(
+              `/recording/screen/recording/${recordingId}/complete`,
+              {
+                expectedSegments: uploader.getUploadedCount(recordingId),
+                ...(size ? { width: size.width, height: size.height } : {}),
+              },
+            );
+          },
         ),
       );
 
@@ -410,7 +423,14 @@ export default function useScreenRecordingManager({
       setError(message);
       setRecordingState("error");
     }
-  }, [recordingState, clearCountdown, stopLocal, flushPendingChunks, uploader]);
+  }, [
+    recordingState,
+    clearCountdown,
+    stopLocal,
+    flushPendingChunks,
+    uploader,
+    getMaxTrackSize,
+  ]);
   stopRecordingRef.current = stopRecording;
 
   const toggleRecording = useCallback(() => {

@@ -126,6 +126,94 @@ function runFfmpeg(args: string[]): Promise<void> {
 	});
 }
 
+/** Run ffmpeg purely to read its stderr (probing); never rejects on exit code. */
+function ffmpegStderr(args: string[]): Promise<string> {
+	return new Promise((resolve) => {
+		const proc = spawn(ffmpegPath, args, {
+			stdio: ["ignore", "ignore", "pipe"],
+		});
+		let stderr = "";
+		const timeout = setTimeout(() => proc.kill("SIGKILL"), 30_000);
+		proc.stderr.on("data", (d) => {
+			stderr += d.toString();
+		});
+		proc.on("error", () => {
+			clearTimeout(timeout);
+			resolve(stderr);
+		});
+		proc.on("close", () => {
+			clearTimeout(timeout);
+			resolve(stderr);
+		});
+	});
+}
+
+export interface VideoSize {
+	width: number;
+	height: number;
+}
+
+/** First video frame size reported in the container header (null if unreadable). */
+async function probeVideoSize(file: string): Promise<VideoSize | null> {
+	// No output file: ffmpeg prints the input's stream table to stderr, then
+	// exits non-zero ("At least one output file must be specified").
+	const out = await ffmpegStderr(["-hide_banner", "-i", file]);
+	const match = /Video:[^\n]*?\b(\d{2,5})x(\d{2,5})\b/.exec(out);
+	if (!match) return null;
+	const width = Number(match[1]);
+	const height = Number(match[2]);
+	if (!width || !height) return null;
+	return { width, height };
+}
+
+/** yuv420p needs even dimensions. */
+function evenDim(n: number): number {
+	return Math.max(2, Math.floor(n / 2) * 2);
+}
+
+/**
+ * The single output geometry every frame of a video master is normalized to.
+ *
+ * WHY: a `getDisplayMedia` track RESIZES mid-capture whenever the shared
+ * surface changes shape - switching tabs, resizing/maximizing the shared
+ * window, a display-scale change. MediaRecorder happily encodes that as a
+ * resolution switch mid-stream, but libx264 cannot change frame size mid-encode
+ * and, with no explicit size filter, everything after the switch is fed to an
+ * encoder still configured for the ORIGINAL geometry - which is what produced
+ * the smeared/garbage masters ("leave the recorder page, get a broken video").
+ * Pinning W/H and letterboxing anything off-aspect keeps the file playable.
+ *
+ * Target = the LARGEST size we know about (client-reported max observed dims vs
+ * the container header), so a resize-up is downscaled rather than cropped.
+ */
+async function resolveTargetSize(
+	rec: { width: number | null; height: number | null },
+	rawPath: string,
+): Promise<VideoSize> {
+	const candidates: VideoSize[] = [];
+	if (rec.width && rec.height && rec.width > 1 && rec.height > 1) {
+		candidates.push({ width: rec.width, height: rec.height });
+	}
+	const probed = await probeVideoSize(rawPath);
+	if (probed) candidates.push(probed);
+
+	const best = candidates.reduce<VideoSize | null>(
+		(acc, c) => (!acc || c.width * c.height > acc.width * acc.height ? c : acc),
+		null,
+	) ?? { width: 1920, height: 1080 };
+
+	return { width: evenDim(best.width), height: evenDim(best.height) };
+}
+
+/** scale-to-fit + letterbox onto the pinned canvas, so a mid-stream resolution
+ *  change becomes black bars instead of a corrupt encode. */
+function sizeFilter(size: VideoSize): string {
+	return (
+		`scale=${size.width}:${size.height}:force_original_aspect_ratio=decrease,` +
+		`pad=${size.width}:${size.height}:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1`
+	);
+}
+
 type MasterExt = "mp4" | "webm";
 
 function screenKey(
@@ -156,6 +244,8 @@ interface MasterInfo {
 	height: number | null;
 	fps: number | null;
 	durationMs: number;
+	/** True when the file on disk is guaranteed to be one fixed frame size. */
+	pinned: boolean;
 }
 
 /** Stitch one track's chunks → normalized master on disk, uploaded to R2. */
@@ -239,15 +329,22 @@ async function stitchMaster(
 	// pass. Audio is re-encoded to AAC because Opus sources can't be copied
 	// into MP4. Audio-only masters keep the cheap WebM remux.
 	const fps = rec.fps && rec.fps >= 10 ? Math.round(rec.fps) : 30;
+	const target = rec.hasVideo ? await resolveTargetSize(rec, rawPath) : null;
 	let outExt: MasterExt = rec.hasVideo ? "mp4" : "webm";
 	let outPath = path.join(tmpDir, `${rec.id}-master.${outExt}`);
 	let masterPath = outPath;
 	let encoded = false;
 
-	if (rec.hasVideo) {
+	if (rec.hasVideo && target) {
+		// Size filter FIRST (pins geometry against mid-capture resolution
+		// changes), watermark after so the badge lands on the final canvas.
+		const filters = [
+			sizeFilter(target),
+			...(watermark ? [WATERMARK_FILTER] : []),
+		];
 		try {
 			console.log(
-				`[ScreenFinalize] stitching ${rec.id} role=${role} segments=${rec.segments.length} fps=${fps}${watermark ? " (watermark)" : ""}`,
+				`[ScreenFinalize] stitching ${rec.id} role=${role} segments=${rec.segments.length} fps=${fps} size=${target.width}x${target.height}${watermark ? " (watermark)" : ""}`,
 			);
 			await runFfmpeg([
 				"-y",
@@ -255,7 +352,8 @@ async function stitchMaster(
 				"+genpts",
 				"-i",
 				rawPath,
-				...(watermark ? ["-vf", WATERMARK_FILTER] : []),
+				"-vf",
+				filters.join(","),
 				"-r",
 				String(fps),
 				"-fps_mode",
@@ -328,6 +426,11 @@ async function stitchMaster(
 			fileSize: BigInt(fileStat.size),
 			durationMs,
 			mimeType: contentType,
+			// The master's REAL geometry (the client's start-of-capture snapshot
+			// is stale once the shared surface resizes).
+			...(encoded && target
+				? { width: target.width, height: target.height }
+				: {}),
 			processingError: gapNote,
 		},
 	});
@@ -336,10 +439,14 @@ async function stitchMaster(
 		role,
 		path: masterPath,
 		key,
-		width: rec.width,
-		height: rec.height,
+		width: encoded && target ? target.width : rec.width,
+		height: encoded && target ? target.height : rec.height,
 		fps: rec.fps,
 		durationMs,
+		// Only a re-encoded master is guaranteed single-geometry; the remux /
+		// raw-concat fallbacks can still carry a resolution switch, so the
+		// composite has to re-pin them itself.
+		pinned: encoded && target !== null,
 	};
 }
 
@@ -392,11 +499,18 @@ async function composeBoth(
 		`[1:v]crop='min(iw,ih*${aspectStr})':'min(ih,iw/${aspectStr})',` +
 		`scale=${camW}:${camH},fps=${fps},setpts=PTS-STARTPTS,format=rgba,` +
 		`geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='${roundedAlphaExpr(radius)}'[cam];`;
+	// A re-encoded screen master is already one fixed size; a remuxed/raw-concat
+	// fallback master is not, so re-pin it here or the overlay pass reproduces
+	// the same mid-stream-resize corruption.
+	const basePin =
+		!screen.pinned && screen.width && screen.height
+			? `${sizeFilter({ width: evenDim(screen.width), height: evenDim(screen.height) })},`
+			: "";
 	const filter =
 		// format=yuv420p: the geq/rgba path yields gbrap, which encoders reject.
 		// DEMO composites re-stamp the badge AFTER the overlay (bottom-left): the
 		// screen master's own badge sits under the PiP and would be hidden.
-		`[0:v]fps=${fps},setpts=PTS-STARTPTS[base];${camChain}[base][cam]overlay=main_w-overlay_w-${margin}:main_h-overlay_h-${margin}:format=auto,format=yuv420p${watermark ? `,${WATERMARK_FILTER_LEFT}` : ""}[v]`;
+		`[0:v]${basePin}fps=${fps},setpts=PTS-STARTPTS[base];${camChain}[base][cam]overlay=main_w-overlay_w-${margin}:main_h-overlay_h-${margin}:format=auto,format=yuv420p${watermark ? `,${WATERMARK_FILTER_LEFT}` : ""}[v]`;
 
 	const outPath = path.join(tmpDir, `${sessionId}-both.mp4`);
 	console.log(

@@ -1502,7 +1502,7 @@ export async function markScreenRecordingCompleteController(
 		}
 
 		const recordingId = req.params.recordingId as string | undefined;
-		const { expectedSegments } = req.body;
+		const { expectedSegments, width, height } = req.body;
 
 		if (!recordingId) {
 			res.status(400).json({
@@ -1528,10 +1528,16 @@ export async function markScreenRecordingCompleteController(
 		}
 
 		const user = await findOrCreateUser(req.user);
+		const toDimension = (value: unknown): number | null =>
+			typeof value === "number" && Number.isFinite(value) && value > 0
+				? Math.round(value)
+				: null;
+
 		const recording = await markScreenRecordingComplete(
 			recordingId,
 			user.id,
 			expectedSegments,
+			{ width: toDimension(width), height: toDimension(height) },
 		);
 
 		console.log(
