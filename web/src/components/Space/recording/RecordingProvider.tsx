@@ -25,6 +25,7 @@ import { useLocalParticipant } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import { getOrCreateSessionId } from "@/utils/ParticipantSessionId";
 import { useSocket } from "@/context/socket";
+import useUnloadWarning from "@/hooks/useUnloadWarning";
 import useRecordingManager, {
   type RecordingState,
 } from "@/hooks/useRecordingManager";
@@ -343,6 +344,10 @@ const RecordingProvider = ({
   }, [recordingState, isScreenShareEnabled, detachScreenStream]);
 
   const isActive = ACTIVE_STATES.includes(recordingState);
+
+  // Closing/reloading this tab kills the capture (see useUnloadWarning), so
+  // confirm first while anything is still recording or uploading.
+  useUnloadWarning(isActive);
 
   const toggleRecording = useCallback(() => {
     if (!canControl) return;

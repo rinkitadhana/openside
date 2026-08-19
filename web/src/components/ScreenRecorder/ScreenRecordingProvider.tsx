@@ -27,6 +27,7 @@ import { useGetMe } from "@/hooks/useUserQuery";
 import useScreenRecordingManager, {
   type ScreenRecordingState,
 } from "@/hooks/useScreenRecordingManager";
+import useUnloadWarning from "@/hooks/useUnloadWarning";
 import type { ScreenStreams } from "@/hooks/useScreenLocalRecording";
 import { useLocalMedia } from "./LocalMediaProvider";
 
@@ -167,6 +168,10 @@ const ScreenRecordingProvider = ({ children }: { children: ReactNode }) => {
       cameraCorner: "bottom-right",
     }),
   });
+
+  // Closing/reloading this tab kills the capture (see useUnloadWarning), so
+  // confirm first while anything is still recording or uploading.
+  useUnloadWarning(ACTIVE_STATES.includes(manager.recordingState));
 
   const toggleRecording = useCallback(() => {
     if (manager.recordingState === "idle" || manager.recordingState === "complete") {
