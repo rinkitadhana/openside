@@ -273,6 +273,33 @@ export default function useRecordingManager(
   const detachedScreenRecordingIdsRef = useRef<string[]>([]);
   const combinedMetaRef = useRef<RecordingMetadata | null>(null);
   const screenMetaRef = useRef<RecordingMetadata | null>(null);
+  // Largest frame size each screen recording has reported, keyed by its
+  // ParticipantRecording id. A shared surface RESIZES mid-capture (switching
+  // tabs, resizing the shared window), so the size snapshotted when the share
+  // started is not the geometry finalization must normalize the master to.
+  // Sampled from getSettings() because MediaStreamTrack has no resize event.
+  const screenMaxSizesRef = useRef<
+    Map<string, { width: number; height: number }>
+  >(new Map());
+
+  const sampleScreenSize = useCallback(() => {
+    const recordingId = screenRecordingIdRef.current;
+    const track = screenStreamRef.current?.getVideoTracks()[0];
+    if (!recordingId || !track || track.readyState !== "live") return;
+    const { width, height } = track.getSettings();
+    if (!width || !height) return;
+    const current = screenMaxSizesRef.current.get(recordingId);
+    if (!current || width * height > current.width * current.height) {
+      screenMaxSizesRef.current.set(recordingId, { width, height });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (recordingState !== "recording") return;
+    sampleScreenSize();
+    const interval = setInterval(sampleScreenSize, 1000);
+    return () => clearInterval(interval);
+  }, [recordingState, sampleScreenSize]);
   const sessionStartedAtRef = useRef<number | null>(null);
   // Assigned once handleRecordingStopped exists (below); invoked when the
   // combined encoder dies mid-session so we save the captured footage instead of
@@ -1044,12 +1071,19 @@ export default function useRecordingManager(
         ...detachedScreenRecordingIdsRef.current,
         ...(screenRecordingIdRef.current ? [screenRecordingIdRef.current] : []),
       ];
+      // Sample once more while the share is still live, so a resize in the
+      // final second still reaches the finalizer.
+      sampleScreenSize();
       for (const screenId of allScreenIds) {
+        const size = screenMaxSizesRef.current.get(screenId);
         completions.push(
           api.post(`/recording/participant/${screenId}/complete`, {
             expectedSegments: uploader.getUploadedCount(screenId),
             participantSessionId,
             spaceId,
+            // The LARGEST frame size this share reported, not the one
+            // snapshotted when it started - finalization pins the master to it.
+            ...(size ? { width: size.width, height: size.height } : {}),
           }),
         );
       }
@@ -1075,6 +1109,7 @@ export default function useRecordingManager(
       screenRecordingIdRef.current = null;
       pcmRecordingIdRef.current = null;
       detachedScreenRecordingIdsRef.current = [];
+      screenMaxSizesRef.current.clear();
       sessionStartedAtRef.current = null;
       activeSessionRef.current = null;
     } catch (err) {
@@ -1096,6 +1131,7 @@ export default function useRecordingManager(
     spaceId,
     clearCountdown,
     stopSessionClock,
+    sampleScreenSize,
   ]);
 
   // Finalize THIS participant's own recording on demand - used when leaving the

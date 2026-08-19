@@ -1166,7 +1166,8 @@ export async function markRecordingCompleteController(
 ): Promise<void> {
 	try {
 		const recordingId = req.params.recordingId as string | undefined;
-		const { expectedSegments, participantSessionId, spaceId } = req.body;
+		const { expectedSegments, participantSessionId, spaceId, width, height } =
+			req.body;
 
 		if (!recordingId) {
 			res.status(400).json({
@@ -1227,9 +1228,15 @@ export async function markRecordingCompleteController(
 			return;
 		}
 
+		const toDimension = (value: unknown): number | null =>
+			typeof value === "number" && Number.isFinite(value) && value > 0
+				? Math.round(value)
+				: null;
+
 		const recording = await markRecordingComplete(
 			recordingId,
 			expectedSegments,
+			{ width: toDimension(width), height: toDimension(height) },
 		);
 
 		res.status(200).json({

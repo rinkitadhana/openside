@@ -34,6 +34,7 @@ import {
 	findSegmentGaps,
 	waitForLateSegments,
 } from "../lib/segment-gaps.ts";
+import { resolveTargetSize, sizeFilter } from "../lib/video-geometry.ts";
 import { escapeFilterPath, watermarkFontPath } from "../lib/watermark-font.ts";
 import { sessionNeedsWatermark } from "./entitlements-service.ts";
 import {
@@ -715,12 +716,20 @@ async function finalizeRecording({
 	// cheap WebM remux. `outExt` tracks what was actually written so the key,
 	// content-type, and mimeType stay in lockstep.
 	const cfrArgs = ["-r", String(targetFps), "-fps_mode", "cfr"];
+	// A screen-share source RESIZES mid-capture when the shared surface changes
+	// shape, which libx264 cannot follow mid-encode - pin every frame to one
+	// geometry (see video-geometry.ts) or everything after the switch encodes as
+	// garbage. Cheap for camera tracks, which never change size.
+	const target = rec.hasVideo ? await resolveTargetSize(rec, rawPath) : null;
 	let outExt: "mp4" | "webm" = masterExt(rec.hasVideo);
 	let outPath = path.join(tmpDir, `${rec.id}-master.${outExt}`);
 	let masterPath = outPath;
 	let encoded = false;
 
-	if (rec.hasVideo) {
+	if (rec.hasVideo && target) {
+		// Size filter FIRST (pins geometry), watermark after so the badge lands
+		// on the final canvas.
+		const vf = [sizeFilter(target), ...(watermark ? [WATERMARK_FILTER] : [])];
 		try {
 			await runFfmpeg([
 				"-y",
@@ -728,7 +737,8 @@ async function finalizeRecording({
 				"+genpts",
 				"-i",
 				rawPath,
-				...(watermark ? ["-vf", WATERMARK_FILTER] : []),
+				"-vf",
+				vf.join(","),
 				...cfrArgs,
 				"-c:v",
 				"libx264",
@@ -827,6 +837,11 @@ async function finalizeRecording({
 			fileSize: BigInt(fileStat.size),
 			durationMs,
 			mimeType: masterMime,
+			// The master's REAL geometry (the client's start-of-capture snapshot
+			// is stale once a shared surface resizes).
+			...(encoded && target
+				? { width: target.width, height: target.height }
+				: {}),
 			processingError: gapNote,
 		},
 	});
@@ -838,8 +853,8 @@ async function finalizeRecording({
 		mode: rec.hasVideo ? ("MIXED" as const) : ("AUDIO_ONLY" as const),
 		targetParticipantId: rec.participantId,
 		sourceRecordingId: rec.id,
-		width: rec.width,
-		height: rec.height,
+		width: encoded && target ? target.width : rec.width,
+		height: encoded && target ? target.height : rec.height,
 		fps: rec.fps,
 		bitrate: rec.bitrate,
 		sampleRate: rec.sampleRate,
@@ -885,8 +900,11 @@ async function finalizeRecording({
 				inputPath: masterPath,
 				outputPath: alignedPath,
 				gapMs: rec.startOffsetMs,
-				width: rec.width,
-				height: rec.height,
+				// The pinned master geometry, so the black lead-in and the footage
+				// share one canvas (rec.width/height is the start-of-capture
+				// snapshot, which a resized share invalidates).
+				width: target?.width ?? rec.width,
+				height: target?.height ?? rec.height,
 				fps: targetFps,
 				hasAudio: rec.hasAudio,
 			});
