@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import api from "@/lib/axiosInstance";
+import { toast } from "@/lib/toast";
 
 export type ScreenOutputKind = "screen" | "screenAligned" | "camera" | "both";
 
@@ -100,7 +101,28 @@ export const useDeleteScreenRecording = () => {
     mutationFn: async (sessionId: string) => {
       await api.delete(`/recording/screen/${sessionId}`);
     },
-    onSuccess: () => {
+    // Optimistic: drop it from the cached list immediately so the card/detail
+    // page disappears on click, and let the request (which also purges the
+    // stored objects, so it can be slow) finish in the background. The
+    // rollback lives here rather than in a mutate() callback because the
+    // caller usually navigates away instantly - only useMutation's own
+    // callbacks are guaranteed to run after its component unmounts.
+    onMutate: async (sessionId) => {
+      await queryClient.cancelQueries({ queryKey: ["screen-recordings"] });
+      const previous = queryClient.getQueryData<ScreenRecording[]>([
+        "screen-recordings",
+      ]);
+      queryClient.setQueryData<ScreenRecording[]>(
+        ["screen-recordings"],
+        (recs) => recs?.filter((rec) => rec.id !== sessionId),
+      );
+      return { previous };
+    },
+    onError: (_error, _sessionId, context) => {
+      queryClient.setQueryData(["screen-recordings"], context?.previous);
+      toast.error("Couldn't delete that recording - it's back in your list.");
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["screen-recordings"] });
     },
   });

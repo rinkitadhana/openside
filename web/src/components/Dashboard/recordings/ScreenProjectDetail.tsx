@@ -381,9 +381,12 @@ const ScreenProjectDetail = ({ sessionId }: { sessionId: string }) => {
   };
 
   const handleDelete = () => {
-    deleteRecording.mutate(rec.id);
+    // Optimistic: the hook drops it from the cached list right away, so leave
+    // for the library immediately and let the request finish in the background
+    // (it rolls the card back and toasts if the server rejects it).
     setDeleteConfirmOpen(false);
     navigate("/dashboard/project");
+    deleteRecording.mutate(rec.id);
   };
 
   return (
@@ -431,14 +434,9 @@ const ScreenProjectDetail = ({ sessionId }: { sessionId: string }) => {
                 <button
                   type="button"
                   aria-label="Recording options"
-                  disabled={deleteRecording.isPending}
-                  className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-fg-muted hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-fg-muted hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
                 >
-                  {deleteRecording.isPending ? (
-                    <FiLoader className="size-4 animate-spin" />
-                  ) : (
-                    <FiMoreHorizontal className="size-[18px]" />
-                  )}
+                  <FiMoreHorizontal className="size-[18px]" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
@@ -569,9 +567,7 @@ const ScreenProjectDetail = ({ sessionId }: { sessionId: string }) => {
           aria-modal="true"
           aria-labelledby="delete-screen-recording-title"
           aria-describedby="delete-screen-recording-description"
-          onClick={() => {
-            if (!deleteRecording.isPending) setDeleteConfirmOpen(false);
-          }}
+          onClick={() => setDeleteConfirmOpen(false)}
         >
           <div
             className="w-full max-w-[420px] rounded-2xl border border-border bg-background p-6 shadow-2xl"
@@ -595,16 +591,14 @@ const ScreenProjectDetail = ({ sessionId }: { sessionId: string }) => {
               <button
                 type="button"
                 onClick={() => setDeleteConfirmOpen(false)}
-                disabled={deleteRecording.isPending}
-                className="rounded-lg border border-border bg-primary px-3.5 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg border border-border bg-primary px-3.5 py-2 text-sm font-medium text-foreground transition-opacity hover:opacity-70"
               >
                 Keep recording
               </button>
               <button
                 type="button"
                 onClick={handleDelete}
-                disabled={deleteRecording.isPending}
-                className="rounded-lg bg-danger px-3.5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg bg-danger px-3.5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-85"
               >
                 Delete recording
               </button>
