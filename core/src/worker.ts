@@ -253,7 +253,7 @@ function isAuthorized(authorization: string | undefined): boolean {
 }
 
 function startWakeServer(): void {
-	const port = Number(process.env.WORKER_PORT || process.env.PORT) || 4001;
+	const port = Number(process.env.PORT) || 4000;
 	httpServer = createServer((request, response) => {
 		if (request.method === "GET" && request.url === "/health") {
 			response.writeHead(200, { "content-type": "application/json" });

@@ -107,11 +107,15 @@ cd web && pnpm install
 Copy the example env files and fill in your own values:
 
 ```bash
-cp core/.env.example core/.env.local
+cp core/.env.example-api core/.env.local
 cp web/.env.example  web/.env.local
 ```
 
-Each key is documented in the `.env.example` files. The app loads `.env.local` for local development and `.env.production` when hosted (`NODE_ENV=production`), so create a `.env.production` with your production values when deploying.
+Each key is documented in the example files. Both core processes load the
+shared `.env.local` during local development. With `NODE_ENV=production`, the
+API loads `.env.production-api` and the media worker loads
+`.env.production-worker`. These production files are gitignored; hosted Railway
+services should keep their values in Railway's Variables settings.
 
 ### 3. Set up the database
 
