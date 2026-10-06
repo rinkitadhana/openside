@@ -14,6 +14,7 @@
 
 import { type JobsOptions, Queue } from "bullmq";
 import IORedis from "ioredis";
+import { wakeMediaWorker } from "./worker-wake.ts";
 
 const redisUrl = process.env.REDIS_URL;
 
@@ -77,6 +78,25 @@ export function getTranscodeQueue(): Queue<TranscodeJob> {
 	return transcodeQueue;
 }
 
+/** Close producer-side queue connections so an idle serverless worker has no
+ * outbound Redis traffic and Railway can put the container to sleep. */
+export async function closeQueueConnections(): Promise<void> {
+	const queues = [finalizeQueue, transcodeQueue].filter(
+		(queue): queue is Queue<FinalizeJob> | Queue<TranscodeJob> =>
+			queue !== null,
+	);
+	const connection = producerConnection;
+
+	finalizeQueue = null;
+	transcodeQueue = null;
+	producerConnection = null;
+
+	await Promise.allSettled(queues.map((queue) => queue.close()));
+	if (connection && connection.status !== "end") {
+		await connection.quit().catch(() => connection.disconnect());
+	}
+}
+
 const DEFAULT_JOB_OPTS: JobsOptions = {
 	attempts: 3,
 	backoff: { type: "exponential", delay: 5000 },
@@ -113,6 +133,7 @@ export async function enqueueFinalize(
 			removeOnComplete: true,
 		},
 	);
+	await wakeMediaWorker();
 	return true;
 }
 
@@ -127,5 +148,6 @@ export async function enqueueTranscode(job: TranscodeJob): Promise<boolean> {
 		jobId: safeJobId("transcode", job.targetKey),
 		...DEFAULT_JOB_OPTS,
 	});
+	await wakeMediaWorker();
 	return true;
 }

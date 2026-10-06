@@ -58,6 +58,16 @@ flowchart LR
 
 > The worker shares `core`'s Prisma schema, queue definitions, and services with the API, so it's the **same build, a different entrypoint** - no separate repo needed. Scale it horizontally by running more worker instances.
 
+### Wake-on-demand worker
+
+The media worker can run in Railway Serverless mode instead of holding Redis
+connections open all month. Set `WORKER_SERVERLESS=true` on the worker, set the
+same `WORKER_WAKE_SECRET` on the API and worker, and set `WORKER_WAKE_URL` on the
+API to the worker's Railway private URL. After each enqueue the API wakes the
+worker; once both queues are empty, the worker closes Redis and database
+connections so Railway can put it to sleep. Enable **Serverless** on the Railway
+worker service and redeploy for the platform setting to take effect.
+
 ---
 
 ## Tech Stack
