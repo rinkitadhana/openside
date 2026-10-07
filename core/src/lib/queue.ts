@@ -54,6 +54,32 @@ export function createConnection(): IORedis {
 let producerConnection: IORedis | null = null;
 let finalizeQueue: Queue<FinalizeJob> | null = null;
 let transcodeQueue: Queue<TranscodeJob> | null = null;
+let producerOperations = 0;
+let producerCloseTimer: NodeJS.Timeout | null = null;
+let producerClosePromise: Promise<void> | null = null;
+
+const producerIdleMs = Number(process.env.QUEUE_PRODUCER_IDLE_MS) || 30_000;
+
+function beginProducerOperation(): void {
+	producerOperations += 1;
+	if (producerCloseTimer) {
+		clearTimeout(producerCloseTimer);
+		producerCloseTimer = null;
+	}
+}
+
+function endProducerOperation(): void {
+	producerOperations -= 1;
+	if (producerOperations !== 0 || producerCloseTimer) return;
+
+	producerCloseTimer = setTimeout(() => {
+		producerCloseTimer = null;
+		void closeQueueConnections().catch((error) =>
+			console.error("[Queue] failed to close idle Redis connections:", error),
+		);
+	}, producerIdleMs);
+	producerCloseTimer.unref();
+}
 
 function getProducerConnection(): IORedis {
 	if (!producerConnection) producerConnection = createConnection();
@@ -81,6 +107,12 @@ export function getTranscodeQueue(): Queue<TranscodeJob> {
 /** Close producer-side queue connections so an idle serverless worker has no
  * outbound Redis traffic and Railway can put the container to sleep. */
 export async function closeQueueConnections(): Promise<void> {
+	if (producerClosePromise) return producerClosePromise;
+	if (producerCloseTimer) {
+		clearTimeout(producerCloseTimer);
+		producerCloseTimer = null;
+	}
+
 	const queues = [finalizeQueue, transcodeQueue].filter(
 		(queue): queue is Queue<FinalizeJob> | Queue<TranscodeJob> =>
 			queue !== null,
@@ -91,9 +123,17 @@ export async function closeQueueConnections(): Promise<void> {
 	transcodeQueue = null;
 	producerConnection = null;
 
-	await Promise.allSettled(queues.map((queue) => queue.close()));
-	if (connection && connection.status !== "end") {
-		await connection.quit().catch(() => connection.disconnect());
+	producerClosePromise = (async () => {
+		await Promise.allSettled(queues.map((queue) => queue.close()));
+		if (connection && connection.status !== "end") {
+			await connection.quit().catch(() => connection.disconnect());
+		}
+	})();
+
+	try {
+		await producerClosePromise;
+	} finally {
+		producerClosePromise = null;
 	}
 }
 
@@ -119,22 +159,27 @@ export async function enqueueFinalize(
 	recordingSessionId: string,
 ): Promise<boolean> {
 	if (!isQueueConfigured()) return false;
-	await getFinalizeQueue().add(
-		"finalize",
-		{ recordingSessionId },
-		{
-			jobId: safeJobId("finalize", recordingSessionId),
-			...DEFAULT_JOB_OPTS,
-			// Remove immediately on success so a later track completion can enqueue a
-			// fresh finalize for the same session. With the default retention, the
-			// dedup jobId would swallow that follow-up run and the straggler track
-			// would never finalize (until the recovery sweep). While a job is active,
-			// re-adds are still ignored, so this keeps concurrent dedup intact.
-			removeOnComplete: true,
-		},
-	);
-	await wakeMediaWorker();
-	return true;
+	beginProducerOperation();
+	try {
+		await getFinalizeQueue().add(
+			"finalize",
+			{ recordingSessionId },
+			{
+				jobId: safeJobId("finalize", recordingSessionId),
+				...DEFAULT_JOB_OPTS,
+				// Remove immediately on success so a later track completion can enqueue a
+				// fresh finalize for the same session. With the default retention, the
+				// dedup jobId would swallow that follow-up run and the straggler track
+				// would never finalize (until the recovery sweep). While a job is active,
+				// re-adds are still ignored, so this keeps concurrent dedup intact.
+				removeOnComplete: true,
+			},
+		);
+		await wakeMediaWorker();
+		return true;
+	} finally {
+		endProducerOperation();
+	}
 }
 
 /**
@@ -144,10 +189,15 @@ export async function enqueueFinalize(
  */
 export async function enqueueTranscode(job: TranscodeJob): Promise<boolean> {
 	if (!isQueueConfigured()) return false;
-	await getTranscodeQueue().add("transcode", job, {
-		jobId: safeJobId("transcode", job.targetKey),
-		...DEFAULT_JOB_OPTS,
-	});
-	await wakeMediaWorker();
-	return true;
+	beginProducerOperation();
+	try {
+		await getTranscodeQueue().add("transcode", job, {
+			jobId: safeJobId("transcode", job.targetKey),
+			...DEFAULT_JOB_OPTS,
+		});
+		await wakeMediaWorker();
+		return true;
+	} finally {
+		endProducerOperation();
+	}
 }

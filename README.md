@@ -34,7 +34,7 @@
 
 ## Architecture
 
-Openside is **two apps, three deployable processes** - a frontend, an API server, and a media worker (the API and worker share the same `core` codebase, run as separate processes).
+Openside is **two apps, three deployable processes** - a frontend, an API server, and a media worker (the API and worker share the same `core` codebase).
 
 ```mermaid
 flowchart LR
@@ -67,6 +67,11 @@ API to the worker's Railway private URL. After each enqueue the API wakes the
 worker; once both queues are empty, the worker closes Redis and database
 connections so Railway can put it to sleep. Enable **Serverless** on the Railway
 worker service and redeploy for the platform setting to take effect.
+
+For the API to sleep too, set `RATE_LIMIT_REDIS=false`. Maintenance runs only
+when real HTTP or Socket.IO traffic reaches the API, and its BullMQ producer
+connection closes automatically after 30 idle seconds. With no traffic, the API
+does not poll Redis or run recurring database sweeps.
 
 ---
 

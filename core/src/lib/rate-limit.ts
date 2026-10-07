@@ -1,10 +1,9 @@
 /**
  * HTTP rate limiting (express-rate-limit).
  *
- * STORE: if REDIS_URL is set we back the counters with Redis so limits hold
- * across the whole API fleet; otherwise we fall back to the in-memory store
- * (fine for single-instance / local dev, just not shared between instances).
- * This mirrors the queue's graceful-degradation model.
+ * STORE: a single serverless API replica uses the in-memory store so an idle
+ * Redis connection cannot keep the container awake. Set RATE_LIMIT_REDIS=true
+ * only for a multi-replica, always-on API that needs shared counters.
  *
  * PROXY: behind Railway/Cloudflare the real client IP is in X-Forwarded-For, so
  * `trust proxy` must be configured for the per-IP key to be the caller and not
@@ -27,9 +26,11 @@ export function getTrustProxyHops(): number {
 // A dedicated Redis connection for the limiter counters. Kept separate from the
 // BullMQ connection so limiter traffic never contends with the job queue.
 const redisUrl = process.env.REDIS_URL;
-const limiterRedis = redisUrl
-	? new IORedis(redisUrl, { maxRetriesPerRequest: null })
-	: null;
+const useRedisStore = process.env.RATE_LIMIT_REDIS === "true";
+const limiterRedis =
+	redisUrl && useRedisStore
+		? new IORedis(redisUrl, { maxRetriesPerRequest: null })
+		: null;
 
 if (limiterRedis) {
 	// Don't let a Redis blip crash the API; the limiter degrades to memory.
@@ -47,7 +48,11 @@ function buildStore(prefix: string): Options["store"] | undefined {
 	});
 }
 
-const jsonMessage = (message: string) => ({ success: false, data: null, message });
+const jsonMessage = (message: string) => ({
+	success: false,
+	data: null,
+	message,
+});
 
 /**
  * Build a limiter with a shared (Redis or memory) store. `name` namespaces the

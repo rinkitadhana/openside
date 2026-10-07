@@ -55,7 +55,7 @@ interface RecordingSessionData {
 	recordingMode: "VIDEO_AND_AUDIO" | "AUDIO_ONLY";
 }
 
-export function initSocket(httpServer: HTTPServer) {
+export function initSocket(httpServer: HTTPServer, onActivity?: () => void) {
 	const activeRecordingsByRoom = new Map<string, RecordingSessionData>();
 
 	const io = new SocketIOServer(httpServer, {
@@ -69,6 +69,11 @@ export function initSocket(httpServer: HTTPServer) {
 	socketServer = io;
 
 	io.on("connection", (socket) => {
+		onActivity?.();
+		socket.use((_event, next) => {
+			onActivity?.();
+			next();
+		});
 		/**
 		 * EVENT: time:sync
 		 * Clock-synchronization handshake. The client sends this with an ack
