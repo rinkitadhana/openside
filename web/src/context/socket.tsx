@@ -60,7 +60,7 @@ interface ServerToClientEvents {
 interface ClientToServerEvents {
   /** Clock-sync handshake: server replies via ack with its wall-clock time. */
   "time:sync": (ack: (serverTime: number) => void) => void;
-  "join-room": (roomId: string) => void;
+  "join-room": (roomId: string, participantSessionId: string) => void;
   "leave-room": (roomId: string) => void;
   "recording-start": (roomId: string, data: RecordingSessionData) => void;
   "recording-stop": (roomId: string, sessionId: string) => void;

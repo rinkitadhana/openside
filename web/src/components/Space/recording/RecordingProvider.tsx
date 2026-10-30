@@ -144,11 +144,11 @@ const RecordingProvider = ({
   // Join the Socket.IO room so recording start/stop broadcasts reach us.
   useEffect(() => {
     if (!socket) return;
-    socket.emit("join-room", roomCode);
+    socket.emit("join-room", roomCode, participantSessionId);
     return () => {
       socket.emit("leave-room", roomCode);
     };
-  }, [socket, roomCode]);
+  }, [socket, roomCode, participantSessionId]);
 
   const role = localParticipant.attributes.role;
   const canControl = isHost || role === "HOST" || role === "CO_HOST";

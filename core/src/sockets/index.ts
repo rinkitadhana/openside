@@ -98,22 +98,37 @@ export function initSocket(httpServer: HTTPServer) {
 			if (typeof ack === "function") ack(Date.now());
 		});
 
+		// Rooms this socket proved membership of, mapped to its LiveKit identity.
+		const memberships = new Map<string, string | null>();
+
 		/**
 		 * EVENT: join-room / leave-room
 		 * Clients must join a Socket.IO room (keyed by the space join code) so that
 		 * recording coordination broadcasts (io.to(roomId)) actually reach them.
+		 * The join code is shared freely, so the caller must also send their
+		 * private participant session id for an active participant of that space.
 		 */
-		socket.on("join-room", async (roomId: string) => {
-			if (!roomId) return;
-
-			socket.join(roomId);
+		socket.on("join-room", async (roomId: unknown, sessionId: unknown) => {
+			if (
+				typeof roomId !== "string" ||
+				!roomId ||
+				typeof sessionId !== "string" ||
+				!sessionId
+			) {
+				return;
+			}
 
 			// Replay a live session to a (re)joining client from the database - the
 			// source of truth - so a stale cache can never restart a stopped take.
-			const activeSession = await prisma.space
+			const space = await prisma.space
 				.findUnique({
 					where: { joinCode: roomId },
 					select: {
+						participants: {
+							where: { participantSessionId: sessionId, isActive: true },
+							take: 1,
+							select: { livekitIdentity: true },
+						},
 						recordingSessions: {
 							where: { status: "ACTIVE" },
 							orderBy: { startedAt: "desc" },
@@ -135,19 +150,27 @@ export function initSocket(httpServer: HTTPServer) {
 				})
 				.catch((error) => {
 					console.error(
-						`[Socket] active recording lookup failed for ${roomId}:`,
+						`[Socket] room membership lookup failed for ${roomId}:`,
 						error,
 					);
 					return null;
 				});
-			const session = activeSession?.recordingSessions[0];
+			const participant = space?.participants[0];
+			if (!participant) return;
+
+			memberships.set(roomId, participant.livekitIdentity);
+			socket.join(roomId);
+
+			const session = space.recordingSessions[0];
 			if (!session) return;
 
 			socket.emit("recording-started", buildRecordingStartedPayload(session));
 		});
 
 		socket.on("leave-room", (roomId: string) => {
-			if (roomId) socket.leave(roomId);
+			if (typeof roomId !== "string" || !roomId) return;
+			memberships.delete(roomId);
+			socket.leave(roomId);
 		});
 
 		/**
@@ -192,8 +215,24 @@ export function initSocket(httpServer: HTTPServer) {
 					done: boolean;
 				},
 			) => {
-				if (!socket.rooms.has(roomId)) return;
-				socket.broadcast.to(roomId).emit("participant-upload-progress", data);
+				if (!memberships.has(roomId) || !data) return;
+				if (
+					typeof data.sessionId !== "string" ||
+					typeof data.progress !== "number" ||
+					!Number.isFinite(data.progress)
+				) {
+					return;
+				}
+				// The identity comes from the verified membership, so a participant
+				// can only report progress for themselves.
+				const identity = memberships.get(roomId) ?? data.identity;
+				if (typeof identity !== "string") return;
+				socket.broadcast.to(roomId).emit("participant-upload-progress", {
+					identity,
+					sessionId: data.sessionId,
+					progress: Math.min(100, Math.max(0, data.progress)),
+					done: data.done === true,
+				});
 			},
 		);
 	});
