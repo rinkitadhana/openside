@@ -16,7 +16,6 @@ import {
 	getRecordingSessionById,
 	getRecordingSessionsBySpaceId,
 	getRecordingStorageContext,
-	isActiveParticipant,
 	isHostOrCoHost,
 	markRecordingComplete,
 	startRecordingSession,
@@ -741,7 +740,6 @@ export async function createParticipantRecordingController(
 	try {
 		const {
 			recordingSessionId,
-			participantId,
 			participantSessionId,
 			spaceId,
 			type,
@@ -785,43 +783,30 @@ export async function createParticipantRecordingController(
 			return;
 		}
 
-		// Get participant ID from participantSessionId if not provided directly
-		let resolvedParticipantId = participantId;
-		if (!resolvedParticipantId && participantSessionId) {
-			const participant = await getParticipantBySessionId(
-				spaceId,
-				participantSessionId,
-			);
-			if (!participant) {
-				res.status(403).json({
-					success: false,
-					data: null,
-					message: "You are not an active participant in this space!",
-				});
-				return;
-			}
-			resolvedParticipantId = participant.id;
-		}
-
-		if (!resolvedParticipantId) {
+		if (!participantSessionId || typeof participantSessionId !== "string") {
 			res.status(400).json({
 				success: false,
 				data: null,
-				message: "Participant ID or participant session ID is required!",
+				message: "Participant session ID is required!",
 			});
 			return;
 		}
 
-		// Verify participant is active in the space
-		const isActive = await isActiveParticipant(spaceId, resolvedParticipantId);
-		if (!isActive) {
+		// Participant ids are visible to everyone in the room, so the caller is
+		// identified only by their private session id.
+		const participant = await getParticipantBySessionId(
+			spaceId,
+			participantSessionId,
+		);
+		if (!participant) {
 			res.status(403).json({
 				success: false,
 				data: null,
-				message: "Participant is not active in this space!",
+				message: "You are not an active participant in this space!",
 			});
 			return;
 		}
+		const resolvedParticipantId = participant.id;
 
 		const recording = await createParticipantRecording({
 			recordingSessionId,
@@ -1018,7 +1003,6 @@ export async function presignSegmentUploadController(
 			participantRecordingId,
 			spaceId,
 			participantSessionId,
-			participantId,
 			trackType,
 			sequenceNumber,
 		} = req.body;
@@ -1069,25 +1053,30 @@ export async function presignSegmentUploadController(
 			return;
 		}
 
-		// Resolve participantId from session id if needed. Allow inactive so a
-		// participant who left can still upload chunks they captured while here.
-		let resolvedParticipantId = participantId;
-		if (!resolvedParticipantId && participantSessionId) {
-			const participant = await getParticipantBySessionIdAllowInactive(
-				spaceId,
-				participantSessionId,
-			);
-			if (participant) resolvedParticipantId = participant.id;
-		}
-
-		if (!resolvedParticipantId || typeof resolvedParticipantId !== "string") {
+		if (!participantSessionId || typeof participantSessionId !== "string") {
 			res.status(400).json({
 				success: false,
 				data: null,
-				message: "Participant ID or participant session ID is required!",
+				message: "Participant session ID is required!",
 			});
 			return;
 		}
+
+		// Allow inactive so a participant who left can still upload chunks they
+		// captured while here.
+		const participant = await getParticipantBySessionIdAllowInactive(
+			spaceId,
+			participantSessionId,
+		);
+		if (!participant) {
+			res.status(403).json({
+				success: false,
+				data: null,
+				message: "You are not a participant in this space!",
+			});
+			return;
+		}
+		const resolvedParticipantId = participant.id;
 
 		// Ownership: only the recording owner may upload to it.
 		const ownerParticipantId = await getRecordingOwnerParticipantId(
@@ -1156,7 +1145,6 @@ export async function createSegmentController(
 			participantRecordingId,
 			spaceRecordingSessionId,
 			spaceId,
-			participantId,
 			participantSessionId,
 			sequenceNumber,
 			assetKey,
@@ -1246,27 +1234,30 @@ export async function createSegmentController(
 			return;
 		}
 
-		// Resolve participantId from participantSessionId if needed. Allow inactive
-		// so a just-left participant's final segments still register.
-		let resolvedParticipantId = participantId;
-		if (!resolvedParticipantId && participantSessionId) {
-			const participant = await getParticipantBySessionIdAllowInactive(
-				spaceId,
-				participantSessionId,
-			);
-			if (participant) {
-				resolvedParticipantId = participant.id;
-			}
-		}
-
-		if (!resolvedParticipantId || typeof resolvedParticipantId !== "string") {
+		if (!participantSessionId || typeof participantSessionId !== "string") {
 			res.status(400).json({
 				success: false,
 				data: null,
-				message: "Participant ID or participant session ID is required!",
+				message: "Participant session ID is required!",
 			});
 			return;
 		}
+
+		// Allow inactive so a just-left participant's final segments still
+		// register.
+		const participant = await getParticipantBySessionIdAllowInactive(
+			spaceId,
+			participantSessionId,
+		);
+		if (!participant) {
+			res.status(403).json({
+				success: false,
+				data: null,
+				message: "You are not a participant in this space!",
+			});
+			return;
+		}
+		const resolvedParticipantId = participant.id;
 
 		// Verify ownership - only recording owner can upload segments
 		const ownerParticipantId = await getRecordingOwnerParticipantId(
