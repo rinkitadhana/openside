@@ -1,7 +1,8 @@
 import { useState, type ElementType, type ReactNode } from "react";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
-import { FaGithub } from "react-icons/fa";
+import { Check, Globe, Heart } from "lucide-react";
+import { FaGithub, FaLinkedin } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 
 import {
   PricingCTA,
@@ -17,12 +18,11 @@ import {
   pricingPlans,
   recordingPoints,
   selfHostPoints,
+  sponsorUrl,
+  sponsors,
   useCases,
 } from "@/components/landing/content";
-import {
-  containerVariants,
-  riseVariants,
-} from "@/components/landing/motion";
+import { containerVariants, riseVariants } from "@/components/landing/motion";
 
 const inView = {
   initial: "hidden",
@@ -270,6 +270,236 @@ export const HowItWorksSection = () => (
   </Section>
 );
 
+const initials = (name: string) =>
+  name
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+type Sponsor = (typeof sponsors)[number];
+
+const socialLinks = [
+  { key: "website", label: "their website", icon: Globe },
+  { key: "x", label: "X", icon: FaXTwitter },
+  { key: "github", label: "GitHub", icon: FaGithub },
+  { key: "linkedin", label: "LinkedIn", icon: FaLinkedin },
+] as const;
+
+const formatAmount = ({ amount, interval }: Sponsor) =>
+  interval === "month" ? `$${amount} / month` : `$${amount} one-time`;
+
+const SponsorAvatar = ({
+  sponsor,
+  className,
+}: {
+  sponsor: Sponsor;
+  className: string;
+}) =>
+  sponsor.avatar ? (
+    <img
+      src={sponsor.avatar}
+      alt=""
+      className={`shrink-0 rounded-full object-cover ${className}`}
+    />
+  ) : (
+    <div
+      className={`flex shrink-0 items-center justify-center rounded-full bg-(--landing-brand-tint)/45 font-medium text-(--landing-brand-text) ${className}`}
+    >
+      {initials(sponsor.name)}
+    </div>
+  );
+
+const sponsorAmounts = [5, 10, 25, 50, 100];
+
+// Pick an amount and frequency, then finish on GitHub Sponsors.
+const SponsorPicker = () => {
+  const [interval, setFrequency] = useState<"month" | "once">("month");
+  const [amount, setAmount] = useState(25);
+
+  const checkoutUrl = `${sponsorUrl}/sponsorships?${new URLSearchParams({
+    amount: String(amount),
+    frequency: interval === "month" ? "recurring" : "one-time",
+  })}`;
+
+  return (
+    <motion.div
+      className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-[1fr_minmax(0,22rem)] md:items-start md:gap-12"
+      {...inView}
+      variants={riseVariants}
+    >
+      <div>
+        <div className="flex size-11 items-center justify-center rounded-xl bg-(--landing-brand-tint)/45">
+          <Heart className="size-5 fill-[#db61a2] text-[#db61a2]" />
+        </div>
+        <h3 className="font-bricolage mt-5 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+          Support Openside
+        </h3>
+        <p className="mt-2 max-w-md text-sm leading-6 text-foreground/65">
+          Openside is built in the open and free to self-host. Sponsoring keeps
+          it that way, and puts you up there with everyone else.
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-border bg-background p-5">
+        <div className="grid grid-cols-2 gap-1 rounded-lg bg-(--landing-chip) p-1">
+          {(
+            [
+              ["month", "Monthly"],
+              ["once", "One-time"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setFrequency(value)}
+              aria-pressed={interval === value}
+              className={`cursor-pointer rounded-md py-2 text-sm font-medium transition-colors ${
+                interval === value
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-foreground/60 hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-4 grid grid-cols-5 gap-2">
+          {sponsorAmounts.map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setAmount(value)}
+              aria-pressed={amount === value}
+              className={`cursor-pointer rounded-lg border py-2.5 text-sm font-semibold transition-colors ${
+                amount === value
+                  ? "border-(--landing-brand-text) bg-(--landing-brand-text)/[0.08] text-(--landing-brand-text)"
+                  : "border-border text-foreground/70 hover:border-(--landing-brand-text)/40 hover:text-foreground"
+              }`}
+            >
+              ${value}
+            </button>
+          ))}
+        </div>
+
+        <a
+          href={checkoutUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-5 flex w-full select-none items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+        >
+          <Heart className="size-4 fill-[#db61a2] text-[#db61a2]" />
+          Sponsor ${amount}
+          {interval === "month" ? " / month" : " once"}
+        </a>
+        <p className="mt-3 text-center text-xs text-foreground/50">
+          Secure checkout on GitHub Sponsors. Any amount works there too.
+        </p>
+      </div>
+    </motion.div>
+  );
+};
+
+export const SponsorsSection = () => (
+  <Section id="sponsors">
+    <SectionHeading
+      eyebrow="Sponsors"
+      title="Backed by people who love open source."
+      description="Openside stays free to self-host thanks to the people and companies who support its development."
+    />
+
+    {sponsors.length > 0 ? (
+      <motion.div
+        className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+        {...inView}
+        variants={containerVariants}
+      >
+        {sponsors.map((sponsor) => (
+          <motion.figure
+            key={sponsor.name}
+            variants={riseVariants}
+            className="flex flex-col rounded-2xl border border-border bg-foreground/[0.03] p-6"
+          >
+            <figcaption className="flex items-center gap-4">
+              <div className="relative shrink-0">
+                <SponsorAvatar
+                  sponsor={sponsor}
+                  className="size-12 text-base"
+                />
+                <span className="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full bg-background ring-1 ring-border">
+                  <Heart className="size-3 fill-[#db61a2] text-[#db61a2]" />
+                </span>
+              </div>
+              <div className="min-w-0">
+                <p className="font-bricolage truncate text-base font-semibold text-foreground">
+                  {sponsor.name}
+                </p>
+                <p className="text-sm text-foreground/60">
+                  {formatAmount(sponsor)}
+                </p>
+              </div>
+            </figcaption>
+            {sponsor.message && (
+              <blockquote className="mt-5 text-[0.9375rem] leading-7 text-foreground/75">
+                “{sponsor.message}”
+              </blockquote>
+            )}
+            <div className="mt-auto flex items-center justify-between gap-3 pt-5">
+              <p className="text-xs text-foreground/45">
+                {sponsor.interval === "month"
+                  ? `Sponsoring since ${sponsor.since}`
+                  : `Sponsored in ${sponsor.since}`}
+              </p>
+              {sponsor.socials && (
+                <div className="flex items-center gap-1">
+                  {socialLinks.map(({ key, label, icon: Icon }) => {
+                    const url = sponsor.socials?.[key];
+                    return (
+                      url && (
+                        <a
+                          key={key}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${sponsor.name} on ${label}`}
+                          className="flex size-7 items-center justify-center rounded-md text-foreground/50 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+                        >
+                          <Icon className="size-3.5" />
+                        </a>
+                      )
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </motion.figure>
+        ))}
+      </motion.div>
+    ) : (
+      <motion.div
+        className="mt-10 flex flex-col items-center rounded-2xl border border-dashed border-foreground/20 px-6 py-14 text-center"
+        {...inView}
+        variants={riseVariants}
+      >
+        <div className="flex size-11 items-center justify-center rounded-xl bg-(--landing-brand-tint)/45">
+          <Heart className="size-5 fill-[#db61a2] text-[#db61a2]" />
+        </div>
+        <h3 className="font-bricolage mt-5 text-lg font-semibold tracking-tight text-foreground">
+          No sponsors yet
+        </h3>
+        <p className="mt-2 max-w-sm text-sm leading-6 text-foreground/65">
+          Be the first to back Openside. Your name, message, and links will show
+          up right here.
+        </p>
+      </motion.div>
+    )}
+
+    <SponsorPicker />
+  </Section>
+);
+
 export const PricingCards = () => {
   const openAuth = useOpenAuth();
 
@@ -320,7 +550,9 @@ export const PricingCards = () => {
               <li key={feature} className="flex items-start gap-2.5 text-sm">
                 <Check
                   className={`mt-0.5 size-4 shrink-0 ${
-                    plan.featured ? "text-(--landing-brand-text)" : "text-foreground"
+                    plan.featured
+                      ? "text-(--landing-brand-text)"
+                      : "text-foreground"
                   }`}
                 />
                 <span className="text-foreground/75">{feature}</span>

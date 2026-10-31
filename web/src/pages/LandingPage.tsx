@@ -16,6 +16,7 @@ import {
   HowItWorksSection,
   PricingSection,
   PrivacySection,
+  SponsorsSection,
   UseCasesSection,
 } from "@/components/landing/sections";
 import {
@@ -100,6 +101,8 @@ const LandingPage = () => {
       <PrivacySection />
       <SectionDivider />
       <HowItWorksSection />
+      <SectionDivider />
+      <SponsorsSection />
       <SectionDivider />
       <PricingSection />
       <SectionDivider />

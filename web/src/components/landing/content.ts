@@ -195,8 +195,7 @@ export const pricingPlans = [
     name: "Demo",
     price: "Free",
     priceSuffix: "",
-    description:
-      "Try Openside instantly, no keys or setup required.",
+    description: "Try Openside instantly, no keys or setup required.",
     features: [
       "720p recording",
       "44.1kHz audio",
@@ -252,5 +251,28 @@ export const pricingPlans = [
     featured: false,
   },
 ];
+
+export const sponsorUrl = "https://github.com/sponsors/rinkitadhana";
+
+// Add sponsors here as they come in; the section shows an empty state until
+// then. `avatar` is a company logo or a person's photo; without one the card
+// shows initials. Example:
+// { name: "Jane Doe", amount: 10, interval: "month", since: "Nov 2026",
+//   message: "Keep it up!", socials: { x: "https://x.com/jane" } }
+export const sponsors: {
+  name: string;
+  amount: number;
+  interval: "month" | "once";
+  // When they started sponsoring, or when they gave if one-time.
+  since: string;
+  message?: string;
+  avatar?: string;
+  socials?: {
+    website?: string;
+    x?: string;
+    github?: string;
+    linkedin?: string;
+  };
+}[] = [];
 
 export type UseCase = (typeof useCases)[number];
