@@ -213,11 +213,29 @@ export async function isCameraBackgroundSupported(): Promise<boolean> {
   }
 }
 
+// One apply at a time per track. Without this, quick clicks each see "no
+// processor yet" and each build a full segmenter (WASM + model + GPU init on
+// the main thread) instead of switching the first one in place.
+const applyQueues = new WeakMap<LocalVideoTrack, Promise<void>>();
+
 /**
  * Put `background` on a camera track, reusing its processor when it already
  * has one (switching modes in place avoids a flash of the real room).
  */
-export async function applyCameraBackground(
+export function applyCameraBackground(
+  track: LocalVideoTrack,
+  background: CameraBackground,
+  customImageUrl: string | null,
+): Promise<void> {
+  const previous = applyQueues.get(track) ?? Promise.resolve();
+  const next = previous
+    .catch(() => undefined)
+    .then(() => applyNow(track, background, customImageUrl));
+  applyQueues.set(track, next);
+  return next;
+}
+
+async function applyNow(
   track: LocalVideoTrack,
   background: CameraBackground,
   customImageUrl: string | null,

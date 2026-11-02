@@ -445,12 +445,19 @@ const CameraPreviewDialog = ({
     const localParticipant = room.localParticipant;
     const existing = localParticipant.getTrackPublication(Track.Source.Camera);
 
+    // Switching to the camera that's already active would restart the live
+    // track (and its background processor) for nothing.
+    const needsDeviceSwitch =
+      !!deviceId && deviceId !== room.getActiveDevice("videoinput");
+
     try {
       if (isCameraLive && existing?.track) {
         // Opened from "Camera preview" with the camera already on: apply the
-        // chosen camera and background to the live track. The preview's own
-        // capture is released when the panel closes.
-        if (deviceId) {
+        // chosen camera and background to the live track. Stop the preview
+        // first - its segmenter runs on the main thread, and running it next
+        // to the live track's freezes the page.
+        previewTrack.stop();
+        if (needsDeviceSwitch) {
           await room.switchActiveDevice("videoinput", deviceId, true);
         }
         await applyCameraBackground(
@@ -465,7 +472,7 @@ const CameraPreviewDialog = ({
         // The camera was on earlier and is now a muted publication. Keep it
         // (recording follows that publication) - point it at the chosen
         // camera and unmute; LiveKit re-acquires while the preview stays live.
-        if (deviceId) {
+        if (needsDeviceSwitch) {
           await room.switchActiveDevice("videoinput", deviceId, true);
         }
         try {
@@ -476,6 +483,9 @@ const CameraPreviewDialog = ({
           previewTrack.stop();
           await localParticipant.setCameraEnabled(true);
         }
+        // The live camera is up - drop the preview (and its segmenter) before
+        // building the publication's own.
+        previewTrack.stop();
         // That publication has its own processor (or none) - bring it in
         // line with what the preview showed.
         try {
