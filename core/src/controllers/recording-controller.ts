@@ -19,6 +19,7 @@ import {
 	isHostOrCoHost,
 	markRecordingComplete,
 	startRecordingSession,
+	setSpaceSessionPaused,
 	stopRecordingSession,
 	updateSpaceRecordingSession,
 } from "../services/recording-service";
@@ -362,6 +363,117 @@ export async function stopSessionController(
 		});
 	}
 }
+
+/** POST /session/:sessionId/pause and /resume - for everyone in the space. */
+function sessionPauseController(paused: boolean) {
+	return async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+		try {
+			if (!req.user) {
+				res.status(401).json({
+					success: false,
+					data: null,
+					message: "Authentication required!",
+				});
+				return;
+			}
+
+			const sessionId = req.params.sessionId as string | undefined;
+			const { spaceId, participantSessionId } = req.body;
+
+			if (!sessionId) {
+				res.status(400).json({
+					success: false,
+					data: null,
+					message: "Session ID is required!",
+				});
+				return;
+			}
+
+			if (!spaceId || typeof spaceId !== "string") {
+				res
+					.status(400)
+					.json({ success: false, data: null, message: "Space ID is required!" });
+				return;
+			}
+
+			if (!participantSessionId || typeof participantSessionId !== "string") {
+				res.status(400).json({
+					success: false,
+					data: null,
+					message: "Participant session ID is required!",
+				});
+				return;
+			}
+
+			const participant = await getParticipantBySessionId(
+				spaceId,
+				participantSessionId,
+			);
+			if (!participant) {
+				res.status(403).json({
+					success: false,
+					data: null,
+					message: "You are not an active participant in this space!",
+				});
+				return;
+			}
+
+			const canControl = await isHostOrCoHost(spaceId, participant.id);
+			if (!canControl) {
+				res.status(403).json({
+					success: false,
+					data: null,
+					message: `Only host or co-host can ${paused ? "pause" : "resume"} recording!`,
+				});
+				return;
+			}
+
+			const pauseState = await setSpaceSessionPaused(
+				sessionId,
+				spaceId,
+				paused,
+			);
+
+			res.status(200).json({
+				success: true,
+				data: pauseState,
+				message: paused ? "Recording paused!" : "Recording resumed!",
+			});
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				if (error.message === "SESSION_NOT_FOUND") {
+					res.status(404).json({
+						success: false,
+						data: null,
+						message: "Recording session not found!",
+					});
+					return;
+				}
+				if (error.message === "SESSION_NOT_ACTIVE") {
+					res.status(400).json({
+						success: false,
+						data: null,
+						message: "Recording session is not active!",
+					});
+					return;
+				}
+			}
+
+			console.error(
+				`[API] Failed to ${paused ? "pause" : "resume"} recording:`,
+				error,
+			);
+			res.status(500).json({
+				success: false,
+				data: null,
+				message: `Failed to ${paused ? "pause" : "resume"} recording!`,
+			});
+		}
+	};
+}
+
+export const pauseSessionController = sessionPauseController(true);
+export const resumeSessionController = sessionPauseController(false);
 
 export async function deleteSessionController(
 	req: AuthenticatedRequest,

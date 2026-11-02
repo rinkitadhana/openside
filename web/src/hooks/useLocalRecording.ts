@@ -24,7 +24,9 @@
  * TIMING:
  * Chunk offsets use performance.now() (monotonic), not Date.now(), so an NTP
  * clock adjustment mid-call can't corrupt the segment timeline used for A/V
- * sync at merge time. They're measured from the recording's `timeOrigin`.
+ * sync at merge time. They're measured from the recording's `timeOrigin`, on
+ * the caller's `clock` - which stands still while the take is paused, so the
+ * paused stretch never enters the timeline (the recorders pause with it).
  */
 
 import { useRef, useState, useCallback, useEffect } from "react";
@@ -87,6 +89,10 @@ interface LocalRecordingStartOptions {
   videoResolution?: number;
   /** The session's frame rate; the camera is capped to it. */
   targetFps?: number;
+  /** Recording-time clock (performance.now() minus paused time). */
+  clock?: () => number;
+  /** Start paused: no part starts until setPaused(false). */
+  paused?: boolean;
 }
 
 interface ScreenRecordingResult {
@@ -112,6 +118,10 @@ interface UseLocalRecordingReturn {
   getCombinedTrackIds: () => string[];
   /** Combined chunks emitted so far (= the next sequence number). */
   getCombinedChunkCount: () => number;
+  /** Pause or resume every recorder. Track changes while paused are applied
+   *  on resume; `rotate` resumes the camera on a fresh part instead (its
+   *  footage no longer lines up with the clock). */
+  setPaused: (paused: boolean, options?: { rotate?: boolean }) => void;
   attachScreenRecording: (
     screenStream: MediaStream,
   ) => Promise<{ shareId: number; metadata: RecordingMetadata } | null>;
@@ -263,6 +273,8 @@ export default function useLocalRecording(
   // stale state is what used to leave a recorder running after a failed start.
   const activeRef = useRef(false);
   const timeOriginRef = useRef(0);
+  const clockRef = useRef<() => number>(() => performance.now());
+  const pausedRef = useRef(false);
   const startOptionsRef = useRef<LocalRecordingStartOptions>({});
   const combinedSequenceRef = useRef(0);
   const partRef = useRef<RecorderPart | null>(null);
@@ -290,7 +302,7 @@ export default function useLocalRecording(
   useEffect(() => {
     if (isRecording) {
       durationIntervalRef.current = setInterval(() => {
-        setRecordingDurationMs(performance.now() - timeOriginRef.current);
+        setRecordingDurationMs(clockRef.current() - timeOriginRef.current);
       }, 100);
     } else if (durationIntervalRef.current) {
       clearInterval(durationIntervalRef.current);
@@ -313,7 +325,7 @@ export default function useLocalRecording(
   }, []);
 
   const emitCombined = useCallback((part: RecorderPart, blob: Blob) => {
-    const now = performance.now();
+    const now = clockRef.current();
     const chunk: LocalChunk = {
       blob,
       sequenceNumber: combinedSequenceRef.current,
@@ -368,7 +380,7 @@ export default function useLocalRecording(
         stream,
         trackIds: trackIdsOf(tracks),
         mimeType: "",
-        chunkStart: performance.now(),
+        chunkStart: clockRef.current(),
         stopped: false,
         dead: false,
         removeTrackListeners: () => undefined,
@@ -416,7 +428,7 @@ export default function useLocalRecording(
           onActiveRecorder: (recorder, candidate) => {
             part.recorder = recorder;
             part.mimeType = recorder.mimeType || candidate.mimeType;
-            part.chunkStart = performance.now();
+            part.chunkStart = clockRef.current();
             if (!announced) {
               announced = true;
               optionsRef.current.onCombinedPartStart?.(
@@ -455,7 +467,8 @@ export default function useLocalRecording(
 
   const replacePart = useCallback(
     async (stream: MediaStream | null) => {
-      if (!activeRef.current) return;
+      // Paused: the change is picked up on resume (a new part would record).
+      if (!activeRef.current || pausedRef.current) return;
       const live = (stream?.getTracks() ?? []).filter(
         (track) => track.readyState === "live",
       );
@@ -477,6 +490,10 @@ export default function useLocalRecording(
       if (!activeRef.current) {
         if (next) await stopPart(next);
         return;
+      }
+      // Paused while the new part was starting.
+      if (pausedRef.current && next?.recorder?.state === "recording") {
+        next.recorder.pause();
       }
       partRef.current = next;
       if (current) await stopPart(current);
@@ -522,6 +539,8 @@ export default function useLocalRecording(
       if (activeRef.current) return;
       activeRef.current = true;
       timeOriginRef.current = timeOrigin;
+      clockRef.current = startOptions.clock ?? (() => performance.now());
+      pausedRef.current = startOptions.paused ?? false;
       startOptionsRef.current = startOptions;
       combinedSequenceRef.current = 0;
       failedMimesRef.current = new Set();
@@ -555,11 +574,40 @@ export default function useLocalRecording(
     [],
   );
 
+  const setPaused = useCallback(
+    (paused: boolean, { rotate = false }: { rotate?: boolean } = {}) => {
+      if (!activeRef.current || pausedRef.current === paused) return;
+      pausedRef.current = paused;
+      const part = partRef.current;
+      // Left paused and replaced below: a new part starts at the clock's time.
+      if (!paused && rotate && part) part.dead = true;
+      const recorders = [
+        part && !part.dead ? part.recorder : null,
+        screenRef.current?.recorder,
+      ];
+      for (const recorder of recorders) {
+        try {
+          if (paused && recorder?.state === "recording") recorder.pause();
+          if (!paused && recorder?.state === "paused") recorder.resume();
+        } catch (error) {
+          console.warn("[Recording] couldn't pause/resume a recorder:", error);
+        }
+      }
+      // Tracks that changed (or a part that died) while paused.
+      if (!paused) void runOp(() => replacePart(lastStreamRef.current));
+    },
+    [runOp, replacePart],
+  );
+
   const attachScreenRecording = useCallback(
     async (
       screenStream: MediaStream,
     ): Promise<{ shareId: number; metadata: RecordingMetadata } | null> => {
-      if (!activeRef.current || screenStream.getVideoTracks().length === 0) {
+      if (
+        !activeRef.current ||
+        pausedRef.current ||
+        screenStream.getVideoTracks().length === 0
+      ) {
         return null;
       }
       if (screenRef.current) return null;
@@ -576,7 +624,7 @@ export default function useLocalRecording(
         shareId,
         // Each share is its own recording, so its sequence restarts at 0.
         sequence: 0,
-        chunkStart: performance.now(),
+        chunkStart: clockRef.current(),
         mimeType: "",
       };
       screenRef.current = screen;
@@ -596,7 +644,7 @@ export default function useLocalRecording(
           onActiveRecorder: (recorder, candidate) => {
             screen.recorder = recorder;
             screen.mimeType = recorder.mimeType || candidate.mimeType;
-            screen.chunkStart = performance.now();
+            screen.chunkStart = clockRef.current();
             active.metadata = {
               container: candidate.container,
               codec: candidate.codec,
@@ -612,7 +660,7 @@ export default function useLocalRecording(
             };
           },
           onData: (blob) => {
-            const now = performance.now();
+            const now = clockRef.current();
             const chunk: LocalChunk = {
               blob,
               sequenceNumber: screen.sequence,
@@ -717,6 +765,7 @@ export default function useLocalRecording(
     setCombinedStream,
     getCombinedTrackIds,
     getCombinedChunkCount,
+    setPaused,
     attachScreenRecording,
     detachScreenRecording,
     stopRecording,

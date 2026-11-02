@@ -33,6 +33,11 @@
  * suspended), the chunk is cut right there so the new stamp starts exactly at
  * the break. The finalizer fits these stamps to keep the WAV in sync with the
  * video for the whole take (see audio-timeline.ts on the server).
+ *
+ * PAUSE:
+ * While paused the samples are dropped, and the caller's `clock` (the system
+ * clock minus paused time) stands still - so the stamps run on as if the pause
+ * never happened, just like the video's.
  */
 
 import { useCallback, useRef } from "react";
@@ -65,6 +70,10 @@ interface PcmCaptureStartOptions extends PcmSource {
   echoCancellation?: boolean;
   /** performance.now() instant chunk start times are measured from. */
   timeOrigin?: number;
+  /** Recording-time clock (performance.now() minus paused time). */
+  clock?: () => number;
+  /** Start paused: nothing is kept until setPaused(false). */
+  paused?: boolean;
   /** Start silenced (the call mic is muted). */
   muted?: boolean;
 }
@@ -78,6 +87,8 @@ interface UsePcmCaptureReturn {
   switchDevice: (source: PcmSource) => Promise<void>;
   /** Mirror the call mic's mute state (muted = silence is recorded). */
   setMuted: (muted: boolean) => void;
+  /** Pause the take: samples are dropped until resumed. */
+  setPaused: (paused: boolean) => void;
   /** Chunks emitted so far (= the next sequence number). */
   getChunkCount: () => number;
   isRunning: () => boolean;
@@ -136,6 +147,8 @@ export default function usePcmCapture({
   const emittedSamplesRef = useRef(0);
   const seqRef = useRef(0);
   const timeOriginRef = useRef(0);
+  const clockRef = useRef<() => number>(() => performance.now());
+  const pausedRef = useRef(false);
   // System-clock time minus sample-clock time for the pending chunk (ms): its
   // first sample sits at sampleTime + this on the recording timeline.
   const chunkOffsetRef = useRef<number | null>(null);
@@ -313,6 +326,8 @@ export default function usePcmCapture({
         deviceIdRef.current = options.audioId;
         mutedRef.current = options.muted ?? false;
         timeOriginRef.current = options.timeOrigin ?? performance.now();
+        clockRef.current = options.clock ?? (() => performance.now());
+        pausedRef.current = options.paused ?? false;
 
         const stream = await openStream(options);
 
@@ -360,8 +375,9 @@ export default function usePcmCapture({
           FLUSH_INTERVAL_SECONDS * ctx.sampleRate,
         );
         node.port.onmessage = (event) => {
+          if (pausedRef.current) return;
           const ch = event.data as Float32Array;
-          const now = performance.now();
+          const now = clockRef.current();
           framesRef.current.push(ch);
           pendingSamplesRef.current += ch.length;
           // This quantum was complete when posted: its last sample sits at
@@ -449,6 +465,22 @@ export default function usePcmCapture({
     }
   }, []);
 
+  const setPaused = useCallback(
+    (paused: boolean) => {
+      if (pausedRef.current === paused) return;
+      // End the chunk at the pause, so no chunk spans it.
+      if (paused && runningRef.current) {
+        try {
+          flushAll();
+        } catch (err) {
+          console.error("[PcmCapture] flush on pause failed:", err);
+        }
+      }
+      pausedRef.current = paused;
+    },
+    [flushAll],
+  );
+
   const stop = useCallback(async () => {
     if (!runningRef.current && !ctxRef.current) return;
     runningRef.current = false;
@@ -466,5 +498,13 @@ export default function usePcmCapture({
   const getChunkCount = useCallback(() => seqRef.current, []);
   const isRunning = useCallback(() => runningRef.current, []);
 
-  return { start, stop, switchDevice, setMuted, getChunkCount, isRunning };
+  return {
+    start,
+    stop,
+    switchDevice,
+    setMuted,
+    setPaused,
+    getChunkCount,
+    isRunning,
+  };
 }

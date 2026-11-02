@@ -7,8 +7,10 @@ import {
 	getSessionByIdController,
 	getSessionsBySpaceIdController,
 	markRecordingCompleteController,
+	pauseSessionController,
 	presignSegmentUploadController,
 	renameSessionController,
+	resumeSessionController,
 	shareSpaceSessionController,
 	startSessionController,
 	stopSessionController,
@@ -194,6 +196,16 @@ router.delete(
 	unshareSpaceSessionController,
 );
 router.post("/session/:sessionId/stop", authMiddleware, stopSessionController);
+router.post(
+	"/session/:sessionId/pause",
+	authMiddleware,
+	pauseSessionController,
+);
+router.post(
+	"/session/:sessionId/resume",
+	authMiddleware,
+	resumeSessionController,
+);
 router.patch("/session/:sessionId", authMiddleware, renameSessionController);
 router.delete("/session/:sessionId", authMiddleware, deleteSessionController);
 router.get("/session/:sessionId", authMiddleware, getSessionByIdController);

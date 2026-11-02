@@ -41,6 +41,8 @@ import {
   Loader2,
   Maximize,
   Minimize,
+  Pause,
+  Play,
   ScanFace,
   SmilePlus,
   X,
@@ -1486,7 +1488,10 @@ const LiveKitControls = ({
             className={cn(
               "size-4",
               isStartingMedia ? "text-foreground/30" : "text-white",
-              isRecording && !isStartingMedia && "animate-pulse",
+              isRecording &&
+                !isStartingMedia &&
+                !recording.isPaused &&
+                "animate-pulse",
             )}
           />
           <span className="max-md:hidden">{insideLabel}</span>
@@ -1503,6 +1508,65 @@ const LiveKitControls = ({
     );
   };
 
+  // While paused, the upload status goes away once it has shown 100% for a
+  // moment (the chunk count lands a beat before the percent catches up).
+  const liveUploadPercent =
+    recording.takeChunks.uploaded === 0 && recording.uploadProgress === 100
+      ? 0
+      : recording.uploadProgress;
+  const pausedUploadDone =
+    recording.isPaused &&
+    recording.takeChunks.total > 0 &&
+    recording.takeChunks.uploaded >= recording.takeChunks.total &&
+    liveUploadPercent >= 100;
+  const [hidePausedUpload, setHidePausedUpload] = useState(false);
+  useEffect(() => {
+    if (!pausedUploadDone) {
+      setHidePausedUpload(false);
+      return;
+    }
+    const timer = setTimeout(() => setHidePausedUpload(true), 800);
+    return () => clearTimeout(timer);
+  }, [pausedUploadDone]);
+
+  // Pause/resume for everyone - hosts and co-hosts, only while capturing.
+  const renderPauseControl = () => {
+    if (!recording.canControl || recording.recordingState !== "recording") {
+      return null;
+    }
+    const { isPaused, isPauseRequestPending } = recording;
+    return (
+      // On wide screens it hangs off the record button's left edge, out of
+      // the flow, so appearing doesn't shift the centered controls.
+      <div className="flex flex-col gap-1 items-center lg:absolute lg:right-full lg:top-0 lg:mr-2.5">
+        <button
+          type="button"
+          onClick={() => {
+            if (isPauseRequestPending) return;
+            recording.togglePause();
+          }}
+          className={cn(
+            "flex min-h-11 w-11 items-center justify-center rounded-xl border border-call-border transition-all duration-200 max-md:min-h-10 max-md:w-10",
+            isPaused
+              ? "border-amber-400/60 bg-amber-400/15 text-amber-400 hover:bg-amber-400/25"
+              : "bg-primary text-foreground hover:bg-muted",
+            "cursor-pointer",
+          )}
+          aria-label={isPaused ? "Resume recording" : "Pause recording"}
+        >
+          {isPaused ? (
+            <Play className="size-4 fill-current" />
+          ) : (
+            <Pause className="size-4 fill-current" />
+          )}
+        </button>
+        <p className="text-[0.675rem] text-foreground/50 max-md:hidden">
+          {isPaused ? "Resume" : "Pause"}
+        </p>
+      </div>
+    );
+  };
+
   const renderRecordingIndicator = () => {
     // Only show once capture has actually started - never during "starting" or
     // the synced "countdown" lead-in. After stop, the upload card above the
@@ -1512,30 +1576,49 @@ const LiveKitControls = ({
 
     // The uploader reads 100 while idle; before this take's first chunk is up
     // that would claim a finished upload that hasn't started.
-    const uploadPercent =
-      recording.takeChunks.uploaded === 0 && recording.uploadProgress === 100
-        ? 0
-        : recording.uploadProgress;
+    const uploadPercent = liveUploadPercent;
+    // Hidden until the first chunk is on its way, and again once a paused
+    // take has uploaded everything it recorded.
+    const { uploaded, total } = recording.takeChunks;
+    const showUpload = total > 0 && !hidePausedUpload;
 
     return (
-      <div className="flex items-center gap-1.5">
+      <div
+        className="flex items-center gap-1.5"
+        title={recording.isPaused ? "Recording paused" : undefined}
+      >
         <span className="relative flex size-2.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-          <span className="relative inline-flex size-2.5 rounded-full bg-red-500" />
+          {recording.isPaused ? (
+            <span className="relative inline-flex size-2.5 rounded-full bg-amber-400" />
+          ) : (
+            <>
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+              <span className="relative inline-flex size-2.5 rounded-full bg-red-500" />
+            </>
+          )}
         </span>
         <span
           // Fixed width so digit/length changes never shift the rest of the
           // bar. Left-aligned to keep the number anchored in its slot.
-          className="inline-block min-w-[3.25rem] text-left text-base font-normal tabular-nums text-foreground"
+          className={cn(
+            "inline-block min-w-[3.25rem] text-left text-base font-normal tabular-nums",
+            recording.isPaused
+              ? "animate-pulse text-amber-400"
+              : "text-foreground",
+          )}
         >
           {formatRecordingDuration(recording.recordingDurationMs)}
         </span>
-        <span className="mx-0.5 h-5 w-px bg-foreground/20" />
-        <LiveUploadStatus
-          percent={uploadPercent}
-          uploaded={recording.takeChunks.uploaded}
-          total={recording.takeChunks.total}
-        />
+        {showUpload && (
+          <>
+            <span className="mx-0.5 h-5 w-px bg-foreground/20" />
+            <LiveUploadStatus
+              percent={uploadPercent}
+              uploaded={uploaded}
+              total={total}
+            />
+          </>
+        )}
       </div>
     );
   };
@@ -2143,7 +2226,12 @@ const LiveKitControls = ({
 
   const renderPrimaryControls = () => (
     <div className="select-none flex items-center gap-1.5 p-1 md:gap-2.5 md:p-2">
-      {renderRecordingControl()}
+      {recording.canControl && (
+        <div className="relative flex items-start gap-1.5 md:gap-2.5">
+          {renderPauseControl()}
+          {renderRecordingControl()}
+        </div>
+      )}
       {renderSplitMediaControl({
         icon: showMicOn ? <RiMicLine /> : <RiMicOffLine />,
         label: "Mic",

@@ -24,6 +24,10 @@ export interface RecordingSession {
   startedAt: string;
   stoppedAt?: string;
   status: RecordingSessionStatus;
+  /** Live takes: total length of resumed pauses, and when the current pause
+   *  began (null while recording). */
+  pausedMs?: number;
+  pausedAt?: string | null;
   /** Public link id once the Space host enables sharing for this session. */
   shareToken?: string | null;
   /** Share-page opens by anyone other than the host. */

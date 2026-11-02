@@ -19,11 +19,17 @@
  *    then starts local recording + creates (or, after a refresh, resumes) rows
  * 3. Chunks emitted every 5s → uploaded directly to R2
  * 4. Host stops → server broadcasts → all stop, report counts, finish uploads
+ *
+ * PAUSE:
+ * A host pause/resume is broadcast with the server instant it takes effect,
+ * and every recorder flips at that instant. Chunk times run on a recording
+ * clock that stands still while paused, so the paused stretch never enters the
+ * timeline - the finalizer stitches the take as if it hadn't happened.
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { isAxiosError } from "axios";
-import { useSocket } from "@/context/socket";
+import { type RecordingPauseData, useSocket } from "@/context/socket";
 import { useClockSync } from "@/context/clockSync";
 import api from "@/lib/axiosInstance";
 import { toast } from "@/lib/toast";
@@ -86,10 +92,16 @@ interface RecordingStartedData {
   autoGainControl: boolean;
   echoCancellation: boolean;
   recordingMode: "VIDEO_AND_AUDIO" | "AUDIO_ONLY";
+  pausedMs?: number;
+  pausedAt?: number | null;
 }
 
 /** How often the recording host reports metered seconds to the server. */
 const USAGE_HEARTBEAT_MS = 15_000;
+
+/** A pause/resume that runs this late here (missed broadcast, a throttled
+ *  timer) restarts the camera recorder so its footage re-lines up. */
+const PAUSE_SYNC_TOLERANCE_MS = 250;
 
 /** A late joiner's camera track can attach a beat after the start; wait this
  *  long for it so their first part has video. (A camera that lands later is
@@ -133,6 +145,10 @@ interface UseRecordingManagerOptions {
 interface UseRecordingManagerReturn {
   recordingState: RecordingState;
   isRecording: boolean;
+  /** The take is paused for everyone (recordingState stays "recording"). */
+  isPaused: boolean;
+  /** A pause/resume request is on its way to the server. */
+  isPauseRequestPending: boolean;
   recordingDurationMs: number;
   error: string | null;
   /** True when the server could not confirm the previous recording stopped. */
@@ -155,6 +171,9 @@ interface UseRecordingManagerReturn {
     screenStream?: MediaStream | null,
   ) => Promise<void>;
   stopRecording: () => Promise<void>;
+  /** HOST/CO-HOST: pause or resume the take for everyone. */
+  pauseRecording: () => Promise<void>;
+  resumeRecording: () => Promise<void>;
   /** Flush + complete this participant's own recording immediately (e.g. when
    *  they leave mid-recording). No-op if not currently recording. */
   finishLocalRecording: () => Promise<void>;
@@ -231,7 +250,31 @@ function startDataFromSession(session: RecordingSession): RecordingStartedData {
     echoCancellation: session.echoCancellation ?? false,
     recordingMode:
       session.recordingMode === "AUDIO_ONLY" ? "AUDIO_ONLY" : "VIDEO_AND_AUDIO",
+    pausedMs: session.pausedMs ?? 0,
+    pausedAt: session.pausedAt ? new Date(session.pausedAt).getTime() : null,
   };
+}
+
+/** Recorded (unpaused) time of a take at server instant `at`. */
+function recordedMsAt(
+  startedAt: number,
+  pause: RecordingPauseData | null,
+  at: number,
+): number {
+  let paused = pause?.pausedMs ?? 0;
+  if (pause?.pausedAt != null && at > pause.pausedAt) {
+    paused += Math.min(at, pause.resumedAt ?? at) - pause.pausedAt;
+  }
+  return Math.max(0, at - startedAt - paused);
+}
+
+/** Whether the take is paused at server instant `at`. */
+function isPausedAt(pause: RecordingPauseData | null, at: number): boolean {
+  return (
+    pause?.pausedAt != null &&
+    at >= pause.pausedAt &&
+    (pause.resumedAt == null || at < pause.resumedAt)
+  );
 }
 
 export default function useRecordingManager(
@@ -289,6 +332,15 @@ export default function useRecordingManager(
   );
   const [countdownValue, setCountdownValue] = useState<number | null>(null);
   const [sessionElapsedMs, setSessionElapsedMs] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isPauseRequestPending, setIsPauseRequestPending] = useState(false);
+  // What the host just clicked, shown until the recorders actually flip (the
+  // server's lead time) - so the button and timer react on click.
+  const [optimisticPaused, setOptimisticPaused] = useState<boolean | null>(
+    null,
+  );
+  const optimisticPausedRef = useRef<boolean | null>(null);
+  optimisticPausedRef.current = optimisticPaused;
 
   const streamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
@@ -320,6 +372,23 @@ export default function useRecordingManager(
   const startOffsetMsRef = useRef(0);
   /** performance.now() at this tab's start - every chunk time is relative to it. */
   const timeOriginRef = useRef(0);
+  /** The take's pause state, as broadcast by the server. */
+  const pauseStateRef = useRef<RecordingPauseData | null>(null);
+  /** The recording clock's link to server time, fixed at this tab's start
+   *  (performance.now() is monotonic; the synced server clock may step). */
+  const perfToServerRef = useRef(0);
+  /** Recorders are paused here (follows the server, a timer's jitter late). */
+  const pausedLocallyRef = useRef(false);
+  /** A pause or resume landed late here, so the recorder's footage no longer
+   *  lines up with the clock - resume on a fresh recorder part. */
+  const rotateOnResumeRef = useRef(false);
+  const pauseTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const pauseRequestInFlightRef = useRef(false);
+  // Assigned in the pause section below; reached through a ref by flows
+  // defined earlier.
+  const applyPauseStateRef = useRef<(state: RecordingPauseData) => void>(
+    () => undefined,
+  );
   const routesRef = useRef<Map<TrackKey, TrackRoute>>(new Map());
   const screenKeyRef = useRef<TrackKey | null>(null);
   const screenMaxSizesRef = useRef<
@@ -408,6 +477,11 @@ export default function useRecordingManager(
     setCountdownValue(null);
   }, []);
 
+  const clearPauseTimers = useCallback(() => {
+    for (const timer of pauseTimersRef.current) clearTimeout(timer);
+    pauseTimersRef.current = [];
+  }, []);
+
   const stopSessionClock = useCallback(() => {
     if (sessionClockIntervalRef.current) {
       clearInterval(sessionClockIntervalRef.current);
@@ -415,11 +489,31 @@ export default function useRecordingManager(
     }
   }, []);
 
+  /** Every recorder's clock: performance.now() that stands still across the
+   *  take's pauses - by the server's instants, so it agrees for everyone. */
+  const recordingNow = useCallback(() => {
+    const data = startDataRef.current;
+    if (!data) return performance.now();
+    const recorded = recordedMsAt(
+      data.startedAt,
+      pauseStateRef.current,
+      performance.now() + perfToServerRef.current,
+    );
+    return timeOriginRef.current + recorded - startOffsetMsRef.current;
+  }, []);
+
   const startSessionClock = useCallback(
     (startedAt: number) => {
+      // Recorded time, so the timer holds still while paused.
       const updateElapsed = () => {
+        // Paused on click, before the server's pause instant arrives.
+        if (optimisticPausedRef.current === true) return;
         setSessionElapsedMs(
-          Math.max(0, getServerTimeRef.current() - startedAt),
+          recordedMsAt(
+            startedAt,
+            pauseStateRef.current,
+            getServerTimeRef.current(),
+          ),
         );
       };
       stopSessionClock();
@@ -743,14 +837,18 @@ export default function useRecordingManager(
           autoGainControl: data.autoGainControl,
           echoCancellation: recordingEchoCancellationRef.current,
           timeOrigin: timeOriginRef.current,
+          clock: recordingNow,
+          paused: pausedLocallyRef.current,
           muted: !micEnabledRef.current,
         });
         if (!pcmRef.current.isRunning()) pcmStartFailuresRef.current += 1;
+        // Paused while the capture was opening.
+        pcmRef.current.setPaused(pausedLocallyRef.current);
       } finally {
         pcmStartingRef.current = false;
       }
     },
-    [ensureRoute],
+    [ensureRoute, recordingNow],
   );
 
   /** The camera track's recorder tracks: the live ones, with black video in
@@ -929,13 +1027,22 @@ export default function useRecordingManager(
         await waitUntilSyncedRef.current(1500);
         if (activeSessionRef.current !== data.sessionId) return;
 
-        // "How late am I" on the server's clock, measured at the go instant -
-        // ~0 for on-time participants, the real gap for a late joiner.
-        startOffsetMsRef.current = Math.max(
-          0,
-          getServerTimeRef.current() - data.startedAt,
+        // "How late am I" on the take's recorded time, measured at the go
+        // instant - ~0 for on-time participants, the real gap for a late
+        // joiner (pauses before they joined left out, like everyone's).
+        const serverNow = getServerTimeRef.current();
+        startOffsetMsRef.current = recordedMsAt(
+          data.startedAt,
+          pauseStateRef.current,
+          serverNow,
         );
         timeOriginRef.current = performance.now();
+        perfToServerRef.current = serverNow - timeOriginRef.current;
+        // Joined mid-pause: the recorders start paused.
+        const startPaused = isPausedAt(pauseStateRef.current, serverNow);
+        pausedLocallyRef.current = startPaused;
+        rotateOnResumeRef.current = false;
+        setIsPaused(startPaused);
         routesRef.current = new Map();
         takeChunksRef.current = {
           sessionId: data.sessionId,
@@ -960,7 +1067,13 @@ export default function useRecordingManager(
           localRef.current.startRecording(timeOriginRef.current, {
             videoResolution: data.videoResolution,
             targetFps: data.targetFps,
+            clock: recordingNow,
+            paused: startPaused,
           });
+        }
+        // Follow any pause or resume still ahead.
+        if (pauseStateRef.current) {
+          applyPauseStateRef.current(pauseStateRef.current);
         }
 
         // Starts the camera part and the PCM track from whatever tracks exist
@@ -988,6 +1101,7 @@ export default function useRecordingManager(
       acquireRecorderLock,
       syncSources,
       publishTakeChunks,
+      recordingNow,
     ],
   );
 
@@ -1020,6 +1134,12 @@ export default function useRecordingManager(
       startDataRef.current = take;
       sessionStartedAtRef.current = take.startedAt;
       activeSessionRef.current = take.sessionId;
+      pauseStateRef.current = {
+        sessionId: take.sessionId,
+        pausedMs: take.pausedMs ?? 0,
+        pausedAt: take.pausedAt ?? null,
+        resumedAt: null,
+      };
 
       const countdownMs = take.countdownMs ?? COUNTDOWN_MS;
       clearCountdown();
@@ -1125,6 +1245,9 @@ export default function useRecordingManager(
       }
 
       stoppingSessionRef.current = target;
+      clearPauseTimers();
+      setIsPaused(false);
+      setOptimisticPaused(null);
       // A newer take may already be counting down (we missed this one's stop):
       // never overwrite its UI state from here.
       const ownsUi = () =>
@@ -1215,6 +1338,7 @@ export default function useRecordingManager(
     },
     [
       clearCountdown,
+      clearPauseTimers,
       completeRoute,
       releaseRecorderLock,
       releaseBlackVideo,
@@ -1298,6 +1422,8 @@ export default function useRecordingManager(
     const stoppingSession = sessionId;
     try {
       setRecordingState("stopping");
+      // Freeze the timer on click, not when the server answers.
+      stopSessionClock();
       // The server stops the session and broadcasts the stop to everyone.
       await stopSessionMutation.mutateAsync({ spaceId, participantSessionId });
       setStopRequestFailed(false);
@@ -1309,6 +1435,9 @@ export default function useRecordingManager(
       setError(err instanceof Error ? err.message : "Failed to stop");
       setStopRequestFailed(true);
       setRecordingState(capturingSessionRef.current ? "recording" : "error");
+      if (capturingSessionRef.current && sessionStartedAtRef.current) {
+        startSessionClock(sessionStartedAtRef.current);
+      }
     } finally {
       stopRequestInFlightRef.current = false;
     }
@@ -1319,6 +1448,8 @@ export default function useRecordingManager(
     participantSessionId,
     stopSessionMutation,
     handleRecordingStopped,
+    stopSessionClock,
+    startSessionClock,
   ]);
 
   // ── Screen share ──────────────────────────────────────────────────────
@@ -1352,6 +1483,8 @@ export default function useRecordingManager(
         data.recordingMode === "AUDIO_ONLY" ||
         screenKeyRef.current ||
         screenAttachInFlightRef.current ||
+        // Paused: attached on resume.
+        pausedLocallyRef.current ||
         screenStream.getVideoTracks().length === 0
       ) {
         return;
@@ -1367,9 +1500,13 @@ export default function useRecordingManager(
         const key: TrackKey = `screen:${shareId}`;
 
         // Screen share can begin well after the session start, so its own
-        // server-time offset places it correctly on the timeline too.
+        // offset (in recorded time) places it correctly on the timeline too.
         const startOffsetMs = sessionStartedAtRef.current
-          ? Math.max(0, getServerTimeRef.current() - sessionStartedAtRef.current)
+          ? recordedMsAt(
+              sessionStartedAtRef.current,
+              pauseStateRef.current,
+              getServerTimeRef.current(),
+            )
           : 0;
 
         screenKeyRef.current = key;
@@ -1426,6 +1563,108 @@ export default function useRecordingManager(
     setScreenRecordingId(null);
   }, [completeRoute, sampleScreenSize]);
 
+  // ── Pause ─────────────────────────────────────────────────────────────
+
+  /** Pause every recorder now; `lateMs` past the take's pause instant. */
+  const pauseLocally = useCallback((lateMs: number) => {
+    if (!capturingSessionRef.current || pausedLocallyRef.current) return;
+    pausedLocallyRef.current = true;
+    if (lateMs > PAUSE_SYNC_TOLERANCE_MS) rotateOnResumeRef.current = true;
+    localRef.current.setPaused(true);
+    pcmRef.current.setPaused(true);
+    setIsPaused(true);
+  }, []);
+
+  const resumeLocally = useCallback((lateMs: number) => {
+    if (!capturingSessionRef.current || !pausedLocallyRef.current) return;
+    pausedLocallyRef.current = false;
+    const rotate =
+      rotateOnResumeRef.current || lateMs > PAUSE_SYNC_TOLERANCE_MS;
+    rotateOnResumeRef.current = false;
+    localRef.current.setPaused(false, { rotate });
+    pcmRef.current.setPaused(false);
+    setIsPaused(false);
+    // A share that started while paused was held back until now.
+    const screen = screenStreamRef.current;
+    if (screen && !screenKeyRef.current && liveTracks(screen).length > 0) {
+      void attachScreenStream(screen);
+    }
+  }, [attachScreenStream]);
+
+  /** Follow the take's pause state: flip at the instants it names. */
+  applyPauseStateRef.current = (state: RecordingPauseData) => {
+    if (state.sessionId !== activeSessionRef.current) return;
+    pauseStateRef.current = state;
+    clearPauseTimers();
+    // Not capturing yet (counting down): beginRecording picks it up.
+    if (!capturingSessionRef.current) return;
+    const at = (instant: number, action: (lateMs: number) => void) => {
+      const run = () => action(getServerTimeRef.current() - instant);
+      const delayMs = instant - getServerTimeRef.current();
+      if (delayMs <= 0) run();
+      else pauseTimersRef.current.push(setTimeout(run, delayMs));
+    };
+    const { pausedAt, resumedAt } = state;
+    if (pausedAt == null) {
+      // Resumed at an instant we never heard about: treat it as late.
+      resumeLocally(Number.POSITIVE_INFINITY);
+      return;
+    }
+    if (resumedAt == null || resumedAt > pausedAt) {
+      if (resumedAt == null || getServerTimeRef.current() < resumedAt) {
+        at(pausedAt, pauseLocally);
+      }
+    }
+    if (resumedAt != null) at(resumedAt, resumeLocally);
+    // Keep the timer honest across the flip.
+    if (sessionStartedAtRef.current) {
+      startSessionClock(sessionStartedAtRef.current);
+    }
+  };
+
+  const requestPause = useCallback(
+    async (paused: boolean) => {
+      if (!isHost || !sessionId || pauseRequestInFlightRef.current) return;
+      pauseRequestInFlightRef.current = true;
+      setIsPauseRequestPending(true);
+      setOptimisticPaused(paused);
+      try {
+        const { data } = await api.post<{ data: RecordingPauseData }>(
+          `/recording/session/${sessionId}/${paused ? "pause" : "resume"}`,
+          { spaceId, participantSessionId },
+        );
+        // The broadcast does the same; this covers a socket that's down.
+        if (data.data) applyPauseStateRef.current(data.data);
+      } catch (err) {
+        console.error(
+          `[RecordingManager] ${paused ? "pause" : "resume"} failed:`,
+          err,
+        );
+        setOptimisticPaused(null);
+        toast.error(
+          `Couldn't ${paused ? "pause" : "resume"} the recording. Try again.`,
+        );
+      } finally {
+        pauseRequestInFlightRef.current = false;
+        setIsPauseRequestPending(false);
+      }
+    },
+    [isHost, sessionId, spaceId, participantSessionId],
+  );
+
+  // The recorders caught up with the click.
+  useEffect(() => {
+    if (optimisticPaused !== null && optimisticPaused === isPaused) {
+      setOptimisticPaused(null);
+    }
+  }, [optimisticPaused, isPaused]);
+
+  const pauseRecording = useCallback(() => requestPause(true), [requestPause]);
+  const resumeRecording = useCallback(
+    () => requestPause(false),
+    [requestPause],
+  );
+
   // ── Lifecycle wiring ──────────────────────────────────────────────────
 
   // Finalize THIS participant's own recording on demand - used when leaving
@@ -1445,11 +1684,12 @@ export default function useRecordingManager(
     () => () => {
       clearCountdown();
       stopSessionClock();
+      clearPauseTimers();
       if (sourceSyncTimerRef.current) clearTimeout(sourceSyncTimerRef.current);
       releaseRecorderLockRef.current?.();
       releaseBlackVideo();
     },
-    [clearCountdown, stopSessionClock, releaseBlackVideo],
+    [clearCountdown, stopSessionClock, clearPauseTimers, releaseBlackVideo],
   );
 
   // Missed the socket start (joined during the take, socket reconnecting, or
@@ -1464,6 +1704,24 @@ export default function useRecordingManager(
     }
     handleRecordingStarted(startDataFromSession(active));
   }, [activeRecordingQuery.data, handleRecordingStarted, recordingState]);
+
+  // Missed a pause or resume broadcast: the poll's pause state disagrees.
+  useEffect(() => {
+    const active = activeRecordingQuery.data;
+    if (!active || active.id !== activeSessionRef.current) return;
+    const polled = startDataFromSession(active);
+    // Compare where each state ends up, not the state right now: the server
+    // records a pause/resume before its lead time runs out here.
+    const current = pauseStateRef.current;
+    const willBePaused = current?.pausedAt != null && current.resumedAt == null;
+    if ((polled.pausedAt != null) === willBePaused) return;
+    applyPauseStateRef.current({
+      sessionId: active.id,
+      pausedMs: polled.pausedMs ?? 0,
+      pausedAt: polled.pausedAt ?? null,
+      resumedAt: null,
+    });
+  }, [activeRecordingQuery.data]);
 
   // Missed the socket stop: the poll shows our session is no longer the active
   // one while we're still capturing (after a short grace for a brand-new take).
@@ -1497,11 +1755,15 @@ export default function useRecordingManager(
       handleRecordingStarted(data);
     const onStopped = (stoppedSessionId: string) =>
       void handleRecordingStopped(stoppedSessionId);
+    const onPauseChanged = (data: RecordingPauseData) =>
+      applyPauseStateRef.current(data);
     socket.on("recording-started", onStarted);
     socket.on("recording-stopped", onStopped);
+    socket.on("recording-pause-changed", onPauseChanged);
     return () => {
       socket.off("recording-started", onStarted);
       socket.off("recording-stopped", onStopped);
+      socket.off("recording-pause-changed", onPauseChanged);
     };
   }, [socket, handleRecordingStarted, handleRecordingStopped]);
 
@@ -1564,6 +1826,8 @@ export default function useRecordingManager(
   return {
     recordingState,
     isRecording: recordingState === "recording",
+    isPaused: optimisticPaused ?? isPaused,
+    isPauseRequestPending,
     recordingDurationMs: sessionElapsedMs || localRecording.recordingDurationMs,
     error,
     stopRequestFailed,
@@ -1579,6 +1843,8 @@ export default function useRecordingManager(
     countdownValue,
     startRecording,
     stopRecording,
+    pauseRecording,
+    resumeRecording,
     finishLocalRecording,
     setStream,
     setScreenStream,

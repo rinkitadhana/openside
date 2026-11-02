@@ -28,11 +28,34 @@ export interface RecordingStartedPayload {
 	autoGainControl: boolean;
 	echoCancellation: boolean;
 	recordingMode: "VIDEO_AND_AUDIO" | "AUDIO_ONLY";
+	/** Pause state at the time of sending - see RecordingPausePayload. */
+	pausedMs: number;
+	pausedAt: number | null;
+}
+
+/** Lead time before a pause or resume takes effect, so every participant's
+ *  recorder flips at the same server instant despite socket latency. */
+export const RECORDING_PAUSE_LEAD_MS = 400;
+
+/**
+ * A take paused or resumed. Recorders leave paused time out of their timeline,
+ * so at server time T a take has recorded
+ *   T - startedAt - pausedMs - (time since pausedAt, until resumedAt).
+ */
+export interface RecordingPausePayload {
+	sessionId: string;
+	/** Pauses resumed before the one at `pausedAt`. */
+	pausedMs: number;
+	/** Server instant the current (or just-resumed) pause began; null = none. */
+	pausedAt: number | null;
+	/** Server instant the pause at `pausedAt` ends; null while still paused. */
+	resumedAt: number | null;
 }
 
 interface RecordingEventPublisher {
 	started(roomId: string, payload: RecordingStartedPayload): void;
 	stopped(roomId: string, sessionId: string): void;
+	pauseChanged(roomId: string, payload: RecordingPausePayload): void;
 }
 
 let publisher: RecordingEventPublisher | null = null;
@@ -57,6 +80,8 @@ export function buildRecordingStartedPayload(session: {
 	autoGainControl: boolean;
 	echoCancellation: boolean;
 	recordingMode: string;
+	pausedMs?: number;
+	pausedAt?: Date | null;
 }): RecordingStartedPayload {
 	return {
 		sessionId: session.id,
@@ -71,6 +96,8 @@ export function buildRecordingStartedPayload(session: {
 		echoCancellation: session.echoCancellation,
 		recordingMode:
 			session.recordingMode === "AUDIO_ONLY" ? "AUDIO_ONLY" : "VIDEO_AND_AUDIO",
+		pausedMs: session.pausedMs ?? 0,
+		pausedAt: session.pausedAt?.getTime() ?? null,
 	};
 }
 
@@ -95,5 +122,17 @@ export function publishRecordingStopped(
 		publisher?.stopped(roomId, sessionId);
 	} catch (error) {
 		console.error("[RecordingEvents] stop broadcast failed:", error);
+	}
+}
+
+export function publishRecordingPauseChanged(
+	roomId: string | null | undefined,
+	payload: RecordingPausePayload,
+) {
+	if (!roomId) return;
+	try {
+		publisher?.pauseChanged(roomId, payload);
+	} catch (error) {
+		console.error("[RecordingEvents] pause broadcast failed:", error);
 	}
 }

@@ -7,7 +7,10 @@ import {
 	clampVideoResolution,
 } from "../lib/recording-constants.ts";
 import {
+	RECORDING_PAUSE_LEAD_MS,
+	type RecordingPausePayload,
 	buildRecordingStartedPayload,
+	publishRecordingPauseChanged,
 	publishRecordingStarted,
 	publishRecordingStopped,
 } from "../lib/recording-events.ts";
@@ -838,8 +841,83 @@ export async function getActiveSessionBySpaceId(spaceId: string) {
 			autoGainControl: true,
 			echoCancellation: true,
 			recordingMode: true,
+			pausedMs: true,
+			pausedAt: true,
 		},
 	});
+}
+
+/**
+ * Pause or resume a space take for everyone. Takes effect RECORDING_PAUSE_LEAD_MS
+ * from now so every participant's recorder flips at the same server instant;
+ * pausing an already-paused take (or resuming a running one) is a no-op.
+ */
+export async function setSpaceSessionPaused(
+	sessionId: string,
+	spaceId: string,
+	paused: boolean,
+): Promise<RecordingPausePayload> {
+	const session = await prisma.recordingSession.findUnique({
+		where: { id: sessionId },
+		select: {
+			status: true,
+			spaceId: true,
+			startedAt: true,
+			pausedAt: true,
+			pausedMs: true,
+			lastMeteredAt: true,
+			space: { select: { joinCode: true } },
+		},
+	});
+
+	if (!session || session.spaceId !== spaceId) {
+		throw new Error("SESSION_NOT_FOUND");
+	}
+	if (session.status !== "ACTIVE") {
+		throw new Error("SESSION_NOT_ACTIVE");
+	}
+
+	const current: RecordingPausePayload = {
+		sessionId,
+		pausedMs: session.pausedMs,
+		pausedAt: session.pausedAt?.getTime() ?? null,
+		resumedAt: null,
+	};
+	if (paused === !!session.pausedAt) return current;
+
+	const effectiveAt = Date.now() + RECORDING_PAUSE_LEAD_MS;
+	let payload: RecordingPausePayload;
+
+	if (paused) {
+		// Credit everything up to the pause; the meter skips paused sessions.
+		await meterSessionById(sessionId);
+		const claimed = await prisma.recordingSession.updateMany({
+			where: { id: sessionId, status: "ACTIVE", pausedAt: null },
+			data: { pausedAt: new Date(effectiveAt) },
+		});
+		if (claimed.count === 0) return current;
+		payload = { ...current, pausedAt: effectiveAt };
+	} else {
+		const pausedAt = session.pausedAt as Date;
+		// Resumed within the lead time: the pause still happened, for 0ms.
+		const resumedAt = Math.max(effectiveAt, pausedAt.getTime());
+		const pauseLength = resumedAt - pausedAt.getTime();
+		const meteredTo = session.lastMeteredAt ?? session.startedAt;
+		const claimed = await prisma.recordingSession.updateMany({
+			where: { id: sessionId, status: "ACTIVE", pausedAt },
+			data: {
+				pausedAt: null,
+				pausedMs: { increment: pauseLength },
+				// Skip the meter past the pause so it's never credited.
+				lastMeteredAt: new Date(meteredTo.getTime() + pauseLength),
+			},
+		});
+		if (claimed.count === 0) return current;
+		payload = { ...current, resumedAt };
+	}
+
+	publishRecordingPauseChanged(session.space?.joinCode, payload);
+	return payload;
 }
 
 // ParticipantRecording Operations
@@ -1430,10 +1508,10 @@ export async function reconcileStaleRecordingSessions(): Promise<void> {
 			participantRecordings: {
 				none: { lastChunkAt: { gt: cutoff } },
 			},
-			// A paused screen take uploads nothing for as long as it's paused,
-			// but its tab still heartbeats - only a silent one is abandoned.
+			// A paused take uploads nothing for as long as it's paused, but its
+			// host's tab still heartbeats - only a silent one is abandoned.
 			OR: [
-				{ source: "SPACE" },
+				{ source: "SPACE", pausedAt: null },
 				{ lastHeartbeatAt: null },
 				{ lastHeartbeatAt: { lte: cutoff } },
 			],

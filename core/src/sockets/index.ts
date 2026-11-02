@@ -9,6 +9,7 @@
  * EVENTS FLOW:
  * - recording-started: the API started a session → all participants start local recording
  * - recording-stopped: the session stopped → all participants stop and finalize
+ * - recording-pause-changed: the take paused/resumed → every recorder follows
  *
  * Start/stop are published by the server (lib/recording-events) after the
  * authenticated API call commits - clients can't emit them, so a room code alone
@@ -96,6 +97,9 @@ export function initSocket(httpServer: HTTPServer) {
 		stopped(roomId, sessionId) {
 			io.to(roomId).emit("recording-stopped", sessionId);
 		},
+		pauseChanged(roomId, payload) {
+			io.to(roomId).emit("recording-pause-changed", payload);
+		},
 	});
 
 	io.on("connection", (socket) => {
@@ -171,6 +175,8 @@ export function initSocket(httpServer: HTTPServer) {
 									autoGainControl: true,
 									echoCancellation: true,
 									recordingMode: true,
+									pausedMs: true,
+									pausedAt: true,
 								},
 							},
 						},

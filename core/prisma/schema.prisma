@@ -223,8 +223,13 @@ model RecordingSession {
   // not chunk activity alone - is what tells a live session from an abandoned
   // one.
   lastHeartbeatAt         DateTime?
-  // Set while a screen take is paused: the paused stretch isn't metered.
+  // Set while a take is paused: the paused stretch isn't metered. For a SPACE
+  // take it's the server instant every participant's recorder pauses at.
   pausedAt                DateTime?
+  // SPACE takes: total length of the pauses already resumed. Every recorder
+  // leaves paused time out of its chunk timeline, so a late joiner's start
+  // offset is wall time minus this.
+  pausedMs                Int                    @default(0)
   // Per-session cloud backup opt-in (PRO/self-host only; always false on DEMO).
   cloudBackup             Boolean                @default(false)
   // Constant frame rate every participant's master is normalized to (CFR) at

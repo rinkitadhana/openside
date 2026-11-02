@@ -48,6 +48,10 @@ interface RecordingContextValue {
   recordingState: RecordingState;
   /** True while a recording is active anywhere in its lifecycle. */
   isActive: boolean;
+  /** The take is paused for everyone (recordingState stays "recording"). */
+  isPaused: boolean;
+  /** A pause/resume request is on its way. */
+  isPauseRequestPending: boolean;
   recordingDurationMs: number;
   pendingUploads: number;
   /** Chunk upload progress, 0–100. */
@@ -74,6 +78,8 @@ interface RecordingContextValue {
   setCloudBackup: (enabled: boolean) => void;
   openRecording: () => void;
   stopRecording: () => Promise<void>;
+  /** Hosts/co-hosts: pause or resume the take for everyone. */
+  togglePause: () => void;
   toggleRecording: () => void;
 }
 
@@ -497,6 +503,8 @@ const RecordingProvider = ({
     () => ({
       recordingState: manager.recordingState,
       isActive,
+      isPaused: manager.isPaused,
+      isPauseRequestPending: manager.isPauseRequestPending,
       recordingDurationMs: manager.recordingDurationMs,
       pendingUploads: manager.pendingUploads,
       uploadProgress,
@@ -524,6 +532,10 @@ const RecordingProvider = ({
         );
       },
       stopRecording,
+      togglePause: () => {
+        if (manager.isPaused) void manager.resumeRecording();
+        else void manager.pauseRecording();
+      },
       toggleRecording,
     }),
     [

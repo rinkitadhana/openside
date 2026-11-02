@@ -39,6 +39,9 @@ interface RecordingSessionData {
   autoGainControl: boolean;
   echoCancellation: boolean;
   recordingMode: "VIDEO_AND_AUDIO" | "AUDIO_ONLY";
+  /** Pause state when sent - see RecordingPauseData. */
+  pausedMs?: number;
+  pausedAt?: number | null;
 }
 
 // One participant's post-stop upload progress, relayed so the host can watch it
@@ -54,9 +57,21 @@ export interface UploadProgressData {
   total?: number;
 }
 
+/** A take paused or resumed for everyone, effective at server instants. */
+export interface RecordingPauseData {
+  sessionId: string;
+  /** Pauses resumed before the one at `pausedAt`. */
+  pausedMs: number;
+  /** When the current (or just-resumed) pause began; null = none. */
+  pausedAt: number | null;
+  /** When the pause at `pausedAt` ends; null while still paused. */
+  resumedAt: number | null;
+}
+
 interface ServerToClientEvents {
   "recording-started": (data: RecordingSessionData) => void;
   "recording-stopped": (sessionId: string) => void;
+  "recording-pause-changed": (data: RecordingPauseData) => void;
   "participant-upload-progress": (data: UploadProgressData) => void;
 }
 
