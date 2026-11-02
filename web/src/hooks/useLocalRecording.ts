@@ -587,7 +587,12 @@ export default function useLocalRecording(
       ];
       for (const recorder of recorders) {
         try {
-          if (paused && recorder?.state === "recording") recorder.pause();
+          if (paused && recorder?.state === "recording") {
+            // Hand over what's buffered since the last chunk as its own chunk,
+            // so it uploads now instead of waiting in the recorder until stop.
+            recorder.requestData();
+            recorder.pause();
+          }
           if (!paused && recorder?.state === "paused") recorder.resume();
         } catch (error) {
           console.warn("[Recording] couldn't pause/resume a recorder:", error);
