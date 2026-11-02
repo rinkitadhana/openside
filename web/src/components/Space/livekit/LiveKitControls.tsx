@@ -24,7 +24,6 @@ import {
   BsFillRecordCircleFill,
 } from "react-icons/bs";
 import {
-  FiCheck,
   FiCheckSquare,
   FiChevronDown,
   FiChevronUp,
@@ -312,11 +311,7 @@ const LiveUploadStatus = ({
       <span
         className={cn(
           "relative grid size-[28px] shrink-0 place-items-center transition-colors",
-          behind
-            ? "text-amber-400"
-            : caughtUp
-              ? "text-emerald-500"
-              : "text-foreground",
+          behind ? "text-amber-400" : "text-foreground",
         )}
       >
         <svg
@@ -346,14 +341,14 @@ const LiveUploadStatus = ({
             className="transition-[stroke-dashoffset] duration-200 ease-out"
           />
         </svg>
-        {caughtUp ? (
-          <FiCheck className="size-[13.5px]" strokeWidth={3} />
-        ) : (
-          <FiUploadCloud className="size-[13.5px]" strokeWidth={2.5} />
-        )}
+        <FiUploadCloud className="size-[13.5px]" strokeWidth={2.5} />
       </span>
-      <span className="min-w-[2.5rem] text-left text-[15px] font-medium tabular-nums text-foreground">
-        {percent}%
+      {/* A hidden "100%" sizes the label, so going 99 -> 100 doesn't shift it. */}
+      <span className="grid text-left text-[15px] font-medium tabular-nums text-foreground">
+        <span className="invisible col-start-1 row-start-1" aria-hidden="true">
+          100%
+        </span>
+        <span className="col-start-1 row-start-1">{percent}%</span>
       </span>
 
       <span
