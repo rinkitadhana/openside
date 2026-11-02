@@ -250,6 +250,8 @@ export function initSocket(httpServer: HTTPServer) {
 					sessionId: string;
 					progress: number;
 					done: boolean;
+					uploaded?: number;
+					total?: number;
 				},
 			) => {
 				// socket.rooms drops the room when a kick removes this socket.
@@ -267,11 +269,18 @@ export function initSocket(httpServer: HTTPServer) {
 				// can only report progress for themselves.
 				const identity = memberships.get(roomId)?.identity ?? data.identity;
 				if (typeof identity !== "string") return;
+				const isCount = (value: unknown): value is number =>
+					typeof value === "number" && Number.isInteger(value) && value >= 0;
+				const hasCounts =
+					isCount(data.uploaded) &&
+					isCount(data.total) &&
+					data.uploaded <= data.total;
 				socket.broadcast.to(roomId).emit("participant-upload-progress", {
 					identity,
 					sessionId: data.sessionId,
 					progress: Math.min(100, Math.max(0, data.progress)),
 					done: data.done === true,
+					...(hasCounts ? { uploaded: data.uploaded, total: data.total } : {}),
 				});
 			},
 		);

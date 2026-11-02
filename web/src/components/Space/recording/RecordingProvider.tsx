@@ -39,6 +39,9 @@ import CountdownOverlay from "./CountdownOverlay";
 export interface ParticipantUpload {
   progress: number;
   done: boolean;
+  /** Chunks of the take uploaded / recorded, when the client reports them. */
+  uploaded?: number;
+  total?: number;
 }
 
 interface RecordingContextValue {
@@ -428,6 +431,7 @@ const RecordingProvider = ({
   const recordingSessionId = manager.sessionId;
   const localIdentity = localParticipant.identity;
   const uploadDone = manager.recordingState === "complete";
+  const { uploaded: chunksUploaded, total: chunksTotal } = manager.takeChunks;
   const isUploadPhase =
     uploadDone ||
     manager.recordingState === "stopping" ||
@@ -439,6 +443,8 @@ const RecordingProvider = ({
       sessionId: recordingSessionId,
       progress: uploadDone ? 100 : uploadProgress,
       done: uploadDone,
+      uploaded: chunksUploaded,
+      total: chunksTotal,
     });
   }, [
     socket,
@@ -448,6 +454,8 @@ const RecordingProvider = ({
     isUploadPhase,
     uploadDone,
     uploadProgress,
+    chunksUploaded,
+    chunksTotal,
   ]);
 
   // Tagged with its session so a new recording starts from an empty map.
@@ -463,7 +471,12 @@ const RecordingProvider = ({
         sessionId: recordingSessionId,
         uploads: {
           ...(prev.sessionId === recordingSessionId ? prev.uploads : {}),
-          [data.identity]: { progress: data.progress, done: data.done },
+          [data.identity]: {
+            progress: data.progress,
+            done: data.done,
+            uploaded: data.uploaded,
+            total: data.total,
+          },
         },
       }));
     };

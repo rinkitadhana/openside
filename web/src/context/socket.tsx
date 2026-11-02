@@ -49,6 +49,9 @@ export interface UploadProgressData {
   /** 0-100. */
   progress: number;
   done: boolean;
+  /** Chunks of the take uploaded / recorded so far. */
+  uploaded?: number;
+  total?: number;
 }
 
 interface ServerToClientEvents {

@@ -271,6 +271,11 @@ const savedCardDismissKey = (sessionId: string) =>
 const clampPercent = (value: number) =>
   Math.max(0, Math.min(100, Math.round(value)));
 
+type ChunkCounts = { uploaded: number; total: number };
+
+const formatChunkCount = (count: number) =>
+  `${count} ${count === 1 ? "chunk" : "chunks"}`;
+
 const UPLOAD_RING_RADIUS = 12;
 const UPLOAD_RING_CIRCUMFERENCE = 2 * Math.PI * UPLOAD_RING_RADIUS;
 
@@ -397,6 +402,7 @@ const SavedSessionCard = ({
   sessionId,
   onVisit,
   uploadProgress = null,
+  chunks = null,
   participantUploads = null,
 }: {
   spaceId: string | undefined;
@@ -404,11 +410,26 @@ const SavedSessionCard = ({
   onVisit: () => void;
   /** Set while this participant's chunks are still uploading (0-100). */
   uploadProgress?: number | null;
+  /** This participant's chunks in the take: uploaded vs recorded. */
+  chunks?: ChunkCounts | null;
   /** Hosts only: other participants' socket-reported uploads by identity. */
   participantUploads?: Record<string, ParticipantUpload> | null;
 }) => {
   const isUploading = uploadProgress !== null;
   const percent = clampPercent(uploadProgress ?? 0);
+  // uploadProgress is the chunk in flight, which restarts at 0 for every
+  // chunk - the bar shows the whole take instead, nudged by that chunk.
+  const hasChunks = chunks !== null && chunks.total > 0;
+  const overallPercent = hasChunks
+    ? chunks.uploaded >= chunks.total
+      ? 100
+      : Math.min(
+          99,
+          clampPercent(
+            ((chunks.uploaded + percent / 100) / chunks.total) * 100,
+          ),
+        )
+    : percent;
   const allParticipants = useParticipants();
   const showOthers = participantUploads !== null;
   // Pull the current session's per-track thumbnails (early posters from the first
@@ -480,6 +501,7 @@ const SavedSessionCard = ({
     person: Person;
     done: boolean;
     progress: number | null;
+    chunks: ChunkCounts | null;
     /** No longer in the call - their upload continues from their browser. */
     left: boolean;
   };
@@ -496,6 +518,7 @@ const SavedSessionCard = ({
       person: personFor(local.identity),
       done: !isUploading,
       progress: percent,
+      chunks: hasChunks ? chunks : null,
       left: false,
     });
   }
@@ -521,6 +544,12 @@ const SavedSessionCard = ({
         person: personFor(identity),
         done: reported?.done === true || uploaded === true,
         progress: reported ? clampPercent(reported.progress) : null,
+        chunks:
+          reported?.uploaded !== undefined &&
+          reported.total !== undefined &&
+          reported.total > 0
+            ? { uploaded: reported.uploaded, total: reported.total }
+            : null,
         left: !inCall.has(identity),
       });
     }
@@ -586,7 +615,7 @@ const SavedSessionCard = ({
 
       {/* One row per participant in the recording */}
       <div className="flex flex-col gap-1">
-        {rows.map(({ identity, person, done, progress, left }) => {
+        {rows.map(({ identity, person, done, progress, chunks, left }) => {
           return (
             <div
               key={identity}
@@ -604,12 +633,18 @@ const SavedSessionCard = ({
                   </span>
                   <span className="text-xs tabular-nums text-foreground/50">
                     {done
-                      ? "Uploaded"
+                      ? chunks
+                        ? `Uploaded · ${formatChunkCount(chunks.total)}`
+                        : "Uploaded"
                       : left
-                        ? "Left the call · uploading from their browser"
-                        : progress === null
-                          ? "Uploading…"
-                          : `Uploading… ${progress}%`}
+                        ? chunks
+                          ? `Left the call · ${chunks.uploaded} of ${formatChunkCount(chunks.total)}`
+                          : "Left the call · uploading from their browser"
+                        : chunks
+                          ? `Uploading ${chunks.uploaded} of ${formatChunkCount(chunks.total)}`
+                          : progress === null
+                            ? "Uploading…"
+                            : `Uploading… ${progress}%`}
                   </span>
                 </span>
               </span>
@@ -627,18 +662,39 @@ const SavedSessionCard = ({
         // Takes the "Go to project" button's slot until the upload finishes.
         <div
           role="status"
-          aria-label={`Uploading recording, ${percent}%`}
+          aria-label={
+            hasChunks
+              ? `Uploading recording, ${chunks.uploaded} of ${formatChunkCount(chunks.total)} uploaded`
+              : `Uploading recording, ${percent}%`
+          }
           className="flex min-h-10 items-center gap-2.5 rounded-xl border border-call-border bg-call-background px-3"
         >
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-foreground/10">
             <div
               className="h-full rounded-full bg-brand transition-[width] duration-500 ease-out"
-              style={{ width: `${percent}%` }}
+              style={{ width: `${overallPercent}%` }}
             />
           </div>
-          <span className="w-9 shrink-0 text-right text-xs font-medium tabular-nums text-foreground/70">
-            {percent}%
-          </span>
+          {hasChunks ? (
+            // Sized by the widest count it can reach, so it doesn't shift the
+            // bar as the uploaded number gains digits.
+            <span className="grid shrink-0 text-right text-xs font-medium tabular-nums text-foreground/70">
+              <span
+                className="invisible col-start-1 row-start-1"
+                aria-hidden="true"
+              >
+                {chunks.total}/{chunks.total} chunks
+              </span>
+              <span className="col-start-1 row-start-1">
+                {chunks.uploaded}/{chunks.total}{" "}
+                {chunks.total === 1 ? "chunk" : "chunks"}
+              </span>
+            </span>
+          ) : (
+            <span className="w-9 shrink-0 text-right text-xs font-medium tabular-nums text-foreground/70">
+              {percent}%
+            </span>
+          )}
         </div>
       ) : (
         <button
@@ -1509,6 +1565,7 @@ const LiveKitControls = ({
             sessionId={recording.sessionId}
             onVisit={recording.openRecording}
             uploadProgress={recording.uploadProgress}
+            chunks={recording.takeChunks}
             participantUploads={participantUploads}
           />
         </div>
@@ -1523,6 +1580,7 @@ const LiveKitControls = ({
           spaceId={recording.spaceId}
           sessionId={recording.sessionId}
           onVisit={recording.openRecording}
+          chunks={recording.takeChunks}
           participantUploads={participantUploads}
         />
       </div>
