@@ -1509,7 +1509,8 @@ const LiveKitControls = ({
   };
 
   // While paused, the upload status goes away once it has shown 100% for a
-  // moment (the chunk count lands a beat before the percent catches up).
+  // moment (the chunk count lands a beat before the percent catches up), and
+  // stays away - through resume - until the next chunk is recorded.
   const liveUploadPercent =
     recording.takeChunks.uploaded === 0 && recording.uploadProgress === 100
       ? 0
@@ -1519,15 +1520,24 @@ const LiveKitControls = ({
     recording.takeChunks.total > 0 &&
     recording.takeChunks.uploaded >= recording.takeChunks.total &&
     liveUploadPercent >= 100;
-  const [hidePausedUpload, setHidePausedUpload] = useState(false);
+  const [uploadHiddenAtTotal, setUploadHiddenAtTotal] = useState<
+    number | null
+  >(null);
+  const takeChunkTotal = recording.takeChunks.total;
   useEffect(() => {
-    if (!pausedUploadDone) {
-      setHidePausedUpload(false);
-      return;
-    }
-    const timer = setTimeout(() => setHidePausedUpload(true), 800);
+    if (!pausedUploadDone) return;
+    const timer = setTimeout(
+      () => setUploadHiddenAtTotal(takeChunkTotal),
+      800,
+    );
     return () => clearTimeout(timer);
-  }, [pausedUploadDone]);
+  }, [pausedUploadDone, takeChunkTotal]);
+  // A new take counts from 0 again.
+  if (uploadHiddenAtTotal !== null && takeChunkTotal < uploadHiddenAtTotal) {
+    setUploadHiddenAtTotal(null);
+  }
+  const hidePausedUpload =
+    uploadHiddenAtTotal !== null && takeChunkTotal === uploadHiddenAtTotal;
 
   // Pause/resume for everyone - hosts and co-hosts, only while capturing.
   const renderPauseControl = () => {
