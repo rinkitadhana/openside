@@ -922,7 +922,7 @@ const PreJoinScreen = ({
                     disabled={isLoading || !stream}
                     className={`shrink-0 flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium select-none cursor-pointer transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 ${
                       isTestingMic
-                        ? "bg-brand/20 text-foreground"
+                        ? "bg-brand/60 text-white"
                         : "bg-primary text-foreground/80 hover:bg-primary/60"
                     }`}
                   >
@@ -991,7 +991,7 @@ const PreJoinScreen = ({
                       onClick={toggleSpeakerTest}
                       className={`shrink-0 flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium select-none cursor-pointer transition-all duration-200 ${
                         isTestingSpeaker
-                          ? "bg-brand/20 text-foreground"
+                          ? "bg-brand/60 text-white"
                           : "bg-primary text-foreground/80 hover:bg-primary/60"
                       }`}
                     >
