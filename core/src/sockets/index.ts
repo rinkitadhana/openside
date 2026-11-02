@@ -39,6 +39,10 @@ type RecordingCommentEvent = {
 const recordingCommentsRoom = (sessionId: string) =>
 	`recording-comments:${sessionId}`;
 
+// Every socket that joined a space as this participant, so a kick can find them.
+const participantRoom = (participantId: string) =>
+	`participant:${participantId}`;
+
 // REST controllers publish here only after the comment is committed.
 let socketServer: SocketIOServer | null = null;
 
@@ -60,6 +64,18 @@ export function emitRecordingCommentUpdated(
 	socketServer
 		?.to(recordingCommentsRoom(sessionId))
 		.emit("recording-comment-updated", comment);
+}
+
+/**
+ * Drop a kicked participant's sockets from the space room. Membership is only
+ * checked on join-room, so without this they keep receiving its events.
+ */
+export function removeParticipantFromRoom(
+	roomId: string,
+	participantId: string,
+) {
+	const room = participantRoom(participantId);
+	socketServer?.in(room).socketsLeave([roomId, room]);
 }
 
 export function initSocket(httpServer: HTTPServer) {
@@ -98,8 +114,11 @@ export function initSocket(httpServer: HTTPServer) {
 			if (typeof ack === "function") ack(Date.now());
 		});
 
-		// Rooms this socket proved membership of, mapped to its LiveKit identity.
-		const memberships = new Map<string, string | null>();
+		// Rooms this socket proved membership of, mapped to the participant.
+		const memberships = new Map<
+			string,
+			{ participantId: string; identity: string | null }
+		>();
 
 		/**
 		 * EVENT: join-room / leave-room
@@ -107,70 +126,88 @@ export function initSocket(httpServer: HTTPServer) {
 		 * recording coordination broadcasts (io.to(roomId)) actually reach them.
 		 * The join code is shared freely, so the caller must also send their
 		 * private participant session id for an active participant of that space.
+		 * The ack reports whether the join worked, so the client can retry when
+		 * the lookup failed or the participant isn't active yet.
 		 */
-		socket.on("join-room", async (roomId: unknown, sessionId: unknown) => {
-			if (
-				typeof roomId !== "string" ||
-				!roomId ||
-				typeof sessionId !== "string" ||
-				!sessionId
-			) {
-				return;
-			}
+		socket.on(
+			"join-room",
+			async (roomId: unknown, sessionId: unknown, ack?: unknown) => {
+				const reply = (joined: boolean) => {
+					if (typeof ack === "function") ack(joined);
+				};
+				if (
+					typeof roomId !== "string" ||
+					!roomId ||
+					typeof sessionId !== "string" ||
+					!sessionId
+				) {
+					reply(false);
+					return;
+				}
 
-			// Replay a live session to a (re)joining client from the database - the
-			// source of truth - so a stale cache can never restart a stopped take.
-			const space = await prisma.space
-				.findUnique({
-					where: { joinCode: roomId },
-					select: {
-						participants: {
-							where: { participantSessionId: sessionId, isActive: true },
-							take: 1,
-							select: { livekitIdentity: true },
-						},
-						recordingSessions: {
-							where: { status: "ACTIVE" },
-							orderBy: { startedAt: "desc" },
-							take: 1,
-							select: {
-								id: true,
-								spaceRecordingSessionId: true,
-								startedAt: true,
-								videoResolution: true,
-								targetFps: true,
-								audioSampleRate: true,
-								noiseSuppression: true,
-								autoGainControl: true,
-								echoCancellation: true,
-								recordingMode: true,
+				// Replay a live session to a (re)joining client from the database - the
+				// source of truth - so a stale cache can never restart a stopped take.
+				const space = await prisma.space
+					.findUnique({
+						where: { joinCode: roomId },
+						select: {
+							participants: {
+								where: { participantSessionId: sessionId, isActive: true },
+								take: 1,
+								select: { id: true, livekitIdentity: true },
+							},
+							recordingSessions: {
+								where: { status: "ACTIVE" },
+								orderBy: { startedAt: "desc" },
+								take: 1,
+								select: {
+									id: true,
+									spaceRecordingSessionId: true,
+									startedAt: true,
+									videoResolution: true,
+									targetFps: true,
+									audioSampleRate: true,
+									noiseSuppression: true,
+									autoGainControl: true,
+									echoCancellation: true,
+									recordingMode: true,
+								},
 							},
 						},
-					},
-				})
-				.catch((error) => {
-					console.error(
-						`[Socket] room membership lookup failed for ${roomId}:`,
-						error,
-					);
-					return null;
+					})
+					.catch((error) => {
+						console.error(
+							`[Socket] room membership lookup failed for ${roomId}:`,
+							error,
+						);
+						return null;
+					});
+				const participant = space?.participants[0];
+				if (!participant) {
+					reply(false);
+					return;
+				}
+
+				memberships.set(roomId, {
+					participantId: participant.id,
+					identity: participant.livekitIdentity,
 				});
-			const participant = space?.participants[0];
-			if (!participant) return;
+				socket.join([roomId, participantRoom(participant.id)]);
+				reply(true);
 
-			memberships.set(roomId, participant.livekitIdentity);
-			socket.join(roomId);
+				const session = space.recordingSessions[0];
+				if (!session) return;
 
-			const session = space.recordingSessions[0];
-			if (!session) return;
-
-			socket.emit("recording-started", buildRecordingStartedPayload(session));
-		});
+				socket.emit("recording-started", buildRecordingStartedPayload(session));
+			},
+		);
 
 		socket.on("leave-room", (roomId: string) => {
 			if (typeof roomId !== "string" || !roomId) return;
+			const membership = memberships.get(roomId);
 			memberships.delete(roomId);
 			socket.leave(roomId);
+			if (membership) socket.leave(participantRoom(membership.participantId));
 		});
 
 		/**
@@ -215,7 +252,10 @@ export function initSocket(httpServer: HTTPServer) {
 					done: boolean;
 				},
 			) => {
-				if (!memberships.has(roomId) || !data) return;
+				// socket.rooms drops the room when a kick removes this socket.
+				if (!memberships.has(roomId) || !socket.rooms.has(roomId) || !data) {
+					return;
+				}
 				if (
 					typeof data.sessionId !== "string" ||
 					typeof data.progress !== "number" ||
@@ -225,7 +265,7 @@ export function initSocket(httpServer: HTTPServer) {
 				}
 				// The identity comes from the verified membership, so a participant
 				// can only report progress for themselves.
-				const identity = memberships.get(roomId) ?? data.identity;
+				const identity = memberships.get(roomId)?.identity ?? data.identity;
 				if (typeof identity !== "string") return;
 				socket.broadcast.to(roomId).emit("participant-upload-progress", {
 					identity,
