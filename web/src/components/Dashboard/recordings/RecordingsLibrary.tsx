@@ -258,7 +258,8 @@ const RecordingHeader = ({
           )}
         </div>
       </div>
-      {session && (
+      {/* Views only exist once there's a share link to open. */}
+      {session && actions.shareToken && (
         <span className="mr-1 flex h-8 shrink-0 items-center gap-1.5 px-1 text-xs text-fg-muted">
           <FiEye className="size-3.5" />
           {views} {views === 1 ? "view" : "views"}
@@ -344,15 +345,16 @@ const groupRowsByParticipant = (rows: TrackRow[]) => {
   return [...groups.values()];
 };
 
-// Track rows carry a name, stats and a Download button, so their rail is
-// never narrower than this (and starts here).
+// Track rows carry a name, stats and a Download button, so their rail starts
+// at this width; it can be dragged narrower down to TRACKS_RAIL_MIN_WIDTH.
 const TRACKS_RAIL_WIDTH = 560;
+const TRACKS_RAIL_MIN_WIDTH = 380;
 const TRACKS_RAIL_OPTIONS = {
   storageKey: "openside:tracks-rail-width",
   label: "Resize tracks",
   defaultWidth: TRACKS_RAIL_WIDTH,
-  minWidth: TRACKS_RAIL_WIDTH,
-  maxWidth: 760,
+  minWidth: TRACKS_RAIL_MIN_WIDTH,
+  maxWidth: 900,
 };
 
 const TAB_TITLE_MAX = 22;

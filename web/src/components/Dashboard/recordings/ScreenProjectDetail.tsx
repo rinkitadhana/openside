@@ -547,10 +547,13 @@ const ScreenProjectDetail = ({ sessionId }: { sessionId: string }) => {
             aria-label="Recording actions"
             className="flex shrink-0 items-center gap-2"
           >
-            <span className="mr-2 flex h-9 items-center gap-1.5 px-1 text-sm text-fg-muted">
-              <FiEye className="size-3.5" />
-              {rec.viewCount ?? 0} {rec.viewCount === 1 ? "view" : "views"}
-            </span>
+            {/* Views only exist once there's a share link to open. */}
+            {rec.shareToken && (
+              <span className="mr-2 flex h-9 items-center gap-1.5 px-1 text-sm text-fg-muted">
+                <FiEye className="size-3.5" />
+                {rec.viewCount ?? 0} {rec.viewCount === 1 ? "view" : "views"}
+              </span>
+            )}
             {screenVideoKind && (
               <button
                 type="button"

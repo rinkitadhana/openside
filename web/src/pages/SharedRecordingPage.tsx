@@ -489,8 +489,8 @@ const SharedRecordingPage = () => {
     storageKey: "openside:tracks-rail-width",
     label: "Resize tracks",
     defaultWidth: 560,
-    minWidth: 560,
-    maxWidth: 760,
+    minWidth: 380,
+    maxWidth: 900,
   });
   const { data: rec, isLoading, isError } = useSharedRecording(token);
   const { data: comments, isLoading: areCommentsLoading } =

@@ -1,5 +1,4 @@
 import { useRef, useState, type CSSProperties } from "react";
-import { GripVertical } from "lucide-react";
 
 /** The video side always keeps at least this much room. */
 const MIN_VIDEO_WIDTH = 420;
@@ -115,24 +114,11 @@ export const useCommentsRailResizer = ({
       }}
       className="group absolute inset-y-0 z-10 hidden w-4 translate-x-1/2 cursor-col-resize items-center justify-center outline-none lg:flex"
     >
-      {/* Nothing extra at rest. On hover (or while dragging) the line turns
-          brand and a grip fades in at its middle. */}
-      <span
-        className={`absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 transition-colors ${
-          dragging
-            ? "bg-brand"
-            : "bg-transparent group-hover:bg-brand group-focus-visible:bg-brand"
-        }`}
-      />
-      <span
-        className={`relative flex h-7 w-4 items-center justify-center rounded-md bg-brand text-white shadow-sm transition-all duration-150 ${
-          dragging
-            ? "scale-100 opacity-100"
-            : "scale-75 opacity-0 group-hover:scale-100 group-hover:opacity-100 group-focus-visible:scale-100 group-focus-visible:opacity-100"
-        }`}
-      >
-        <GripVertical className="size-3.5" />
-      </span>
+      {/* A small pill centred on the divider - looks the same at rest, on
+          hover and while dragging. The divider is the video column's 1px
+          right border, so its centre sits half a pixel left of the column
+          edge this handle is centred on. */}
+      <span className="h-10 w-1 -translate-x-[0.5px] rounded-full bg-fg-subtle" />
     </div>
   );
 
