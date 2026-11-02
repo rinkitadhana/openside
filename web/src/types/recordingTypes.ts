@@ -148,8 +148,7 @@ export interface StopSessionPayload {
 export interface CreateParticipantRecordingPayload {
   recordingSessionId: string;
   spaceId: string;
-  participantId?: string;
-  participantSessionId?: string;
+  participantSessionId: string;
   type: RecordingType;
   isScreenShare?: boolean;
   container?: string;
