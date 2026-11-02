@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { type Prisma, prisma } from "../db/index.ts";
+import { Prisma, prisma } from "../db/index.ts";
+import {
+	HEARD_FROM,
+	MONTHLY_HOURS,
+	ROLES,
+	USE_CASES,
+} from "../lib/onboarding.ts";
 import {
 	DEMO_RECORDING_SECONDS,
 	PRO_RECORDING_SECONDS,
@@ -37,6 +43,8 @@ type UserRow = {
 	cancelAtPeriodEnd: boolean;
 	currentPeriodEnd: Date | null;
 	createdAt: Date;
+	onboardedAt: Date | null;
+	onboarding: Prisma.JsonValue;
 	selfHostConfig: { enabled: boolean; lastValidatedAt: Date | null } | null;
 };
 
@@ -51,8 +59,78 @@ const USER_SELECT = {
 	cancelAtPeriodEnd: true,
 	currentPeriodEnd: true,
 	createdAt: true,
+	onboardedAt: true,
+	onboarding: true,
 	selfHostConfig: { select: { enabled: true, lastValidatedAt: true } },
 } satisfies Prisma.UserSelect;
+
+/**
+ * Signup onboarding answers, plus flat "question:answer" tags for filtering
+ * (e.g. "heardFrom:google", "useCase:podcasts"). Accounts from before
+ * onboarding have onboardedAt set but no answers.
+ */
+function onboardingOf(u: UserRow) {
+	const raw = (
+		u.onboarding &&
+		typeof u.onboarding === "object" &&
+		!Array.isArray(u.onboarding)
+			? u.onboarding
+			: {}
+	) as Record<string, unknown>;
+	const one = (value: unknown) => (typeof value === "string" ? value : null);
+	const many = (value: unknown) =>
+		Array.isArray(value)
+			? value.filter((item): item is string => typeof item === "string")
+			: [];
+	const answers = {
+		completedAt: u.onboardedAt,
+		answered: u.onboarding !== null,
+		heardFrom: one(raw.heardFrom),
+		heardFromOther: one(raw.heardFromOther),
+		role: one(raw.role),
+		roleOther: one(raw.roleOther),
+		useCases: many(raw.useCases),
+		monthlyHours: one(raw.monthlyHours),
+	};
+	const tags = [
+		answers.heardFrom && `heardFrom:${answers.heardFrom}`,
+		answers.role && `role:${answers.role}`,
+		...answers.useCases.map((useCase) => `useCase:${useCase}`),
+		answers.monthlyHours && `monthlyHours:${answers.monthlyHours}`,
+	].filter((tag): tag is string => !!tag);
+	return { onboarding: answers, tags };
+}
+
+const listed = <T extends string>(value: string, allowed: readonly T[]) =>
+	(allowed as readonly string[]).includes(value) ? (value as T) : null;
+
+/** ?heardFrom=&role=&useCase=&monthlyHours=&onboarded=answered|pending|none */
+function onboardingFilters(query: Record<string, unknown>) {
+	const and: Prisma.UserWhereInput[] = [];
+	const heardFrom = listed(str(query.heardFrom), HEARD_FROM);
+	if (heardFrom)
+		and.push({ onboarding: { path: ["heardFrom"], equals: heardFrom } });
+	const role = listed(str(query.role), ROLES);
+	if (role) and.push({ onboarding: { path: ["role"], equals: role } });
+	const useCase = listed(str(query.useCase), USE_CASES);
+	if (useCase)
+		and.push({ onboarding: { path: ["useCases"], array_contains: [useCase] } });
+	const monthlyHours = listed(str(query.monthlyHours), MONTHLY_HOURS);
+	if (monthlyHours)
+		and.push({ onboarding: { path: ["monthlyHours"], equals: monthlyHours } });
+	const onboarded = str(query.onboarded);
+	// answered: filled it in. pending: signed up, hasn't yet. none: from
+	// before onboarding existed (marked done, no answers).
+	if (onboarded === "answered")
+		and.push({ onboarding: { not: Prisma.DbNull } });
+	else if (onboarded === "pending") and.push({ onboardedAt: null });
+	else if (onboarded === "none")
+		and.push({
+			onboardedAt: { not: null },
+			onboarding: { equals: Prisma.DbNull },
+		});
+	return and;
+}
 
 /** Same rules as the app's entitlements, so the admin sees what the user gets. */
 function effectivePlan(u: UserRow): "demo" | "pro" | "selfhost" {
@@ -103,10 +181,23 @@ function serialize(u: UserRow, usage: Map<string, number>) {
 		createdAt: u.createdAt,
 		usedSeconds: usage.get(u.id) ?? 0,
 		limitSeconds: limitFor(plan),
+		...onboardingOf(u),
 	};
 }
 
+// The onboarding answers a user can have, for building filter controls.
+usersAdminRoutes.get("/users/onboarding-options", (_req, res) => {
+	res.json({
+		heardFrom: HEARD_FROM,
+		role: ROLES,
+		useCase: USE_CASES,
+		monthlyHours: MONTHLY_HOURS,
+		onboarded: ["answered", "pending", "none"],
+	});
+});
+
 // GET /users?q=&plan=all|demo|pro|selfhost&sort=newest|usage&cursor=&limit=
+//   &heardFrom=&role=&useCase=&monthlyHours=&onboarded=answered|pending|none
 usersAdminRoutes.get("/users", async (req, res) => {
 	const q = str(req.query.q);
 	const and: Prisma.UserWhereInput[] = [];
@@ -122,6 +213,7 @@ usersAdminRoutes.get("/users", async (req, res) => {
 	if (plan === "selfhost") and.push(SELF_HOST);
 	else if (plan === "pro") and.push(proActive(), { NOT: SELF_HOST });
 	else if (plan === "demo") and.push({ NOT: SELF_HOST }, { NOT: proActive() });
+	and.push(...onboardingFilters(req.query));
 	const where: Prisma.UserWhereInput = and.length ? { AND: and } : {};
 	const limit = limitOf(req);
 	const total = hasCursor(req)
