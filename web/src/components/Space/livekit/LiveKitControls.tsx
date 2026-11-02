@@ -592,7 +592,7 @@ const SavedSessionCard = ({
   if (dismissed && !isUploading) return null;
 
   return (
-    <div className="relative flex w-[19rem] flex-col gap-3 rounded-2xl border border-call-border bg-call-primary p-3.5">
+    <div className="relative flex w-[min(21.5rem,calc(100vw-2rem))] flex-col gap-3 rounded-2xl border border-call-border bg-call-primary p-3.5">
       {!isUploading && (
         <button
           type="button"
@@ -631,7 +631,7 @@ const SavedSessionCard = ({
                   <span className="truncate text-sm font-medium text-foreground">
                     {person.name}
                   </span>
-                  <span className="text-xs tabular-nums text-foreground/50">
+                  <span className="truncate text-xs tabular-nums text-foreground/50">
                     {done
                       ? chunks
                         ? `Uploaded · ${formatChunkCount(chunks.total)}`
