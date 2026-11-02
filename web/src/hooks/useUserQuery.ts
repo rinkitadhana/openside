@@ -18,6 +18,8 @@ export interface MeUser {
   autoGainControl?: boolean;
   echoCancellation?: boolean;
   recordingMode?: "VIDEO_AND_AUDIO" | "AUDIO_ONLY";
+  /** Signup onboarding hasn't been answered (or skipped) yet. */
+  needsOnboarding?: boolean;
 }
 
 /** Query key for the current-user profile (shared so mutations can patch it). */

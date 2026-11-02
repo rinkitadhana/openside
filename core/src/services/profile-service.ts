@@ -10,7 +10,8 @@
  * network), so it's cheap to do on every read.
  */
 
-import { prisma } from "../db/index.ts";
+import { type Prisma, prisma } from "../db/index.ts";
+import type { OnboardingAnswers } from "../lib/onboarding.ts";
 import {
 	type RecordingMode,
 	clampAudioSampleRate,
@@ -44,6 +45,8 @@ interface PublicProfile {
 	autoGainControl: boolean;
 	echoCancellation: boolean;
 	recordingMode: RecordingMode;
+	/** Signup onboarding still to show. */
+	needsOnboarding: boolean;
 }
 
 type ProfileRow = {
@@ -61,6 +64,7 @@ type ProfileRow = {
 	autoGainControl: boolean;
 	echoCancellation: boolean;
 	recordingMode: string;
+	onboardedAt: Date | null;
 };
 
 const PROFILE_SELECT = {
@@ -78,6 +82,7 @@ const PROFILE_SELECT = {
 	autoGainControl: true,
 	echoCancellation: true,
 	recordingMode: true,
+	onboardedAt: true,
 } as const;
 
 /** Shape a user row for the client, resolving the avatar to a usable URL. */
@@ -102,7 +107,24 @@ async function toPublicProfile(row: ProfileRow): Promise<PublicProfile> {
 		autoGainControl: row.autoGainControl,
 		echoCancellation: row.echoCancellation,
 		recordingMode: clampRecordingMode(row.recordingMode),
+		needsOnboarding: row.onboardedAt === null,
 	};
+}
+
+/** Save the signup onboarding answers (or a skip) - it's shown once. */
+export async function saveOnboarding(
+	userId: string,
+	answers: OnboardingAnswers,
+): Promise<PublicProfile> {
+	const row = await prisma.user.update({
+		where: { id: userId },
+		data: {
+			onboardedAt: new Date(),
+			onboarding: answers as unknown as Prisma.InputJsonValue,
+		},
+		select: PROFILE_SELECT,
+	});
+	return toPublicProfile(row);
 }
 
 export async function getPublicProfile(userId: string): Promise<PublicProfile> {

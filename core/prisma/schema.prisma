@@ -33,6 +33,10 @@ model User {
   autoGainControl    Boolean @default(false)
   echoCancellation   Boolean @default(false)
   recordingMode      String  @default("VIDEO_AND_AUDIO")
+  // Signup onboarding. Null until the user finishes or skips it (accounts that
+  // predate it were backfilled as onboarded). Answers: see lib/onboarding.ts.
+  onboardedAt        DateTime?
+  onboarding         Json?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

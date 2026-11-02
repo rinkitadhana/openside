@@ -7,9 +7,11 @@ import {
 } from "../lib/recording-constants.ts";
 import type { AuthenticatedRequest } from "../middlewares/auth-middleware.ts";
 import { authMiddleware } from "../middlewares/auth-middleware.ts";
+import { sanitizeOnboarding } from "../lib/onboarding.ts";
 import { findOrCreateUser } from "../services/auth-service.ts";
 import {
 	presignAvatarUpload,
+	saveOnboarding,
 	updateProfile,
 	updateRecordingSettings,
 } from "../services/profile-service.ts";
@@ -129,6 +131,40 @@ router.post(
 				success: false,
 				data: null,
 				message: "Failed to prepare avatar upload!",
+			});
+		}
+	},
+);
+
+// Signup onboarding: answers (or a skip), saved once.
+
+router.post(
+	"/onboarding",
+	authMiddleware,
+	async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+		try {
+			if (!req.user) {
+				res.status(401).json({
+					success: false,
+					data: null,
+					message: "Authentication required!",
+				});
+				return;
+			}
+			const user = await findOrCreateUser(req.user);
+			const profile = await saveOnboarding(
+				user.id,
+				sanitizeOnboarding(req.body),
+			);
+			res
+				.status(200)
+				.json({ success: true, data: profile, message: "Onboarding saved!" });
+		} catch (error) {
+			console.error("[Settings] onboarding save failed:", error);
+			res.status(500).json({
+				success: false,
+				data: null,
+				message: "Failed to save onboarding!",
 			});
 		}
 	},

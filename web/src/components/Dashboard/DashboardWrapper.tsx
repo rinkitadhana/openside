@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import DashboardSidebar from "./DashboardSidebar";
 import DashboardHeader from "./DashboardHeader";
+import OnboardingModal from "./OnboardingModal";
 import { backdropMotion, usePresence } from "@/hooks/usePresence";
 
 const SIDEBAR_STATE_KEY = "sidebarOpen";
@@ -93,6 +94,8 @@ const DashboardWrapper = ({ children, noPadding }: DashboardWrapperProps) => {
           {children}
         </main>
       </div>
+      {/* First visit after signup: a few questions, shown once. */}
+      <OnboardingModal />
     </div>
   );
 };

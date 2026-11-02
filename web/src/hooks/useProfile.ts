@@ -194,3 +194,39 @@ export const useRemoveAvatar = () => {
     },
   });
 };
+
+export interface OnboardingAnswers {
+  heardFrom?: string | null;
+  heardFromOther?: string;
+  role?: string | null;
+  roleOther?: string;
+  useCases?: string[];
+  monthlyHours?: string | null;
+  skipped?: boolean;
+}
+
+/** Save the signup onboarding (or a skip). Optimistic: it closes at once. */
+export const useSaveOnboarding = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (answers: OnboardingAnswers) => {
+      const { data } = await api.post<{ data: MeUser }>(
+        "/settings/onboarding",
+        answers,
+      );
+      return data.data;
+    },
+    onMutate: async () => {
+      const rollback = await optimisticallyPatchMe(queryClient, {
+        needsOnboarding: false,
+      });
+      return { rollback };
+    },
+    // Not rolled back on error: reopening a questionnaire the user just
+    // dismissed is worse than losing the answers.
+    onSuccess: (user) => {
+      writeMe(queryClient, user);
+    },
+  });
+};
