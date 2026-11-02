@@ -115,6 +115,12 @@ const ACTIVE_STATES: RecordingState[] = [
 // video-only. Kept short so audioless shares lose minimal leading footage.
 const SCREEN_AUDIO_ATTACH_GRACE_MS = 600;
 
+// join-room retry: wait this long for the server's ack, then back off from
+// 1s up to 10s between attempts.
+const JOIN_ROOM_ACK_TIMEOUT_MS = 5_000;
+const JOIN_ROOM_RETRY_BASE_MS = 1_000;
+const JOIN_ROOM_RETRY_MAX_MS = 10_000;
+
 // Transitional states where a button press should be ignored (mid-flight).
 // Not "uploading": the previous take keeps uploading in the background while
 // the next one records.
@@ -141,14 +147,34 @@ const RecordingProvider = ({
     [roomCode],
   );
 
-  // Join the Socket.IO room so recording start/stop broadcasts reach us.
+  // Join the Socket.IO room so recording start/stop broadcasts reach us. The
+  // server refuses until we're an active participant (a network drop can mark
+  // us inactive for a moment) and on a failed lookup, so keep retrying.
   useEffect(() => {
     if (!socket) return;
-    socket.emit("join-room", roomCode);
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let attempt = 0;
+    const join = () => {
+      socket
+        .timeout(JOIN_ROOM_ACK_TIMEOUT_MS)
+        .emit("join-room", roomCode, participantSessionId, (err, joined) => {
+          if (cancelled || (!err && joined)) return;
+          const delay = Math.min(
+            JOIN_ROOM_RETRY_MAX_MS,
+            JOIN_ROOM_RETRY_BASE_MS * 2 ** attempt,
+          );
+          attempt += 1;
+          retryTimer = setTimeout(join, delay);
+        });
+    };
+    join();
     return () => {
+      cancelled = true;
+      clearTimeout(retryTimer);
       socket.emit("leave-room", roomCode);
     };
-  }, [socket, roomCode]);
+  }, [socket, roomCode, participantSessionId]);
 
   const role = localParticipant.attributes.role;
   const canControl = isHost || role === "HOST" || role === "CO_HOST";

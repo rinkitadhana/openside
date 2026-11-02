@@ -1,5 +1,6 @@
 import { TrackSource } from "livekit-server-sdk";
 import { type Prisma, prisma } from "../db/index.ts";
+import { removeParticipantFromRoom } from "../sockets/index.ts";
 import { getEntitlements } from "./entitlements-service.ts";
 import {
 	invalidateSpaceInfraCache,
@@ -477,6 +478,7 @@ export async function kickParticipant(participantId: string) {
 			space: {
 				select: {
 					livekitRoomName: true,
+					joinCode: true,
 				},
 			},
 		},
@@ -486,6 +488,9 @@ export async function kickParticipant(participantId: string) {
 		roomName: fullParticipant?.space.livekitRoomName,
 		identity: fullParticipant?.livekitIdentity,
 	});
+	if (fullParticipant) {
+		removeParticipantFromRoom(fullParticipant.space.joinCode, participantId);
+	}
 
 	return kickedParticipant;
 }
