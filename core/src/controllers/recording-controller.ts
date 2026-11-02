@@ -806,11 +806,10 @@ export async function createParticipantRecordingController(
 			});
 			return;
 		}
-		const resolvedParticipantId = participant.id;
 
 		const recording = await createParticipantRecording({
 			recordingSessionId,
-			participantId: resolvedParticipantId,
+			participantId: participant.id,
 			type,
 			isScreenShare,
 			container,
@@ -1081,7 +1080,6 @@ export async function presignSegmentUploadController(
 			});
 			return;
 		}
-		const resolvedParticipantId = participant.id;
 
 		// Ownership: only the recording owner may upload to it.
 		const ownerParticipantId = await getRecordingOwnerParticipantId(
@@ -1093,7 +1091,7 @@ export async function presignSegmentUploadController(
 				.json({ success: false, data: null, message: "Recording not found!" });
 			return;
 		}
-		if (ownerParticipantId !== resolvedParticipantId) {
+		if (ownerParticipantId !== participant.id) {
 			res.status(403).json({
 				success: false,
 				data: null,
@@ -1262,13 +1260,12 @@ export async function createSegmentController(
 			});
 			return;
 		}
-		const resolvedParticipantId = participant.id;
 
 		// Verify ownership - only recording owner can upload segments
 		const ownerParticipantId = await getRecordingOwnerParticipantId(
 			participantRecordingId,
 		);
-		if (ownerParticipantId !== resolvedParticipantId) {
+		if (ownerParticipantId !== participant.id) {
 			res.status(403).json({
 				success: false,
 				data: null,
@@ -1297,7 +1294,7 @@ export async function createSegmentController(
 			participantRecordingId,
 			spaceRecordingSessionId,
 			spaceId,
-			participantId: resolvedParticipantId,
+			participantId: participant.id,
 			sequenceNumber,
 			assetKey,
 			startMs,

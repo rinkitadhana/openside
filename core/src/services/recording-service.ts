@@ -277,21 +277,6 @@ export async function isHostOrCoHost(
 	return !!participant;
 }
 
-export async function isActiveParticipant(
-	spaceId: string,
-	participantId: string,
-): Promise<boolean> {
-	const participant = await prisma.spaceParticipant.findFirst({
-		where: {
-			id: participantId,
-			spaceId,
-			isActive: true,
-		},
-	});
-
-	return !!participant;
-}
-
 export async function getParticipantBySessionId(
 	spaceId: string,
 	participantSessionId: string,
