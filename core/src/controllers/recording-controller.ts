@@ -905,7 +905,12 @@ export async function markRecordingCompleteController(
 		}
 
 		// Require participantSessionId and spaceId for ownership verification
-		if (!participantSessionId || !spaceId) {
+		if (
+			!participantSessionId ||
+			typeof participantSessionId !== "string" ||
+			!spaceId ||
+			typeof spaceId !== "string"
+		) {
 			res.status(400).json({
 				success: false,
 				data: null,
