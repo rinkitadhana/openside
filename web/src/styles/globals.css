@@ -115,6 +115,23 @@
   }
 }
 
+/* A reaction rising off the landing hero's call mockup (SpaceBlueprint),
+   like reaction-float-up in the real call. */
+@keyframes space-reaction-float {
+  0% {
+    transform: translateY(0) scale(0.85);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(-110px) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-220px) scale(1.1);
+    opacity: 0;
+  }
+}
+
 /* Landing page palette. Follows the app theme (system by default). */
 .landing {
   --background: #ffffff;
