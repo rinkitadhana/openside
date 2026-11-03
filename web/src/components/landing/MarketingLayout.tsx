@@ -21,6 +21,7 @@ import {
   containerVariants,
   riseVariants,
 } from "@/components/landing/motion";
+import { useHydrated } from "@/hooks/useHydrated";
 import { useSeoMeta } from "@/hooks/useSeoMeta";
 
 export const NAV_LINKS = [
@@ -53,6 +54,10 @@ const themeOptions = [
 
 const ThemeSwitcher = () => {
   const { theme, setTheme } = useTheme();
+  // The prerendered HTML can't know the stored theme, so show "system" until
+  // hydration is done, then the real choice.
+  const hydrated = useHydrated();
+  const current = (hydrated && theme) || "system";
 
   return (
     <div
@@ -61,7 +66,7 @@ const ThemeSwitcher = () => {
       className="flex w-fit items-center gap-0.5 rounded-lg border border-white/20 bg-white/5 p-0.5"
     >
       {themeOptions.map(({ id, label, icon: Icon }) => {
-        const selected = (theme ?? "system") === id;
+        const selected = current === id;
         return (
           <button
             key={id}

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && vite build -c vite.prerender.config.ts && node scripts/prerender.mjs",
     "lint": "eslint .",
     "preview": "pnpm run build && wrangler dev",
     "format": "prettier --write .",

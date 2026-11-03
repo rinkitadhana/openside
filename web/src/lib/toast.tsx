@@ -15,6 +15,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { FaSquareCheck, FaSquareMinus } from "react-icons/fa6";
 import { cn } from "@/lib/utils";
+import { useHydrated } from "@/hooks/useHydrated";
 
 type ToastVariant = "success" | "error";
 
@@ -106,7 +107,9 @@ const ToastCard = ({ item }: { item: ToastItem }) => {
 /** Mounted once (in AppProviders) - renders the active toasts. */
 export const ToastHost = () => {
   const active = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  if (typeof document === "undefined") return null;
+  // A portal can't be hydrated, so it waits until the page is interactive.
+  const hydrated = useHydrated();
+  if (!hydrated) return null;
 
   return createPortal(
     <div className="pointer-events-none fixed inset-x-0 top-4 z-[9999] flex flex-col items-center gap-2 px-4">

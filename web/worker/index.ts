@@ -93,19 +93,42 @@ interface Env {
   ASSETS: Fetcher;
 }
 
+// Where scripts/prerender.mjs writes each marketing page's rendered HTML.
+const PRERENDER_DIR = "/_pages/";
+
+// Serves the prerendered HTML for a marketing page. Without a build (vite dev)
+// the asset is missing and this falls back to the app shell.
+function fetchMarketingPage(request: Request, url: URL, env: Env) {
+  const path = url.pathname.replace(/\/+$/, "");
+  const name = path === "" ? "home" : path.slice(1);
+  return env.ASSETS.fetch(
+    new Request(new URL(`${PRERENDER_DIR}${name}`, url), request)
+  );
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    // The prerendered pages are only reachable through their real paths.
+    if (url.pathname.startsWith(PRERENDER_DIR)) {
+      return new Response("Not found", { status: 404 });
+    }
+
+    const seo = getSeoMeta(url.pathname);
+    if (seo) {
+      return rewriteMarketingHead(
+        await fetchMarketingPage(request, url, env),
+        url.pathname,
+        seo
+      );
+    }
+
     const assetResponse = await env.ASSETS.fetch(request);
 
     const contentType = assetResponse.headers.get("content-type") ?? "";
     if (!contentType.includes("text/html")) {
       return assetResponse;
-    }
-
-    const seo = getSeoMeta(url.pathname);
-    if (seo) {
-      return rewriteMarketingHead(assetResponse, url.pathname, seo);
     }
 
     if (!ROOM_CODE_PATTERN.test(url.pathname)) {
