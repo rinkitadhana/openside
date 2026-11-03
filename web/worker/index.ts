@@ -7,6 +7,12 @@ import { SITE_URL, getSeoMeta, type SeoMeta } from "../src/lib/seo";
 // confusable-character-free alphabet.
 const ROOM_CODE_PATTERN = /^\/[ABCDEFGHJKMNPRTUWXY234579]{5}$/i;
 
+// The app's other routes (see src/App.tsx). Any other path that isn't a file,
+// marketing page, or room link gets a real 404, so search engines don't index
+// it as a copy of the site.
+const APP_PATH_PATTERN =
+  /^\/(?:dashboard(?:\/.*)?|share\/[^/]+|sso-callback|meeting-ended)\/?$/;
+
 const MEETING_OG_TITLE = "Ready for the recording?";
 const MEETING_OG_DESCRIPTION =
   "You've been invited to a recording on Openside. Join the call.";
@@ -106,13 +112,26 @@ function fetchMarketingPage(request: Request, url: URL, env: Env) {
   );
 }
 
+// A 404 that still boots the app, which sends the visitor on from there. The
+// shell is fetched fresh so a conditional request can't turn it into a 304.
+async function notFound(url: URL, env: Env) {
+  const shell = await env.ASSETS.fetch(new URL("/", url));
+  return new Response(shell.body, {
+    status: 404,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "x-robots-tag": "noindex",
+    },
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
     // The prerendered pages are only reachable through their real paths.
     if (url.pathname.startsWith(PRERENDER_DIR)) {
-      return new Response("Not found", { status: 404 });
+      return notFound(url, env);
     }
 
     const seo = getSeoMeta(url.pathname);
@@ -131,8 +150,12 @@ export default {
       return assetResponse;
     }
 
-    if (!ROOM_CODE_PATTERN.test(url.pathname)) {
+    if (APP_PATH_PATTERN.test(url.pathname)) {
       return assetResponse;
+    }
+
+    if (!ROOM_CODE_PATTERN.test(url.pathname)) {
+      return notFound(url, env);
     }
 
     const imageUrl = `${url.origin}${MEETING_OG_IMAGE_PATH}`;
