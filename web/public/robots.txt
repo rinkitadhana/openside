@@ -1,6 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /dashboard
-Disallow: /sso-callback
 
 Sitemap: https://openside.pro/sitemap.xml

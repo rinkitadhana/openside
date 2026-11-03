@@ -11,6 +11,7 @@ import {
 import { useOpenAuth } from "@/components/landing/MarketingLayout";
 import { featureDemos } from "@/components/landing/FeatureDemos";
 import HowItWorksDiagram from "@/components/landing/HowItWorksDiagram";
+import JsonLd from "@/components/landing/JsonLd";
 import UseCasesShowcase from "@/components/landing/UseCasesShowcase";
 import {
   faqs as defaultFaqs,
@@ -35,10 +36,7 @@ export const HeroCTAs = () => {
   const openAuth = useOpenAuth();
 
   return (
-    <motion.div
-      variants={riseVariants}
-      className="mt-3 flex flex-wrap items-center gap-3"
-    >
+    <div className="hero-rise mt-3 flex flex-wrap items-center gap-3 [--i:3]">
       <StartRecordingCTA
         onOpenAuth={openAuth}
         className="flex select-none items-center gap-2 rounded-lg bg-white px-4.5 py-2.5 text-[0.9375rem] font-semibold text-[#131313] transition-colors hover:bg-white/90 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
@@ -52,7 +50,7 @@ export const HeroCTAs = () => {
         <FaGithub className="size-4" />
         Star on GitHub
       </a>
-    </motion.div>
+    </div>
   );
 };
 
@@ -66,32 +64,18 @@ export const PageHero = ({
   title: string;
   description: string;
 }) => (
-  <motion.section
-    variants={containerVariants}
-    initial="hidden"
-    animate="show"
-    className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-start gap-3 pt-6 pb-20 text-left sm:pt-10 sm:pb-24"
-  >
-    <motion.span
-      variants={riseVariants}
-      className="inline-flex select-none items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 sm:text-sm"
-    >
+  <section className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-start gap-3 pt-6 pb-20 text-left sm:pt-10 sm:pb-24">
+    <span className="hero-rise inline-flex select-none items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 sm:text-sm">
       {eyebrow}
-    </motion.span>
-    <motion.h1
-      variants={riseVariants}
-      className="font-bricolage max-w-3xl text-3xl font-semibold leading-[1.2] text-white sm:text-[2.5rem]"
-    >
+    </span>
+    <h1 className="hero-rise font-bricolage max-w-3xl text-3xl font-semibold leading-[1.2] text-white [--i:1] sm:text-[2.5rem]">
       {title}
-    </motion.h1>
-    <motion.p
-      variants={riseVariants}
-      className="-mt-1 max-w-xl text-sm font-normal text-white/80 sm:text-base"
-    >
+    </h1>
+    <p className="hero-rise -mt-1 max-w-xl text-sm font-normal text-white/80 [--i:2] sm:text-base">
       {description}
-    </motion.p>
+    </p>
     <HeroCTAs />
-  </motion.section>
+  </section>
 );
 
 export const SectionHeading = ({
@@ -598,6 +582,17 @@ export const FaqSection = ({
 
   return (
     <section id="faq" className="bg-background px-4 py-20 sm:px-6">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: items.map(({ question, answer }) => ({
+            "@type": "Question",
+            name: question,
+            acceptedAnswer: { "@type": "Answer", text: answer },
+          })),
+        }}
+      />
       <motion.div
         className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] md:gap-16"
         {...inView}

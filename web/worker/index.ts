@@ -42,31 +42,6 @@ class AttributeRewriter implements HTMLRewriterElementContentHandlers {
   }
 }
 
-class HeadAppender implements HTMLRewriterElementContentHandlers {
-  constructor(private readonly html: string) {}
-  element(element: Element) {
-    element.append(this.html, { html: true });
-  }
-}
-
-// Structured data for the home page, so search engines can show Openside as
-// an app with its pricing.
-const HOME_JSON_LD = JSON.stringify({
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "Openside",
-  url: `${SITE_URL}/`,
-  applicationCategory: "MultimediaApplication",
-  operatingSystem: "Web",
-  description:
-    "Open-source, self-hostable recording studio for podcasts, interviews, and calls, with a built-in screen recorder.",
-  offers: [
-    { "@type": "Offer", name: "Demo", price: "0", priceCurrency: "USD" },
-    { "@type": "Offer", name: "Pro", price: "8.99", priceCurrency: "USD" },
-    { "@type": "Offer", name: "Self-host", price: "0", priceCurrency: "USD" },
-  ],
-});
-
 // Gives each marketing page its own title, description, and canonical URL in
 // the served HTML, so crawlers see them without running the app.
 function rewriteMarketingHead(
@@ -75,7 +50,7 @@ function rewriteMarketingHead(
   seo: SeoMeta
 ): Response {
   const canonicalUrl = `${SITE_URL}${pathname === "/" ? "/" : pathname.replace(/\/+$/, "")}`;
-  let rewriter = new HTMLRewriter()
+  return new HTMLRewriter()
     .on("title", new TitleTextRewriter(seo.title))
     .on('meta[name="description"]', new MetaContentRewriter(seo.description))
     .on('link[rel="canonical"]', new AttributeRewriter("href", canonicalUrl))
@@ -83,16 +58,8 @@ function rewriteMarketingHead(
     .on('meta[property="og:description"]', new MetaContentRewriter(seo.description))
     .on('meta[property="og:url"]', new MetaContentRewriter(canonicalUrl))
     .on('meta[name="twitter:title"]', new MetaContentRewriter(seo.title))
-    .on('meta[name="twitter:description"]', new MetaContentRewriter(seo.description));
-
-  if (pathname === "/") {
-    rewriter = rewriter.on(
-      "head",
-      new HeadAppender(`<script type="application/ld+json">${HOME_JSON_LD}</script>`)
-    );
-  }
-
-  return rewriter.transform(response);
+    .on('meta[name="twitter:description"]', new MetaContentRewriter(seo.description))
+    .transform(response);
 }
 
 interface Env {
@@ -110,6 +77,14 @@ function fetchMarketingPage(request: Request, url: URL, env: Env) {
   return env.ASSETS.fetch(
     new Request(new URL(`${PRERENDER_DIR}${name}`, url), request)
   );
+}
+
+// Rooms, share links, and the dashboard belong to their users, so search
+// engines are told not to list them. Link previews still use their OG tags.
+function withNoindex(response: Response) {
+  const marked = new Response(response.body, response);
+  marked.headers.set("x-robots-tag", "noindex");
+  return marked;
 }
 
 // A 404 that still boots the app, which sends the visitor on from there. The
@@ -151,7 +126,7 @@ export default {
     }
 
     if (APP_PATH_PATTERN.test(url.pathname)) {
-      return assetResponse;
+      return withNoindex(assetResponse);
     }
 
     if (!ROOM_CODE_PATTERN.test(url.pathname)) {
@@ -160,7 +135,7 @@ export default {
 
     const imageUrl = `${url.origin}${MEETING_OG_IMAGE_PATH}`;
 
-    return new HTMLRewriter()
+    const roomResponse = new HTMLRewriter()
       .on("title", new TitleTextRewriter(MEETING_OG_TITLE))
       .on('meta[property="og:title"]', new MetaContentRewriter(MEETING_OG_TITLE))
       .on('meta[name="twitter:title"]', new MetaContentRewriter(MEETING_OG_TITLE))
@@ -181,5 +156,6 @@ export default {
       .on('meta[name="twitter:image"]', new MetaContentRewriter(imageUrl))
       .on('meta[property="og:url"]', new MetaContentRewriter(url.toString()))
       .transform(assetResponse);
+    return withNoindex(roomResponse);
   },
 } satisfies ExportedHandler<Env>;

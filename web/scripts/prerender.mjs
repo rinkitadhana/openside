@@ -10,6 +10,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const clientDir = path.join(root, "dist/client");
 const serverDir = path.join(root, "dist/prerender");
 const ROOT_DIV = '<div id="root"></div>';
+// The hero artwork is a CSS background, which the browser only discovers once
+// the stylesheet loads. Pages that use it preload it, since it's the largest
+// thing above the fold.
+const HERO_IMAGE = "/img/landing/hero-bg.webp";
+const HERO_PRELOAD = `<link rel="preload" as="image" href="${HERO_IMAGE}" fetchpriority="high" />`;
 
 const template = await fs.readFile(path.join(clientDir, "index.html"), "utf8");
 if (!template.includes(ROOT_DIV)) {
@@ -24,10 +29,13 @@ await fs.mkdir(path.join(clientDir, "_pages"), { recursive: true });
 
 for (const pathname of Object.keys(SEO_PAGES)) {
   const appHtml = await render(pathname);
-  const html = template.replace(
+  let html = template.replace(
     ROOT_DIV,
     () => `<div id="root">${appHtml}</div>`,
   );
+  if (appHtml.includes(HERO_IMAGE)) {
+    html = html.replace("</head>", () => `${HERO_PRELOAD}</head>`);
+  }
   const name = pathname === "/" ? "home" : pathname.slice(1);
   await fs.writeFile(path.join(clientDir, "_pages", `${name}.html`), html);
   console.log(`prerendered ${pathname} → _pages/${name}.html`);

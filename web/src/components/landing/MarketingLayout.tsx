@@ -15,6 +15,7 @@ import { FaXTwitter } from "react-icons/fa6";
 
 import AuthModal, { type AuthMode } from "@/components/auth/AuthModal";
 import GithubStarButton from "@/components/landing/GithubStarButton";
+import JsonLd from "@/components/landing/JsonLd";
 import { HeaderAuthCTA } from "@/components/landing/LandingAuthCTA";
 import {
   EASE,
@@ -23,6 +24,7 @@ import {
 } from "@/components/landing/motion";
 import { useHydrated } from "@/hooks/useHydrated";
 import { useSeoMeta } from "@/hooks/useSeoMeta";
+import { getStructuredData } from "@/lib/seo";
 
 export const NAV_LINKS = [
   { to: "/features", label: "Features" },
@@ -325,6 +327,7 @@ const MarketingLayout = ({
   const [authMode, setAuthMode] = useState<AuthMode>("signin");
 
   useSeoMeta();
+  const structuredData = getStructuredData(pathname);
 
   // Each marketing page starts at the top, unless the link targets a section.
   // Instant, because the global smooth scrolling would otherwise glide up
@@ -342,6 +345,7 @@ const MarketingLayout = ({
   return (
     <OpenAuthContext.Provider value={openAuth}>
       <div className="landing relative min-h-screen bg-background text-foreground">
+        {structuredData && <JsonLd data={structuredData} />}
         <MarketingHeader onOpenAuth={openAuth} />
 
         <main>

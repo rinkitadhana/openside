@@ -19,13 +19,3 @@ export const riseVariants = {
     transition: { duration: 1, ease: EASE },
   },
 };
-
-export const boxVariants = {
-  hidden: { opacity: 0, scale: 0.96, y: 16 },
-  show: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: { duration: 1.2, ease: EASE },
-  },
-};
