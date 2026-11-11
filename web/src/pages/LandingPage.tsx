@@ -61,7 +61,7 @@ const LandingPage = () => {
             or let us handle the infra.
           </p>
 
-          <HeroCTAs />
+          <HeroCTAs animated />
 
           <div className="relative mt-8 w-full">
             <div className="hero-box relative z-10 aspect-[3/4] w-full overflow-hidden rounded-2xl border border-border bg-background shadow-[0_0_12px_rgba(0,0,0,0.18),0_0_45px_rgba(0,0,0,0.08),0_0_90px_rgba(0,0,0,0.05)] [--i:4] sm:aspect-video">

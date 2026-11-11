@@ -1,6 +1,6 @@
 import { useState, type ElementType, type ReactNode } from "react";
 import { Check, Globe, Heart } from "lucide-react";
-import { FaGithub, FaLinkedin } from "react-icons/fa";
+import { FaDiscord, FaGithub, FaLinkedin } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 
 import {
@@ -24,29 +24,35 @@ import {
 } from "@/components/landing/content";
 
 // The two hero buttons: start recording (auth-aware) and star on GitHub.
-export const HeroCTAs = () => {
+/** `animated` plays the hero entrance; only the home page uses it. */
+export const HeroCTAs = ({ animated = false }: { animated?: boolean }) => {
   const openAuth = useOpenAuth();
 
   return (
-    <div className="hero-rise mt-3 flex flex-wrap items-center gap-3 [--i:3]">
+    <div
+      className={`mt-3 flex flex-wrap items-center gap-3 ${
+        animated ? "hero-rise [--i:3]" : ""
+      }`}
+    >
       <StartRecordingCTA
         onOpenAuth={openAuth}
         className="flex select-none items-center gap-2 rounded-lg bg-white px-4.5 py-2.5 text-[0.9375rem] font-semibold text-[#131313] transition-colors hover:bg-white/90 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
       />
       <a
-        href="https://github.com/rinkitadhana/openside"
+        href="https://discord.gg/chWCvASzP"
         target="_blank"
         rel="noopener noreferrer"
         className="flex select-none cursor-pointer items-center gap-2 rounded-lg bg-[#131313] px-4.5 py-2.5 text-[0.9375rem] font-semibold text-white transition-colors hover:bg-[#131313]/90"
       >
-        <FaGithub className="size-4" />
-        Star on GitHub
+        <FaDiscord className="size-4" />
+        Join community
       </a>
     </div>
   );
 };
 
-// Hero band content for the inner marketing pages.
+// Hero band content for the inner marketing pages. Static: only the home
+// page hero animates in.
 export const PageHero = ({
   eyebrow,
   title,
@@ -57,13 +63,13 @@ export const PageHero = ({
   description: string;
 }) => (
   <section className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-start gap-3 pt-6 pb-20 text-left sm:pt-10 sm:pb-24">
-    <span className="hero-rise inline-flex select-none items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 sm:text-sm">
+    <span className="inline-flex select-none items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 sm:text-sm">
       {eyebrow}
     </span>
-    <h1 className="hero-rise font-bricolage max-w-3xl text-3xl font-semibold leading-[1.2] text-white [--i:1] sm:text-[2.5rem]">
+    <h1 className="font-bricolage max-w-3xl text-3xl font-semibold leading-[1.2] text-white sm:text-[2.5rem]">
       {title}
     </h1>
-    <p className="hero-rise -mt-1 max-w-xl text-sm font-normal text-white/80 [--i:2] sm:text-base">
+    <p className="-mt-1 max-w-xl text-sm font-normal text-white/80 sm:text-base">
       {description}
     </p>
     <HeroCTAs />
