@@ -2,13 +2,13 @@ import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 import {
   ArrowUpRight,
-  Bug,
   Check,
-  GitPullRequest,
-  ShieldAlert,
+  GitCommitHorizontal,
+  Heart,
+  Star,
 } from "lucide-react";
-import { FaGithub } from "react-icons/fa";
 import { SiLoom } from "react-icons/si";
+import { Link } from "react-router-dom";
 
 import { RiversideIcon } from "@/components/landing/BrandIcons";
 import MarketingLayout from "@/components/landing/MarketingLayout";
@@ -17,6 +17,7 @@ import {
   containerVariants,
   riseVariants,
 } from "@/components/landing/motion";
+import { timeAgo, useGithubRepo } from "@/hooks/useGithubRepo";
 
 const REPO_URL = "https://github.com/rinkitadhana/openside";
 
@@ -37,7 +38,10 @@ const hostingOptions = [
   {
     name: "Bring your own keys",
     tagline: "Use openside.pro on your own infrastructure.",
-    need: ["A LiveKit project, on LiveKit Cloud or your own server", "A Cloudflare R2 bucket"],
+    need: [
+      "A LiveKit project, on LiveKit Cloud or your own server",
+      "A Cloudflare R2 bucket",
+    ],
     get: [
       "Unlimited recording time, participants, and retention",
       "No watermark and no Openside fee",
@@ -70,32 +74,6 @@ const alternativePoints = [
   "Free self-hosting on your own LiveKit and R2",
 ];
 
-const contributeLinks = [
-  {
-    icon: Bug,
-    title: "Report an issue",
-    description: "Found a bug or want a feature? Open an issue on GitHub.",
-    href: `${REPO_URL}/issues`,
-    cta: "Open an issue",
-  },
-  {
-    icon: GitPullRequest,
-    title: "Send a pull request",
-    description:
-      "Include screenshots and the reasoning behind the change so it's easy to review.",
-    href: `${REPO_URL}/pulls`,
-    cta: "View pull requests",
-  },
-  {
-    icon: ShieldAlert,
-    title: "Report a vulnerability",
-    description:
-      "Please report security problems privately through a GitHub advisory, not a public issue.",
-    href: `${REPO_URL}/security/advisories/new`,
-    cta: "Open an advisory",
-  },
-];
-
 const inView = {
   initial: "hidden",
   whileInView: "show",
@@ -107,33 +85,55 @@ const Block = ({
   eyebrow,
   title,
   description,
+  aside,
   children,
 }: {
   id: string;
   eyebrow: string;
   title: string;
   description?: string;
+  /** Sits opposite the heading on wide screens, e.g. a "view all" link. */
+  aside?: ReactNode;
   children: ReactNode;
 }) => (
   <section
     id={id}
-    className="border-b border-border px-4 py-16 last:border-b-0 sm:px-6 sm:py-20"
+    className="scroll-mt-6 border-b border-border px-4 py-16 last:border-b-0 sm:px-6 sm:py-20"
   >
     <div className="mx-auto max-w-5xl">
-      <motion.div className="max-w-xl" {...inView} variants={riseVariants}>
-        <p className="text-sm font-medium text-foreground/60">{eyebrow}</p>
-        <h2 className="font-bricolage mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-          {title}
-        </h2>
-        {description && (
-          <p className="mt-3 text-base leading-7 text-foreground/70">
-            {description}
-          </p>
-        )}
+      <motion.div
+        className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+        {...inView}
+        variants={riseVariants}
+      >
+        <div className="max-w-xl">
+          <p className="text-sm font-medium text-foreground/60">{eyebrow}</p>
+          <h2 className="font-bricolage mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            {title}
+          </h2>
+          {description && (
+            <p className="mt-3 text-base leading-7 text-foreground/70">
+              {description}
+            </p>
+          )}
+        </div>
+        {aside}
       </motion.div>
       {children}
     </div>
   </section>
+);
+
+const ExternalLink = ({ href, children }: { href: string; children: ReactNode }) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="group inline-flex w-fit shrink-0 items-center gap-1.5 text-sm font-medium text-foreground/70 transition-colors hover:text-foreground"
+  >
+    {children}
+    <ArrowUpRight className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+  </a>
 );
 
 const RepoSection = () => (
@@ -164,15 +164,6 @@ const RepoSection = () => (
             </div>
           ))}
         </dl>
-        <a
-          href={REPO_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90"
-        >
-          <FaGithub className="size-4" />
-          View on GitHub
-        </a>
       </motion.div>
 
       <motion.div
@@ -263,6 +254,196 @@ const HostingSection = () => (
   </Block>
 );
 
+// The changelog is the commit log: real, current, and nothing to maintain.
+const ShippedSection = () => {
+  const repo = useGithubRepo();
+
+  return (
+    <Block
+      id="shipped"
+      eyebrow="Changelog"
+      title="Recently shipped."
+      description="Straight from the commit history, so you can see how actively it's built."
+      aside={
+        <ExternalLink href={`${REPO_URL}/commits/main`}>
+          Full history
+        </ExternalLink>
+      }
+    >
+      <motion.div
+        className="mt-10 overflow-hidden rounded-2xl border border-border bg-foreground/[0.03]"
+        {...inView}
+        variants={riseVariants}
+      >
+        {repo.status === "ready" && repo.data.commits.length > 0 ? (
+          <ul className="divide-y divide-border">
+            {repo.data.commits.map(({ sha, message, date, url }) => (
+              <li key={sha}>
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-foreground/[0.04]"
+                >
+                  <GitCommitHorizontal className="size-4 shrink-0 text-foreground/40" />
+                  <span className="min-w-0 flex-1 truncate text-[0.9375rem] text-foreground/85 group-hover:text-foreground">
+                    {message}
+                  </span>
+                  <code className="hidden shrink-0 rounded bg-(--landing-chip) px-1.5 py-0.5 font-mono text-xs text-foreground/60 sm:block">
+                    {sha.slice(0, 7)}
+                  </code>
+                  <span className="w-24 shrink-0 text-right text-xs text-foreground/50 first-letter:uppercase">
+                    {timeAgo(date)}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : repo.status === "error" ? (
+          <p className="px-5 py-10 text-center text-sm text-foreground/60">
+            Couldn't load commits from GitHub right now.{" "}
+            <a
+              href={`${REPO_URL}/commits/main`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground underline underline-offset-4"
+            >
+              See them on GitHub
+            </a>
+            .
+          </p>
+        ) : (
+          <ul className="divide-y divide-border" aria-hidden>
+            {Array.from({ length: 6 }, (_, index) => (
+              <li key={index} className="flex items-center gap-4 px-5 py-4">
+                <span className="size-4 shrink-0 rounded-full bg-foreground/10" />
+                <span
+                  className="h-3.5 animate-pulse rounded bg-foreground/10"
+                  style={{ width: `${70 - index * 7}%` }}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </motion.div>
+    </Block>
+  );
+};
+
+const REPO_OWNER = "rinkitadhana";
+
+// Empty cells that square off the last row of a gap-px grid, so the border
+// color doesn't show through as a solid block. One set per breakpoint.
+const gridFillers = (count: number) => {
+  const fill = (cols: number) => (cols - (count % cols)) % cols;
+  return [
+    ...Array.from({ length: fill(2) }, (_, i) => ({
+      key: `sm-${i}`,
+      className: "hidden sm:block lg:hidden",
+    })),
+    ...Array.from({ length: fill(3) }, (_, i) => ({
+      key: `lg-${i}`,
+      className: "hidden lg:block",
+    })),
+  ];
+};
+
+const ContributeSection = () => {
+  const repo = useGithubRepo();
+  const contributors = repo.status === "ready" ? repo.data.contributors : [];
+  const totalCommits = contributors.reduce((sum, c) => sum + c.contributions, 0);
+
+  return (
+    <Block
+      id="contribute"
+      eyebrow="Contributors"
+      title="Built in the open."
+      description={
+        contributors.length > 1
+          ? `${contributors.length} people have shipped ${totalCommits.toLocaleString()} commits to Openside so far. Bug reports, ideas, and pull requests are all welcome, and small fixes count.`
+          : "Everyone who ships code to Openside is listed here. Bug reports, ideas, and pull requests are all welcome, and small fixes count."
+      }
+      aside={
+        <div className="flex flex-wrap gap-x-6 gap-y-2.5 sm:flex-col sm:items-end">
+          <ExternalLink href={`${REPO_URL}/issues/new`}>Report a bug</ExternalLink>
+          <ExternalLink href={`${REPO_URL}/security/advisories/new`}>
+            Report a vulnerability
+          </ExternalLink>
+        </div>
+      }
+    >
+      <motion.div className="mt-10" {...inView} variants={riseVariants}>
+        {repo.status === "error" ? (
+          <p className="rounded-2xl border border-border bg-foreground/[0.03] px-5 py-10 text-center text-sm text-foreground/60">
+            Couldn't load contributors.{" "}
+            <a
+              href={`${REPO_URL}/graphs/contributors`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground underline underline-offset-4"
+            >
+              See them on GitHub
+            </a>
+            .
+          </p>
+        ) : (
+          <ol className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+            {repo.status === "loading" &&
+              Array.from({ length: 3 }, (_, index) => (
+                <li
+                  key={index}
+                  aria-hidden
+                  className="flex items-center gap-4 bg-background p-5"
+                >
+                  <span className="size-11 shrink-0 animate-pulse rounded-full bg-foreground/10" />
+                  <span className="flex flex-col gap-2">
+                    <span className="h-3.5 w-28 animate-pulse rounded bg-foreground/10" />
+                    <span className="h-3 w-16 animate-pulse rounded bg-foreground/10" />
+                  </span>
+                </li>
+              ))}
+            {contributors.map(({ login, avatarUrl, url, contributions }, index) => (
+              <li key={login} className="bg-background">
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex h-full items-center gap-4 p-5 transition-colors hover:bg-foreground/[0.04]"
+                >
+                  <img
+                    src={`${avatarUrl}&s=88`}
+                    alt=""
+                    loading="lazy"
+                    className="size-11 shrink-0 rounded-full bg-foreground/10 ring-1 ring-border"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[0.9375rem] font-medium text-foreground">
+                      {login}
+                    </span>
+                    <span className="mt-0.5 block text-sm tabular-nums text-foreground/50">
+                      {contributions.toLocaleString()}{" "}
+                      {contributions === 1 ? "commit" : "commits"}
+                      {login === REPO_OWNER && " · Maintainer"}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-xs font-medium tabular-nums text-foreground/30 transition-colors group-hover:text-foreground/60">
+                    #{index + 1}
+                  </span>
+                </a>
+              </li>
+            ))}
+            {gridFillers(
+              repo.status === "loading" ? 3 : contributors.length,
+            ).map(({ key, className }) => (
+              <li key={key} aria-hidden className={`bg-background ${className}`} />
+            ))}
+          </ol>
+        )}
+      </motion.div>
+    </Block>
+  );
+};
+
 const AlternativeSection = () => (
   <section className="border-b border-border px-4 py-16 sm:px-6 sm:py-20">
     <motion.div
@@ -309,44 +490,63 @@ const AlternativeSection = () => (
   </section>
 );
 
-const ContributeSection = () => (
-  <Block
-    id="contribute"
-    eyebrow="Contribute"
-    title="Built in the open."
-    description="Issues and pull requests are always welcome."
-  >
+// Closing call to action: open and centered, no card, so it reads as the
+// end of the page rather than one more box.
+const SupportSection = () => (
+  <section className="px-4 py-20 sm:px-6 sm:py-28">
     <motion.div
-      className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3"
+      className="mx-auto flex max-w-2xl flex-col items-center text-center"
       {...inView}
       variants={containerVariants}
     >
-      {contributeLinks.map(({ icon: Icon, title, description, href, cta }) => (
-        <motion.a
-          key={title}
-          variants={riseVariants}
-          href={href}
+      <motion.span
+        variants={riseVariants}
+        className="flex size-12 items-center justify-center rounded-xl bg-[#db61a2]/12 ring-1 ring-[#db61a2]/25"
+      >
+        <Heart className="size-5 fill-[#db61a2] text-[#db61a2]" />
+      </motion.span>
+      <motion.h2
+        variants={riseVariants}
+        className="font-bricolage mt-6 text-3xl font-semibold tracking-tight text-balance text-foreground sm:text-4xl"
+      >
+        Help keep Openside open.
+      </motion.h2>
+      <motion.p
+        variants={riseVariants}
+        className="mt-4 max-w-lg text-base leading-7 text-pretty text-foreground/65"
+      >
+        Sponsorships fund development and keep self-hosting free. A star on
+        GitHub helps more people find it.
+      </motion.p>
+      <motion.div
+        variants={riseVariants}
+        className="mt-8 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row"
+      >
+        <Link
+          to="/sponsor"
+          className="flex h-11 items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90"
+        >
+          <Heart className="size-4 fill-[#db61a2] text-[#db61a2]" />
+          Become a sponsor
+        </Link>
+        <a
+          href={REPO_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="group flex flex-col rounded-2xl border border-border bg-foreground/[0.03] p-6 transition-colors hover:border-foreground/20 hover:bg-foreground/[0.06]"
+          className="flex h-11 items-center justify-center gap-2 rounded-lg border border-border px-5 text-sm font-medium text-foreground transition-colors hover:bg-foreground/[0.05]"
         >
-          <span className="flex size-11 items-center justify-center rounded-xl bg-(--landing-brand-tint)/45 text-(--landing-brand-text)">
-            <Icon className="size-5" />
-          </span>
-          <h3 className="font-bricolage mt-5 text-lg font-semibold tracking-tight text-foreground">
-            {title}
-          </h3>
-          <p className="mt-2 flex-1 text-sm leading-6 text-foreground/65">
-            {description}
-          </p>
-          <span className="mt-6 flex items-center justify-between border-t border-border pt-4 text-sm font-medium text-foreground/80 transition-colors group-hover:text-foreground">
-            {cta}
-            <ArrowUpRight className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-          </span>
-        </motion.a>
-      ))}
+          <Star className="size-4" />
+          Star on GitHub
+        </a>
+      </motion.div>
+      <motion.p
+        variants={riseVariants}
+        className="mt-4 text-xs text-foreground/45"
+      >
+        Monthly or one-time, through GitHub Sponsors.
+      </motion.p>
     </motion.div>
-  </Block>
+  </section>
 );
 
 const OpenSourcePage = () => (
@@ -361,8 +561,10 @@ const OpenSourcePage = () => (
   >
     <RepoSection />
     <HostingSection />
-    <AlternativeSection />
+    <ShippedSection />
     <ContributeSection />
+    <AlternativeSection />
+    <SupportSection />
   </MarketingLayout>
 );
 
