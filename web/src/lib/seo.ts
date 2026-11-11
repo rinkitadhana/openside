@@ -30,6 +30,12 @@ export const SEO_PAGES: Record<string, SeoMeta> = {
     description:
       "Try Openside free, upgrade to Pro for managed 4K recording at $8.99 a month, or self-host it for free with unlimited recording on your own keys.",
   },
+  "/sponsor": {
+    name: "Sponsor",
+    title: "Sponsor Openside: Support open-source recording | Openside",
+    description:
+      "Back Openside on GitHub Sponsors, monthly or one-time. Sponsorships keep the recording studio MIT licensed and free to self-host.",
+  },
   "/privacy": {
     name: "Privacy Policy",
     title: "Privacy Policy | Openside",

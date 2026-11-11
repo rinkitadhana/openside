@@ -212,6 +212,7 @@ const footerColumns = [
   {
     title: "Company",
     links: [
+      { to: "/sponsor", label: "Sponsor" },
       { to: "https://x.com/damngruz", label: "Contact us" },
       { to: "https://github.com/rinkitadhana/openside", label: "GitHub" },
     ],

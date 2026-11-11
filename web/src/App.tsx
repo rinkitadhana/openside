@@ -12,6 +12,7 @@ import AppLoader from "@/components/shared/AppLoader";
 // call/recorder code behind it) downloads when it's first visited.
 const OpenSourcePage = lazy(() => import("@/pages/OpenSourcePage"));
 const PricingPage = lazy(() => import("@/pages/PricingPage"));
+const SponsorPage = lazy(() => import("@/pages/SponsorPage"));
 const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"));
 const TermsPage = lazy(() => import("@/pages/TermsPage"));
 const DashboardWrapper = lazy(
@@ -49,6 +50,7 @@ const App = () => {
       <Route path="/" element={<LandingPage />} />
       <Route path="/open-source" element={<OpenSourcePage />} />
       <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/sponsor" element={<SponsorPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/terms" element={<TermsPage />} />
       <Route
