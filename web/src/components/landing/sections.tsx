@@ -1,5 +1,4 @@
 import { useState, type ElementType, type ReactNode } from "react";
-import { motion } from "framer-motion";
 import { Check, Globe, Heart } from "lucide-react";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
@@ -23,13 +22,6 @@ import {
   sponsors,
   useCases,
 } from "@/components/landing/content";
-import { containerVariants, riseVariants } from "@/components/landing/motion";
-
-const inView = {
-  initial: "hidden",
-  whileInView: "show",
-  viewport: { once: true, margin: "-100px" },
-} as const;
 
 // The two hero buttons: start recording (auth-aware) and star on GitHub.
 export const HeroCTAs = () => {
@@ -87,10 +79,8 @@ export const SectionHeading = ({
   title: string;
   description?: string;
 }) => (
-  <motion.div
+  <div
     className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
-    {...inView}
-    variants={riseVariants}
   >
     <div className="max-w-xl">
       <p className="text-sm font-medium text-foreground/60">{eyebrow}</p>
@@ -103,7 +93,7 @@ export const SectionHeading = ({
         </p>
       )}
     </div>
-  </motion.div>
+  </div>
 );
 
 export const Section = ({
@@ -119,17 +109,14 @@ export const Section = ({
 );
 
 export const FeaturesGrid = () => (
-  <motion.div
+  <div
     className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2"
-    {...inView}
-    variants={containerVariants}
   >
     {features.map(({ icon: Icon, title, description }) => {
       const Demo = featureDemos[title];
       return (
-        <motion.article
+        <article
           key={title}
-          variants={riseVariants}
           className="flex flex-col rounded-2xl border border-border bg-foreground/[0.03] p-6"
         >
           <div className="flex size-11 items-center justify-center rounded-xl bg-(--landing-brand-tint)/45 text-(--landing-brand-text)">
@@ -144,10 +131,10 @@ export const FeaturesGrid = () => (
           <div className="relative mt-6 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl border border-border bg-[url('/img/landing/feature-bg.jpg')] bg-cover bg-center px-5 sm:aspect-[16/10]">
             {Demo && <Demo />}
           </div>
-        </motion.article>
+        </article>
       );
     })}
-  </motion.div>
+  </div>
 );
 
 export const FeaturesSection = () => (
@@ -168,9 +155,9 @@ export const UseCasesSection = () => (
       title="Built for how you actually work."
       description="From solo creators to compliance-sensitive teams, here is who records with Openside."
     />
-    <motion.div {...inView} variants={riseVariants}>
+    <div>
       <UseCasesShowcase items={useCases} />
-    </motion.div>
+    </div>
   </Section>
 );
 
@@ -183,8 +170,7 @@ const PointsCard = ({
   subtitle: string;
   points: { icon: ElementType; title: string; description: string }[];
 }) => (
-  <motion.div
-    variants={riseVariants}
+  <div
     className="rounded-2xl border border-border bg-foreground/[0.03] p-6 sm:p-8"
   >
     <h3 className="font-bricolage text-lg font-semibold tracking-tight text-foreground">
@@ -208,7 +194,7 @@ const PointsCard = ({
         </li>
       ))}
     </ul>
-  </motion.div>
+  </div>
 );
 
 export const PrivacySection = () => (
@@ -218,10 +204,8 @@ export const PrivacySection = () => (
       title="Your recordings stay yours."
       description="Two things matter here: keeping your recordings safe, and letting you run the whole thing yourself. Here is how each works."
     />
-    <motion.div
+    <div
       className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-2"
-      {...inView}
-      variants={containerVariants}
     >
       <PointsCard
         title="Your recordings"
@@ -233,7 +217,7 @@ export const PrivacySection = () => (
         subtitle="Run Openside on your own infrastructure, with your own keys."
         points={selfHostPoints}
       />
-    </motion.div>
+    </div>
   </Section>
 );
 
@@ -244,13 +228,11 @@ export const HowItWorksSection = () => (
       title="Recorded locally, not over the internet."
       description="Most tools record the call stream, so quality depends on everyone's connection. Openside records each person locally, so it doesn't."
     />
-    <motion.div
+    <div
       className="mt-10 overflow-x-auto"
-      {...inView}
-      variants={riseVariants}
     >
       <HowItWorksDiagram />
-    </motion.div>
+    </div>
   </Section>
 );
 
@@ -308,10 +290,8 @@ const SponsorPicker = () => {
   })}`;
 
   return (
-    <motion.div
+    <div
       className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-[1fr_minmax(0,22rem)] md:items-start md:gap-12"
-      {...inView}
-      variants={riseVariants}
     >
       <div>
         <div className="flex size-11 items-center justify-center rounded-xl bg-(--landing-brand-tint)/45">
@@ -382,7 +362,7 @@ const SponsorPicker = () => {
           Secure checkout on GitHub Sponsors. Any amount works there too.
         </p>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -395,15 +375,12 @@ export const SponsorsSection = () => (
     />
 
     {sponsors.length > 0 ? (
-      <motion.div
+      <div
         className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-        {...inView}
-        variants={containerVariants}
       >
         {sponsors.map((sponsor) => (
-          <motion.figure
+          <figure
             key={sponsor.name}
-            variants={riseVariants}
             className="flex flex-col rounded-2xl border border-border bg-foreground/[0.03] p-6"
           >
             <figcaption className="flex items-center gap-4">
@@ -458,14 +435,12 @@ export const SponsorsSection = () => (
                 </div>
               )}
             </div>
-          </motion.figure>
+          </figure>
         ))}
-      </motion.div>
+      </div>
     ) : (
-      <motion.div
+      <div
         className="mt-10 flex flex-col items-center rounded-2xl border border-dashed border-foreground/20 px-6 py-14 text-center"
-        {...inView}
-        variants={riseVariants}
       >
         <div className="flex size-11 items-center justify-center rounded-xl bg-(--landing-brand-tint)/45">
           <Heart className="size-5 fill-[#db61a2] text-[#db61a2]" />
@@ -477,7 +452,7 @@ export const SponsorsSection = () => (
           Be the first to back Openside. Your name, message, and links will show
           up right here.
         </p>
-      </motion.div>
+      </div>
     )}
 
     <SponsorPicker />
@@ -488,15 +463,12 @@ export const PricingCards = () => {
   const openAuth = useOpenAuth();
 
   return (
-    <motion.div
+    <div
       className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3"
-      {...inView}
-      variants={containerVariants}
     >
       {pricingPlans.map((plan) => (
-        <motion.div
+        <div
           key={plan.name}
-          variants={riseVariants}
           className={`flex flex-col rounded-2xl border p-6 text-foreground ${
             plan.featured
               ? "border-(--landing-brand-tint) bg-(--landing-brand-soft) shadow-[0_12px_34px_rgba(0,65,170,0.14)] ring-1 ring-(--landing-brand-tint)"
@@ -554,9 +526,9 @@ export const PricingCards = () => {
                 : "bg-foreground text-background hover:bg-foreground/90"
             }`}
           />
-        </motion.div>
+        </div>
       ))}
-    </motion.div>
+    </div>
   );
 };
 
@@ -593,20 +565,17 @@ export const FaqSection = ({
           })),
         }}
       />
-      <motion.div
+      <div
         className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] md:gap-16"
-        {...inView}
-        variants={containerVariants}
       >
-        <motion.div variants={riseVariants}>
+        <div>
           <p className="text-sm font-medium text-foreground/60">FAQ</p>
           <h2 className="font-bricolage mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             {title}
           </h2>
-        </motion.div>
+        </div>
 
-        <motion.div
-          variants={riseVariants}
+        <div
           className="divide-y divide-border border-y border-border"
         >
           {items.map(({ question, answer }, index) => {
@@ -644,8 +613,8 @@ export const FaqSection = ({
               </div>
             );
           })}
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </section>
   );
 };

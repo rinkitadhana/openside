@@ -78,8 +78,8 @@
   }
 }
 
-/* Hero entrance on the marketing pages, matching riseVariants in
-   components/landing/motion.ts. Plain CSS so it plays as soon as the
+/* Hero entrance on the marketing pages, the only entrance animation they
+   have. Plain CSS so it plays as soon as the
    prerendered HTML paints, instead of waiting for the app's JavaScript.
    Each item sets --i for its place in the stagger. */
 @keyframes hero-rise {

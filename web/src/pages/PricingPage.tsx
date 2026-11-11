@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { motion } from "framer-motion";
 import { Check, Minus } from "lucide-react";
 
 import MarketingLayout, {
@@ -12,7 +11,6 @@ import {
   Section,
   SectionHeading,
 } from "@/components/landing/sections";
-import { riseVariants } from "@/components/landing/motion";
 
 const PLAN_NAMES = ["Demo", "Pro", "Self-host"] as const;
 
@@ -105,11 +103,7 @@ const PricingPage = () => (
     <SectionDivider />
     <Section id="compare">
       <SectionHeading eyebrow="Compare" title="Compare plans side by side." />
-      <motion.div
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-100px" }}
-        variants={riseVariants}
+      <div
         className="mt-10 overflow-x-auto rounded-2xl border border-border"
       >
         <table className="w-full min-w-[36rem] border-collapse text-left text-sm">
@@ -150,7 +144,7 @@ const PricingPage = () => (
             ))}
           </tbody>
         </table>
-      </motion.div>
+      </div>
     </Section>
     <SectionDivider />
     <FaqSection items={pricingFaqs} title="Questions about plans and billing." />

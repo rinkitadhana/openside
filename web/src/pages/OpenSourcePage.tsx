@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 import {
   ArrowUpRight,
@@ -13,10 +12,6 @@ import { Link } from "react-router-dom";
 import { RiversideIcon } from "@/components/landing/BrandIcons";
 import MarketingLayout from "@/components/landing/MarketingLayout";
 import { PageHero } from "@/components/landing/sections";
-import {
-  containerVariants,
-  riseVariants,
-} from "@/components/landing/motion";
 import { timeAgo, useGithubRepo } from "@/hooks/useGithubRepo";
 
 const REPO_URL = "https://github.com/rinkitadhana/openside";
@@ -74,12 +69,6 @@ const alternativePoints = [
   "Free self-hosting on your own LiveKit and R2",
 ];
 
-const inView = {
-  initial: "hidden",
-  whileInView: "show",
-  viewport: { once: true, margin: "-100px" },
-} as const;
-
 const Block = ({
   id,
   eyebrow,
@@ -101,10 +90,8 @@ const Block = ({
     className="scroll-mt-6 border-b border-border px-4 py-16 last:border-b-0 sm:px-6 sm:py-20"
   >
     <div className="mx-auto max-w-5xl">
-      <motion.div
+      <div
         className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
-        {...inView}
-        variants={riseVariants}
       >
         <div className="max-w-xl">
           <p className="text-sm font-medium text-foreground/60">{eyebrow}</p>
@@ -118,7 +105,7 @@ const Block = ({
           )}
         </div>
         {aside}
-      </motion.div>
+      </div>
       {children}
     </div>
   </section>
@@ -138,12 +125,10 @@ const ExternalLink = ({ href, children }: { href: string; children: ReactNode })
 
 const RepoSection = () => (
   <section className="border-b border-border px-4 py-16 sm:px-6 sm:py-20">
-    <motion.div
+    <div
       className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-10 md:grid-cols-2 md:gap-14"
-      {...inView}
-      variants={containerVariants}
     >
-      <motion.div variants={riseVariants}>
+      <div>
         <p className="text-sm font-medium text-foreground/60">The repository</p>
         <h2 className="font-bricolage mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           MIT licensed, every line public.
@@ -164,10 +149,9 @@ const RepoSection = () => (
             </div>
           ))}
         </dl>
-      </motion.div>
+      </div>
 
-      <motion.div
-        variants={riseVariants}
+      <div
         className="overflow-hidden rounded-2xl border border-border bg-[#131313] shadow-[0_14px_38px_rgba(0,0,0,0.16)]"
       >
         <div className="flex items-center gap-1.5 border-b border-white/10 px-4 py-3">
@@ -184,8 +168,8 @@ const RepoSection = () => (
             </div>
           ))}
         </pre>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   </section>
 );
 
@@ -196,15 +180,12 @@ const HostingSection = () => (
     title="Two ways to run it yourself."
     description="Keep the hosted app and plug in your own infrastructure, or deploy the entire thing from the repository."
   >
-    <motion.div
+    <div
       className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2"
-      {...inView}
-      variants={containerVariants}
     >
       {hostingOptions.map(({ name, tagline, need, get }, index) => (
-        <motion.div
+        <div
           key={name}
-          variants={riseVariants}
           className="flex flex-col rounded-2xl border border-border bg-foreground/[0.03]"
         >
           <div className="p-6">
@@ -248,9 +229,9 @@ const HostingSection = () => (
               ))}
             </ul>
           </div>
-        </motion.div>
+        </div>
       ))}
-    </motion.div>
+    </div>
   </Block>
 );
 
@@ -270,10 +251,8 @@ const ShippedSection = () => {
         </ExternalLink>
       }
     >
-      <motion.div
+      <div
         className="mt-10 overflow-hidden rounded-2xl border border-border bg-foreground/[0.03]"
-        {...inView}
-        variants={riseVariants}
       >
         {repo.status === "ready" && repo.data.commits.length > 0 ? (
           <ul className="divide-y divide-border">
@@ -325,7 +304,7 @@ const ShippedSection = () => {
             ))}
           </ul>
         )}
-      </motion.div>
+      </div>
     </Block>
   );
 };
@@ -372,7 +351,7 @@ const ContributeSection = () => {
         </div>
       }
     >
-      <motion.div className="mt-10" {...inView} variants={riseVariants}>
+      <div className="mt-10">
         {repo.status === "error" ? (
           <p className="rounded-2xl border border-border bg-foreground/[0.03] px-5 py-10 text-center text-sm text-foreground/60">
             Couldn't load contributors.{" "}
@@ -439,19 +418,17 @@ const ContributeSection = () => {
             ))}
           </ol>
         )}
-      </motion.div>
+      </div>
     </Block>
   );
 };
 
 const AlternativeSection = () => (
   <section className="border-b border-border px-4 py-16 sm:px-6 sm:py-20">
-    <motion.div
+    <div
       className="mx-auto grid max-w-5xl grid-cols-1 gap-10 md:grid-cols-2 md:gap-16"
-      {...inView}
-      variants={containerVariants}
     >
-      <motion.div variants={riseVariants}>
+      <div>
         <p className="text-sm font-medium text-foreground/60">Alternative</p>
         <h2 className="font-bricolage mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           An open-source alternative to Riverside and Loom.
@@ -471,9 +448,8 @@ const AlternativeSection = () => (
           for, quick screen recordings shared with a link. It does both in one
           app, and you can read and run all of its code.
         </p>
-      </motion.div>
-      <motion.ul
-        variants={riseVariants}
+      </div>
+      <ul
         className="divide-y divide-border self-start overflow-hidden rounded-2xl border border-border bg-foreground/[0.03]"
       >
         {alternativePoints.map((point) => (
@@ -485,8 +461,8 @@ const AlternativeSection = () => (
             {point}
           </li>
         ))}
-      </motion.ul>
-    </motion.div>
+      </ul>
+    </div>
   </section>
 );
 
@@ -494,32 +470,26 @@ const AlternativeSection = () => (
 // end of the page rather than one more box.
 const SupportSection = () => (
   <section className="px-4 py-20 sm:px-6 sm:py-28">
-    <motion.div
+    <div
       className="mx-auto flex max-w-2xl flex-col items-center text-center"
-      {...inView}
-      variants={containerVariants}
     >
-      <motion.span
-        variants={riseVariants}
+      <span
         className="flex size-12 items-center justify-center rounded-xl bg-[#db61a2]/12 ring-1 ring-[#db61a2]/25"
       >
         <Heart className="size-5 fill-[#db61a2] text-[#db61a2]" />
-      </motion.span>
-      <motion.h2
-        variants={riseVariants}
+      </span>
+      <h2
         className="font-bricolage mt-6 text-3xl font-semibold tracking-tight text-balance text-foreground sm:text-4xl"
       >
         Help keep Openside open.
-      </motion.h2>
-      <motion.p
-        variants={riseVariants}
+      </h2>
+      <p
         className="mt-4 max-w-lg text-base leading-7 text-pretty text-foreground/65"
       >
         Sponsorships fund development and keep self-hosting free. A star on
         GitHub helps more people find it.
-      </motion.p>
-      <motion.div
-        variants={riseVariants}
+      </p>
+      <div
         className="mt-8 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row"
       >
         <Link
@@ -538,14 +508,13 @@ const SupportSection = () => (
           <Star className="size-4" />
           Star on GitHub
         </a>
-      </motion.div>
-      <motion.p
-        variants={riseVariants}
+      </div>
+      <p
         className="mt-4 text-xs text-foreground/45"
       >
         Monthly or one-time, through GitHub Sponsors.
-      </motion.p>
-    </motion.div>
+      </p>
+    </div>
   </section>
 );
 

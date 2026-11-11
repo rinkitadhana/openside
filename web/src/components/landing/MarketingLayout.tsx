@@ -17,11 +17,7 @@ import AuthModal, { type AuthMode } from "@/components/auth/AuthModal";
 import GithubStarButton from "@/components/landing/GithubStarButton";
 import JsonLd from "@/components/landing/JsonLd";
 import { HeaderAuthCTA } from "@/components/landing/LandingAuthCTA";
-import {
-  EASE,
-  containerVariants,
-  riseVariants,
-} from "@/components/landing/motion";
+import { EASE } from "@/components/landing/motion";
 import { useHydrated } from "@/hooks/useHydrated";
 import { useSeoMeta } from "@/hooks/useSeoMeta";
 import { getStructuredData } from "@/lib/seo";
@@ -230,14 +226,10 @@ const MarketingFooter = () => (
   <footer className="relative overflow-hidden bg-[url('/img/landing/hero-bg.webp')] bg-cover bg-top px-4 py-20 sm:px-6 sm:py-24">
     <div className="absolute inset-0 bg-black/20" />
     <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
-    <motion.div
+    <div
       className="relative mx-auto grid max-w-5xl grid-cols-2 gap-12 sm:grid-cols-[1.4fr_1fr_1fr_1fr]"
-      initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, margin: "-100px" }}
-      variants={containerVariants}
     >
-      <motion.div variants={riseVariants} className="col-span-2 sm:col-span-1">
+      <div className="col-span-2 sm:col-span-1">
         <Link to="/" className="flex items-center gap-2.5">
           <img
             src="/logo/logo-dark.png"
@@ -272,10 +264,10 @@ const MarketingFooter = () => (
             <FaXTwitter className="size-4" />
           </a>
         </div>
-      </motion.div>
+      </div>
 
       {footerColumns.map(({ title, links }) => (
-        <motion.div key={title} variants={riseVariants}>
+        <div key={title}>
           <p className="text-sm font-semibold uppercase tracking-wide text-white/50">
             {title}
           </p>
@@ -298,15 +290,11 @@ const MarketingFooter = () => (
               ),
             )}
           </div>
-        </motion.div>
+        </div>
       ))}
-    </motion.div>
-    <motion.div
+    </div>
+    <div
       className="relative mx-auto mt-12 flex max-w-5xl flex-col gap-2 border-t border-white/20 pt-6 text-sm text-white/60 sm:flex-row sm:items-center sm:justify-between"
-      initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, margin: "-100px" }}
-      variants={riseVariants}
     >
       <p>
         © {new Date().getFullYear()} Openside. Open source under the MIT
@@ -316,7 +304,7 @@ const MarketingFooter = () => (
         <p className="text-white/50">Built for creators who own their footage.</p>
         <ThemeSwitcher />
       </div>
-    </motion.div>
+    </div>
   </footer>
 );
 
