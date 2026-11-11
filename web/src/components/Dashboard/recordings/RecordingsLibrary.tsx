@@ -1412,48 +1412,50 @@ const RecordingsLibrary = () => {
             </span>
           </p>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              aria-label={`Filter: ${activeFilterLabel}`}
-              className="flex size-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-border/50 bg-primary text-sm font-medium text-foreground transition-colors hover:bg-muted data-[state=open]:bg-muted cursor-pointer sm:w-auto sm:px-3"
+        {!hasNoRecordings && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label={`Filter: ${activeFilterLabel}`}
+                className="flex size-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-border/50 bg-primary text-sm font-medium text-foreground transition-colors hover:bg-muted data-[state=open]:bg-muted cursor-pointer sm:w-auto sm:px-3"
+              >
+                <FiFilter size={14} className="text-fg-subtle" />
+                {/* Phones: just the icon - the names are in the menu. */}
+                <span className="hidden sm:inline">{activeFilterLabel}</span>
+                <FiChevronDown
+                  size={14}
+                  className="hidden text-fg-subtle sm:block"
+                />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              sideOffset={6}
+              className="w-52 rounded-xl border-border/50 bg-primary p-1"
             >
-              <FiFilter size={14} className="text-fg-subtle" />
-              {/* Phones: just the icon - the names are in the menu. */}
-              <span className="hidden sm:inline">{activeFilterLabel}</span>
-              <FiChevronDown
-                size={14}
-                className="hidden text-fg-subtle sm:block"
-              />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            sideOffset={6}
-            className="w-52 rounded-xl border-border/50 bg-primary p-1"
-          >
-            <DropdownMenuRadioGroup
-              value={filter}
-              onValueChange={(value) => setFilter(value as ProjectFilter)}
-            >
-              {PROJECT_FILTERS.map((item) => (
-                <DropdownMenuRadioItem
-                  key={item.value}
-                  value={item.value}
-                  // Hide the stock radio dot; the check on the right marks it.
-                  className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-sm text-fg-muted focus:bg-muted focus:text-foreground data-[state=checked]:text-foreground [&>span:first-child]:hidden"
-                >
-                  <item.icon size={15} />
-                  <span className="flex-1">{item.label}</span>
-                  {item.value === filter && (
-                    <FiCheck size={14} className="text-foreground" />
-                  )}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuRadioGroup
+                value={filter}
+                onValueChange={(value) => setFilter(value as ProjectFilter)}
+              >
+                {PROJECT_FILTERS.map((item) => (
+                  <DropdownMenuRadioItem
+                    key={item.value}
+                    value={item.value}
+                    // Hide the stock radio dot; the check on the right marks it.
+                    className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-sm text-fg-muted focus:bg-muted focus:text-foreground data-[state=checked]:text-foreground [&>span:first-child]:hidden"
+                  >
+                    <item.icon size={15} />
+                    <span className="flex-1">{item.label}</span>
+                    {item.value === filter && (
+                      <FiCheck size={14} className="text-foreground" />
+                    )}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {hasNoRecordings && (
