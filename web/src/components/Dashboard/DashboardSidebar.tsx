@@ -26,6 +26,15 @@ import PricingModal from "./PricingModal";
 const GITHUB_NEW_ISSUE_URL =
   "https://github.com/rinkitadhana/openside/issues/new";
 
+/** Seconds -> "45m", "2h", "2h 30m". */
+const formatTime = (seconds: number) => {
+  const totalMinutes = Math.floor(seconds / 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h === 0) return `${m}m`;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+};
+
 const navLinks = [
   { icon: House, name: "Home", to: "/dashboard/home" },
   { icon: FolderClosed, name: "Projects", to: "/dashboard/project" },
@@ -46,6 +55,17 @@ const DashboardSidebar = ({ isOpen, onNavigate }: DashboardSidebarProps) => {
   const [pricingOpen, setPricingOpen] = useState(false);
   // Free (demo) users only - pro and self-host already have everything.
   const showUpgrade = usage?.plan === "demo";
+  // Metered plans only - self-host has no limit to show.
+  const credit =
+    usage && usage.limit !== null && usage.limit > 0
+      ? {
+          used: Math.min(usage.used, usage.limit),
+          limit: usage.limit,
+          remaining: usage.remaining ?? 0,
+          percent: Math.min(100, (usage.used / usage.limit) * 100),
+          low: usage.warning || usage.exhausted,
+        }
+      : null;
 
   const navLinkClass = (isActive: boolean) =>
     `flex h-10 items-center overflow-hidden rounded-md text-sm font-medium transition-colors ${
@@ -112,6 +132,45 @@ const DashboardSidebar = ({ isOpen, onNavigate }: DashboardSidebarProps) => {
       </nav>
 
       <div className="flex flex-col gap-1">
+        {credit && (
+          <div
+            title={`${formatTime(credit.remaining)} left of ${formatTime(credit.limit)}`}
+            className={`mb-1 overflow-hidden ${
+              isOpen
+                ? "rounded-md border border-border/50 bg-primary p-3"
+                : "px-2 py-1"
+            }`}
+          >
+            {isOpen && (
+              <div className="mb-2 flex items-baseline justify-between gap-2 text-xs">
+                <span className="truncate font-medium text-foreground">
+                  {formatTime(credit.remaining)} left
+                </span>
+                <span className="shrink-0 tabular-nums text-fg-muted">
+                  {formatTime(credit.used)} / {formatTime(credit.limit)}
+                </span>
+              </div>
+            )}
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className={`h-full rounded-full transition-[width] duration-300 ${
+                  credit.low ? "bg-danger" : "bg-brand"
+                }`}
+                style={{ width: `${credit.percent}%` }}
+              />
+            </div>
+            {isOpen && usage?.resets_at && (
+              <p className="mt-2 truncate text-[0.7rem] text-fg-subtle">
+                Resets{" "}
+                {new Date(usage.resets_at).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                })}
+              </p>
+            )}
+          </div>
+        )}
+
         {showUpgrade && (
           <button
             type="button"
