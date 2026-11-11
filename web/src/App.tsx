@@ -10,8 +10,6 @@ import AppLoader from "@/components/shared/AppLoader";
 
 // Only the landing page ships in the main bundle; every other page (and the
 // call/recorder code behind it) downloads when it's first visited.
-const FeaturesPage = lazy(() => import("@/pages/FeaturesPage"));
-const UseCasesPage = lazy(() => import("@/pages/UseCasesPage"));
 const OpenSourcePage = lazy(() => import("@/pages/OpenSourcePage"));
 const PricingPage = lazy(() => import("@/pages/PricingPage"));
 const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"));
@@ -49,8 +47,6 @@ const App = () => {
         <Suspense fallback={<AppLoader />}>
         <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/features" element={<FeaturesPage />} />
-      <Route path="/use-cases" element={<UseCasesPage />} />
       <Route path="/open-source" element={<OpenSourcePage />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />

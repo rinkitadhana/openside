@@ -18,19 +18,6 @@ export const SEO_PAGES: Record<string, SeoMeta> = {
     description:
       "Record studio-quality podcasts, interviews, and calls right from your browser. Separate tracks for every guest, a built-in screen recorder, and free self-hosting.",
   },
-  "/features": {
-    name: "Features",
-    title:
-      "Features: Local recording, separate tracks, screen recorder | Openside",
-    description:
-      "Record up to 4K video and 48kHz audio locally in the browser, get a separate track for every participant, record your screen, and share with a link.",
-  },
-  "/use-cases": {
-    name: "Use cases",
-    title: "Use cases: Podcasts, interviews, demos, and meetings | Openside",
-    description:
-      "See how creators and teams use Openside for remote podcasts, video interviews, product demos, client calls, bug reports, team meetings, and testimonials.",
-  },
   "/open-source": {
     name: "Open source",
     title: "Open-source recording studio you can self-host | Openside",

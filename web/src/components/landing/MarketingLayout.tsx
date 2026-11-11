@@ -27,8 +27,8 @@ import { useSeoMeta } from "@/hooks/useSeoMeta";
 import { getStructuredData } from "@/lib/seo";
 
 export const NAV_LINKS = [
-  { to: "/features", label: "Features" },
-  { to: "/use-cases", label: "Use cases" },
+  { to: "/#features", label: "Features" },
+  { to: "/#use-cases", label: "Use cases" },
   { to: "/open-source", label: "Open source" },
   { to: "/pricing", label: "Pricing" },
 ];
@@ -93,8 +93,18 @@ const ThemeSwitcher = () => {
 };
 
 const MarketingHeader = ({ onOpenAuth }: { onOpenAuth: OpenAuth }) => {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Clicking the section link you're already on doesn't change the URL, so
+  // the layout's hash effect won't fire - scroll to it here instead.
+  const scrollIfCurrent = (to: string) => {
+    if (to.includes("#") && `${pathname}${hash}` === to) {
+      document
+        .getElementById(to.split("#")[1])
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   return (
     <header className="absolute inset-x-0 top-0 z-20">
@@ -118,6 +128,7 @@ const MarketingHeader = ({ onOpenAuth }: { onOpenAuth: OpenAuth }) => {
             <Link
               key={to}
               to={to}
+              onClick={() => scrollIfCurrent(to)}
               aria-current={pathname === to ? "page" : undefined}
               className={`rounded-full px-3 py-2 transition-colors hover:bg-white/10 hover:text-white ${
                 pathname === to ? "bg-white/10 text-white" : ""
@@ -168,7 +179,10 @@ const MarketingHeader = ({ onOpenAuth }: { onOpenAuth: OpenAuth }) => {
                 <Link
                   key={to}
                   to={to}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    scrollIfCurrent(to);
+                  }}
                   className="rounded-xl px-4 py-3 text-sm font-medium text-white/85 transition-colors hover:bg-white/10 hover:text-white"
                 >
                   {label}
@@ -332,8 +346,22 @@ const MarketingLayout = ({
   // Each marketing page starts at the top, unless the link targets a section.
   // Instant, because the global smooth scrolling would otherwise glide up
   // from wherever the previous page was scrolled to.
+  // Client-side navigation doesn't jump to the hash, so find the section
+  // ourselves (retrying briefly while the page renders).
   useEffect(() => {
-    if (!hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    if (!hash) {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      return;
+    }
+    let frame = 0;
+    let tries = 0;
+    const scrollToHash = () => {
+      const el = document.getElementById(decodeURIComponent(hash.slice(1)));
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      else if (tries++ < 30) frame = requestAnimationFrame(scrollToHash);
+    };
+    scrollToHash();
+    return () => cancelAnimationFrame(frame);
   }, [pathname, hash]);
 
   // Stable so the memoized auth CTAs don't re-render on every page render.
