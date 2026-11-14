@@ -73,7 +73,7 @@ const LandingPage = () => {
 
           <div className="hero-rise mt-3 flex w-full justify-center [--i:5]">
             <span className="inline-flex select-none items-center gap-2 rounded-md border border-white/10 bg-[#131313]/85 py-1.5 pr-3 pl-1.5 text-xs font-medium tracking-wide uppercase sm:text-sm">
-              <span className="flex size-6 items-center justify-center rounded bg-white text-[#131313]">
+              <span className="flex size-6 items-center justify-center rounded bg-[#F26625] text-white">
                 <FaPersonPraying className="size-3.5" />
               </span>
               <span className="text-white/55">
