@@ -143,7 +143,7 @@ export const FeaturesGrid = () => (
   </div>
 );
 
-const LAUNCH_VIDEO_ID = "G-4cxjj3s14";
+const LAUNCH_VIDEO_ID = "xp9F5rpJzG4";
 
 // Thumbnail facade: the YouTube iframe (and its ~1MB of JS) only loads on click.
 const LaunchVideo = () => {
