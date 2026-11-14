@@ -1,5 +1,5 @@
 import { useState, type ElementType, type ReactNode } from "react";
-import { Check, Globe, Heart } from "lucide-react";
+import { Check, Globe, Heart, Play } from "lucide-react";
 import { FaDiscord, FaGithub, FaLinkedin } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 
@@ -141,6 +141,57 @@ export const FeaturesGrid = () => (
       );
     })}
   </div>
+);
+
+const LAUNCH_VIDEO_ID = "G-4cxjj3s14";
+
+// Thumbnail facade: the YouTube iframe (and its ~1MB of JS) only loads on click.
+const LaunchVideo = () => {
+  const [playing, setPlaying] = useState(false);
+
+  return (
+    <div className="relative mt-10 aspect-video w-full overflow-hidden rounded-2xl border border-border bg-[#131313] shadow-[0_0_12px_rgba(0,0,0,0.18),0_0_45px_rgba(0,0,0,0.08)]">
+      {playing ? (
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${LAUNCH_VIDEO_ID}?autoplay=1&rel=0`}
+          title="Openside launch video"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="absolute inset-0 size-full"
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setPlaying(true)}
+          aria-label="Play the Openside launch video"
+          className="group absolute inset-0 size-full cursor-pointer"
+        >
+          <img
+            src={`https://i.ytimg.com/vi/${LAUNCH_VIDEO_ID}/maxresdefault.jpg`}
+            alt=""
+            loading="lazy"
+            className="size-full object-cover"
+          />
+          <span className="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors group-hover:bg-black/30">
+            <span className="flex size-16 items-center justify-center rounded-full bg-white text-[#131313] shadow-lg transition-transform group-hover:scale-105 sm:size-20">
+              <Play className="ml-1 size-7 fill-current sm:size-8" />
+            </span>
+          </span>
+        </button>
+      )}
+    </div>
+  );
+};
+
+export const LaunchVideoSection = () => (
+  <Section id="launch-video">
+    <SectionHeading
+      eyebrow="Launch video"
+      title="Meet Openside."
+      description="The story behind Openside and why we built an open-source way to record from the browser."
+    />
+    <LaunchVideo />
+  </Section>
 );
 
 export const FeaturesSection = () => (

@@ -13,6 +13,7 @@ import {
   FeaturesSection,
   HeroCTAs,
   HowItWorksSection,
+  LaunchVideoSection,
   PricingSection,
   PrivacySection,
   SponsorsSection,
@@ -71,6 +72,8 @@ const LandingPage = () => {
         </section>
       }
     >
+      <LaunchVideoSection />
+      <SectionDivider />
       <FeaturesSection />
       <SectionDivider />
       <UseCasesSection />
