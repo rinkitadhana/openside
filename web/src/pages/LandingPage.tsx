@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { FaGithub } from "react-icons/fa";
+import { FaPersonPraying } from "react-icons/fa6";
 import { SiLoom } from "react-icons/si";
 
 import SpaceBlueprint from "@/components/landing/SpaceBlueprint";
@@ -37,7 +38,7 @@ const LandingPage = () => {
       heroClassName="flex min-h-(--hero-art-height) flex-col items-center justify-start"
       heroArt="full"
       hero={
-        <section className="relative z-10 flex w-full max-w-5xl flex-col items-start gap-3 pt-2 pb-20 text-left sm:pt-4">
+        <section className="relative z-10 flex w-full max-w-5xl flex-col items-start gap-3 pt-2 pb-6 text-left sm:pt-4">
           <span className="hero-rise inline-flex select-none items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 sm:text-sm">
             <FaGithub className="size-3.5" />
             Open-source alternative to
@@ -68,6 +69,17 @@ const LandingPage = () => {
             <div className="hero-box relative z-10 aspect-[3/4] w-full overflow-hidden rounded-2xl border border-border bg-background shadow-[0_0_12px_rgba(0,0,0,0.18),0_0_45px_rgba(0,0,0,0.08),0_0_90px_rgba(0,0,0,0.05)] [--i:4] sm:aspect-video">
               <SpaceBlueprint />
             </div>
+          </div>
+
+          <div className="hero-rise mt-3 flex w-full justify-center [--i:5]">
+            <span className="inline-flex select-none items-center gap-2 rounded-md border border-white/10 bg-[#131313]/85 py-1.5 pr-3 pl-1.5 text-xs font-medium tracking-wide uppercase sm:text-sm">
+              <span className="flex size-6 items-center justify-center rounded bg-white text-[#131313]">
+                <FaPersonPraying className="size-3.5" />
+              </span>
+              <span className="text-white/55">
+                Backed by <span className="text-white">God</span>
+              </span>
+            </span>
           </div>
         </section>
       }
