@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiUpload } from "react-icons/fi";
-import { Crown } from "lucide-react";
 import useVideoUpload from "@/hooks/useVideoUpload";
 import { usePresence } from "@/hooks/usePresence";
 import { useUsage } from "@/hooks/useUsage";
@@ -65,7 +64,14 @@ const UploadVideoButton = ({
     <>
       <button
         type="button"
-        onClick={() => (locked ? setPricingOpen(true) : setDialogOpen(true))}
+        onClick={() => {
+          if (locked) {
+            toast.error("Uploading videos is a Pro feature.");
+            setPricingOpen(true);
+          } else {
+            setDialogOpen(true);
+          }
+        }}
         aria-label={
           uploading
             ? "Uploading video"
@@ -108,12 +114,6 @@ const UploadVideoButton = ({
             ? `Uploading ${Math.floor(progress * 100)}%`
             : "Upload video"}
         </span>
-        {locked && (
-          <Crown
-            size={12}
-            className="relative hidden fill-current text-amber-400 sm:block"
-          />
-        )}
       </button>
 
       {dialog.rendered && (

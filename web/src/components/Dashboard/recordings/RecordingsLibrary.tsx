@@ -1423,56 +1423,56 @@ const RecordingsLibrary = () => {
             </span>
           </p>
         </div>
-        {!hasNoRecordings && (
-          <div className="flex shrink-0 items-center gap-2">
-            <UploadVideoButton variant="brand" />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  aria-label={`Filter: ${activeFilterLabel}`}
-                  className="flex size-9 shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-muted text-sm font-medium text-foreground transition-opacity hover:opacity-80 data-[state=open]:opacity-80 cursor-pointer sm:w-auto sm:px-3"
-                >
-                  <FiFilter size={14} />
-                  {/* Phones: just the icon - the names are in the menu. */}
-                  <span className="hidden sm:inline">{activeFilterLabel}</span>
-                  <FiChevronDown
-                    size={14}
-                    className="hidden text-fg-subtle sm:block"
-                  />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                sideOffset={6}
-                className="w-52 rounded-xl border-border/50 bg-primary p-1"
+        {/* Always shown, even before the first recording. */}
+        <div className="flex shrink-0 items-center gap-2">
+          <UploadVideoButton variant="brand" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label={`Filter: ${activeFilterLabel}`}
+                className="flex size-9 shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-muted text-sm font-medium text-foreground transition-opacity hover:opacity-80 data-[state=open]:opacity-80 cursor-pointer sm:w-auto sm:px-3"
               >
-                <DropdownMenuRadioGroup
-                  value={filter}
-                  onValueChange={(value) => setFilter(value as ProjectFilter)}
-                >
-                  {PROJECT_FILTERS.map((item) => (
-                    <DropdownMenuRadioItem
-                      key={item.value}
-                      value={item.value}
-                      // Hide the stock radio dot; the check on the right marks it.
-                      className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-sm text-fg-muted focus:bg-muted focus:text-foreground data-[state=checked]:text-foreground [&>span:first-child]:hidden"
-                    >
-                      <item.icon size={15} />
-                      <span className="flex-1">{item.label}</span>
-                      {item.value === filter && (
-                        <FiCheck size={14} className="text-foreground" />
-                      )}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
+                <FiFilter size={14} />
+                {/* Phones: just the icon - the names are in the menu. */}
+                <span className="hidden sm:inline">{activeFilterLabel}</span>
+                <FiChevronDown
+                  size={14}
+                  className="hidden text-fg-subtle sm:block"
+                />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              sideOffset={6}
+              className="w-52 rounded-xl border-border/50 bg-primary p-1"
+            >
+              <DropdownMenuRadioGroup
+                value={filter}
+                onValueChange={(value) => setFilter(value as ProjectFilter)}
+              >
+                {PROJECT_FILTERS.map((item) => (
+                  <DropdownMenuRadioItem
+                    key={item.value}
+                    value={item.value}
+                    // Hide the stock radio dot; the check on the right marks it.
+                    className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-sm text-fg-muted focus:bg-muted focus:text-foreground data-[state=checked]:text-foreground [&>span:first-child]:hidden"
+                  >
+                    <item.icon size={15} />
+                    <span className="flex-1">{item.label}</span>
+                    {item.value === filter && (
+                      <FiCheck size={14} className="text-foreground" />
+                    )}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
-      {hasNoRecordings && (
+      {/* A picked filter shows its own empty state below instead. */}
+      {hasNoRecordings && filter === "all" && (
         <div className="flex flex-col items-center gap-4 pt-28 text-center">
           <span className="flex size-14 items-center justify-center rounded-xl bg-muted ring-1 ring-border">
             <Clapperboard className="size-7 text-fg-subtle" />
@@ -1482,32 +1482,21 @@ const RecordingsLibrary = () => {
               No recordings yet
             </h2>
             <p className="max-w-sm text-sm text-fg-muted">
-              Start a call and hit record, or upload a video you already have.
-              Your recordings will show up here, ready to preview and share.
+              Start a call and hit record. Your recordings show up here.
             </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <UploadVideoButton alwaysShowLabel />
-            <button
-              type="button"
-              onClick={() => navigate("/dashboard/home")}
-              className="h-9 cursor-pointer rounded-lg bg-brand px-4 text-sm font-medium text-white transition-opacity hover:opacity-90"
-            >
-              Start a call
-            </button>
           </div>
         </div>
       )}
 
-      {!hasNoRecordings &&
-        filter === "space" &&
-        spacesWithRecordings.length === 0 && <FilterEmpty kind="space" />}
-      {!hasNoRecordings &&
-        filter === "screen" &&
-        recordedScreenRecs.length === 0 && <FilterEmpty kind="screen" />}
-      {!hasNoRecordings &&
-        filter === "upload" &&
-        uploadedRecs.length === 0 && <FilterEmpty kind="upload" />}
+      {filter === "space" && spacesWithRecordings.length === 0 && (
+        <FilterEmpty kind="space" />
+      )}
+      {filter === "screen" && recordedScreenRecs.length === 0 && (
+        <FilterEmpty kind="screen" />
+      )}
+      {filter === "upload" && uploadedRecs.length === 0 && (
+        <FilterEmpty kind="upload" />
+      )}
 
       {(filter === "all" || filter === "space") &&
       spacesWithRecordings.length > 0 ? (
