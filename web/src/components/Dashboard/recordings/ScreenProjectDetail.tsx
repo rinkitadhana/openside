@@ -75,7 +75,7 @@ const PROCESSING_STATUS: Partial<Record<ScreenRecording["status"], string>> = {
 
 // Stand-in for the player while the video is still being made: a spinner and
 // one line saying what's happening.
-export const ProcessingStagePanel = ({
+const ProcessingStagePanel = ({
   status,
 }: {
   status: ScreenRecording["status"];
