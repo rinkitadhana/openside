@@ -15,6 +15,7 @@ import {
   FiMonitor,
   FiShare2,
   FiTrash2,
+  FiUploadCloud,
   FiVideo,
 } from "react-icons/fi";
 import {
@@ -911,8 +912,13 @@ const ProjectsListSkeleton = ({ filter }: { filter: ProjectFilter }) => (
       </div>
       <div className="skeleton-shimmer size-9 shrink-0 rounded-lg sm:w-36" />
     </div>
-    {filter !== "screen" && <SkeletonSection title="Space Recordings" />}
-    {filter !== "space" && <SkeletonSection title="Screen recordings" />}
+    {(filter === "all" || filter === "space") && (
+      <SkeletonSection title="Space Recordings" />
+    )}
+    {(filter === "all" || filter === "screen") && (
+      <SkeletonSection title="Screen recordings" />
+    )}
+    {filter === "upload" && <SkeletonSection title="Uploaded videos" />}
   </div>
 );
 
@@ -1341,7 +1347,7 @@ export const ProjectDetail = ({ spaceId }: { spaceId: string }) => {
   );
 };
 
-type ProjectFilter = "all" | "space" | "screen";
+type ProjectFilter = "all" | "space" | "screen" | "upload";
 
 const PROJECT_FILTERS: {
   value: ProjectFilter;
@@ -1351,6 +1357,7 @@ const PROJECT_FILTERS: {
   { value: "all", label: "All projects", icon: FiFolder },
   { value: "space", label: "Space recordings", icon: FiVideo },
   { value: "screen", label: "Screen recordings", icon: FiMonitor },
+  { value: "upload", label: "Uploaded videos", icon: FiUploadCloud },
 ];
 
 const RecordingsLibrary = () => {
@@ -1374,6 +1381,9 @@ const RecordingsLibrary = () => {
   const { data: screenRecordings, isLoading: areScreenRecordingsLoading } =
     useScreenRecordings();
   const screenRecs = screenRecordings ?? [];
+  // Uploads live in their own section, split from live screen captures.
+  const recordedScreenRecs = screenRecs.filter((rec) => !rec.uploaded);
+  const uploadedRecs = screenRecs.filter((rec) => rec.uploaded);
 
   const spacesWithRecordings = useMemo(
     () =>
@@ -1477,7 +1487,7 @@ const RecordingsLibrary = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <UploadVideoButton />
+            <UploadVideoButton alwaysShowLabel />
             <button
               type="button"
               onClick={() => navigate("/dashboard/home")}
@@ -1492,11 +1502,15 @@ const RecordingsLibrary = () => {
       {!hasNoRecordings &&
         filter === "space" &&
         spacesWithRecordings.length === 0 && <FilterEmpty kind="space" />}
-      {!hasNoRecordings && filter === "screen" && screenRecs.length === 0 && (
-        <FilterEmpty kind="screen" />
-      )}
+      {!hasNoRecordings &&
+        filter === "screen" &&
+        recordedScreenRecs.length === 0 && <FilterEmpty kind="screen" />}
+      {!hasNoRecordings &&
+        filter === "upload" &&
+        uploadedRecs.length === 0 && <FilterEmpty kind="upload" />}
 
-      {filter !== "screen" && spacesWithRecordings.length > 0 ? (
+      {(filter === "all" || filter === "space") &&
+      spacesWithRecordings.length > 0 ? (
         <section className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold text-foreground">
@@ -1536,15 +1550,22 @@ const RecordingsLibrary = () => {
         </section>
       ) : null}
 
-      {filter !== "space" && (
-        <ScreenRecordingsSection recordings={screenRecs} />
+      {(filter === "all" || filter === "screen") && (
+        <ScreenRecordingsSection recordings={recordedScreenRecs} />
+      )}
+
+      {(filter === "all" || filter === "upload") && (
+        <ScreenRecordingsSection
+          recordings={uploadedRecs}
+          title="Uploaded videos"
+        />
       )}
     </div>
   );
 };
 
 const FILTER_EMPTY: Record<
-  "space" | "screen",
+  "space" | "screen" | "upload",
   {
     icon: typeof FiFolder;
     title: string;
@@ -1570,9 +1591,17 @@ const FILTER_EMPTY: Record<
     cta: "Open screen recorder",
     to: null,
   },
+  upload: {
+    icon: FiUploadCloud,
+    title: "No uploaded videos yet",
+    description:
+      "Upload a video you already have to get a share link and comments on it.",
+    cta: "Upload video",
+    to: null,
+  },
 };
 
-const FilterEmpty = ({ kind }: { kind: "space" | "screen" }) => {
+const FilterEmpty = ({ kind }: { kind: "space" | "screen" | "upload" }) => {
   const navigate = useNavigate();
   const { openRecorder } = useScreenRecordingContext();
   const { icon: Icon, title, description, cta, to } = FILTER_EMPTY[kind];
@@ -1586,13 +1615,17 @@ const FilterEmpty = ({ kind }: { kind: "space" | "screen" }) => {
         <h2 className="text-base font-semibold text-foreground">{title}</h2>
         <p className="max-w-sm text-sm text-fg-muted">{description}</p>
       </div>
-      <button
-        type="button"
-        onClick={() => (to ? navigate(to) : openRecorder())}
-        className="h-9 cursor-pointer rounded-lg bg-brand px-4 text-sm font-medium text-white transition-opacity hover:opacity-90"
-      >
-        {cta}
-      </button>
+      {kind === "upload" ? (
+        <UploadVideoButton variant="brand" alwaysShowLabel />
+      ) : (
+        <button
+          type="button"
+          onClick={() => (to ? navigate(to) : openRecorder())}
+          className="h-9 cursor-pointer rounded-lg bg-brand px-4 text-sm font-medium text-white transition-opacity hover:opacity-90"
+        >
+          {cta}
+        </button>
+      )}
     </div>
   );
 };

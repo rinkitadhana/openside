@@ -205,7 +205,9 @@ export const ScreenRecordingCard = ({
               {rec.title || "Untitled recording"}
             </p>
             <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-fg-subtle">
-              <span className="whitespace-nowrap">Screen recording</span>
+              <span className="whitespace-nowrap">
+                {rec.uploaded ? "Uploaded video" : "Screen recording"}
+              </span>
               {startedAt && (
                 <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
                   <span>·</span>
@@ -291,9 +293,11 @@ const ScreenRecordingCardSkeleton = () => (
 const ScreenRecordingsSection = ({
   recordings,
   isLoading = false,
+  title = "Screen recordings",
 }: {
   recordings: ScreenRecording[];
   isLoading?: boolean;
+  title?: string;
 }) => {
   const [visibleCount, setVisibleCount] = useState(RECORDINGS_PER_PAGE);
   if (!isLoading && recordings.length === 0) return null;
@@ -307,9 +311,7 @@ const ScreenRecordingsSection = ({
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
-        <h2 className="text-sm font-semibold text-foreground">
-          Screen recordings
-        </h2>
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
       </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
         {isLoading

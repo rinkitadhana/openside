@@ -18,8 +18,11 @@ import UploadVideoDialog from "./UploadVideoDialog";
  */
 const UploadVideoButton = ({
   variant = "outline",
+  alwaysShowLabel = false,
 }: {
   variant?: "outline" | "brand";
+  /** Keep the text on phones too (otherwise icon-only below sm). */
+  alwaysShowLabel?: boolean;
 }) => {
   const navigate = useNavigate();
   const { upload, state, progress } = useVideoUpload();
@@ -72,7 +75,8 @@ const UploadVideoButton = ({
         }
         title={locked ? "Uploading videos is on Pro and self-host" : undefined}
         className={cn(
-          "relative flex size-9 shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-md text-sm font-medium transition-opacity hover:opacity-80 sm:w-auto sm:px-3",
+          "relative flex h-9 shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-md text-sm font-medium transition-opacity hover:opacity-80",
+          alwaysShowLabel ? "px-3" : "w-9 sm:w-auto sm:px-3",
           variant === "brand"
             ? "bg-brand text-white"
             : "border border-border bg-muted text-foreground",
@@ -94,7 +98,12 @@ const UploadVideoButton = ({
           className={cn("relative", variant !== "brand" && "text-fg-subtle")}
         />
         {/* Phones: just the icon, like the filter button next to it. */}
-        <span className="relative hidden tabular-nums sm:inline">
+        <span
+          className={cn(
+            "relative tabular-nums",
+            alwaysShowLabel ? "inline" : "hidden sm:inline",
+          )}
+        >
           {uploading
             ? `Uploading ${Math.floor(progress * 100)}%`
             : "Upload video"}

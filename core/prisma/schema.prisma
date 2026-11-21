@@ -207,6 +207,8 @@ model RecordingSession {
   composition             Json?
   // SCREEN_RECORDER finalized output keys: { camera?, screen?, both? }.
   outputs                 Json?
+  // SCREEN_RECORDER only: made from an uploaded video file, not a live capture.
+  uploaded                Boolean                @default(false)
   spaceRecordingSessionId String                 @unique
   // Public share link. Null until the owner enables sharing; revoking clears it
   // (so an old link dies immediately). Anyone holding the token can watch the

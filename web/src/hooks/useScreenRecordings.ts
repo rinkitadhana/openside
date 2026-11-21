@@ -36,6 +36,8 @@ export interface ScreenRecording {
   shareToken: string | null;
   /** Share-page opens by anyone other than the owner. */
   viewCount: number;
+  /** Made from an uploaded video file, not a live capture. */
+  uploaded?: boolean;
   createdAt: string;
   _count?: { comments: number };
 }

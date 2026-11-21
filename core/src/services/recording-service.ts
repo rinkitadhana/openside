@@ -2523,6 +2523,7 @@ export async function startScreenUploadSession(data: {
 	return await prisma.recordingSession.create({
 		data: {
 			source: "SCREEN_RECORDER",
+			uploaded: true,
 			userId,
 			selfHosted,
 			videoResolution: entitlements.maxVideoHeight,
@@ -2739,6 +2740,7 @@ export async function listScreenRecordings(userId: string) {
 			startedAt: true,
 			stoppedAt: true,
 			outputs: true,
+			uploaded: true,
 			shareToken: true,
 			viewCount: true,
 			createdAt: true,
