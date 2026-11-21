@@ -157,13 +157,9 @@ export const ScreenRecordingCard = ({
             {rec.title || "Untitled recording"}
           </p>
           <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-fg-subtle">
-            <span className="whitespace-nowrap">
-              {rec.uploaded ? "Uploaded video" : "Screen recording"}
-            </span>
             {startedAt && (
-              <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                <span>·</span>
-                <span>{formatDate(startedAt)}</span>
+              <span className="whitespace-nowrap">
+                {formatDate(startedAt)}
               </span>
             )}
             {remaining && (
@@ -171,7 +167,7 @@ export const ScreenRecordingCard = ({
                 className="inline-flex items-center gap-1.5 whitespace-nowrap"
                 title="Recordings auto-delete when they reach your plan's retention window."
               >
-                <span>·</span>
+                {startedAt && <span>·</span>}
                 <span>deletes in {remaining}</span>
               </span>
             )}

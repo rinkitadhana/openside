@@ -439,12 +439,11 @@ const OutputCard = ({
         <p className="truncate text-sm font-medium text-foreground">{title}</p>
         {/* Always show the status so users know where the recording stands; on
             a ready track, follow it with the useful stats. */}
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-fg-subtle">
+        {/* One line: anything that doesn't fit is cut off with "…". */}
+        <p className="mt-0.5 truncate text-xs tabular-nums text-fg-subtle">
           {/* Ready tracks lead with their stats; anything else shows its status. */}
           {!isReady && (
-            <span
-              className={`whitespace-nowrap ${isFailed ? "text-danger" : ""}`}
-            >
+            <span className={isFailed ? "text-danger" : ""}>
               {statusLabel(output.status)}
             </span>
           )}
@@ -460,20 +459,21 @@ const OutputCard = ({
                 .map((part, index) => (
                   <span
                     key={part}
-                    className="inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums"
                     title={
                       part?.startsWith("Deletes in")
                         ? "This recording auto-deletes when it reaches your plan's retention window."
                         : undefined
                     }
                   >
-                    {index > 0 && <span className="text-fg-faint">·</span>}
+                    {index > 0 && (
+                      <span className="mx-1.5 text-fg-faint">·</span>
+                    )}
                     {part}
                   </span>
                 ))}
             </>
           )}
-        </div>
+        </p>
       </div>
 
       <DropdownMenu open={open} onOpenChange={setOpen}>
