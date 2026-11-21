@@ -18,8 +18,8 @@ import {
 	getRecordingStorageContext,
 	isHostOrCoHost,
 	markRecordingComplete,
-	startRecordingSession,
 	setSpaceSessionPaused,
+	startRecordingSession,
 	stopRecordingSession,
 	updateSpaceRecordingSession,
 } from "../services/recording-service";
@@ -390,9 +390,11 @@ function sessionPauseController(paused: boolean) {
 			}
 
 			if (!spaceId || typeof spaceId !== "string") {
-				res
-					.status(400)
-					.json({ success: false, data: null, message: "Space ID is required!" });
+				res.status(400).json({
+					success: false,
+					data: null,
+					message: "Space ID is required!",
+				});
 				return;
 			}
 

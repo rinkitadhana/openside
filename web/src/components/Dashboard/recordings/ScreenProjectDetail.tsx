@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type Ref } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  FiCheck,
   FiChevronLeft,
   FiEdit2,
   FiEye,

@@ -1,4 +1,5 @@
 import express, { type Response } from "express";
+import { sanitizeOnboarding } from "../lib/onboarding.ts";
 import {
 	ALLOWED_AUDIO_SAMPLE_RATES,
 	ALLOWED_FPS,
@@ -7,7 +8,6 @@ import {
 } from "../lib/recording-constants.ts";
 import type { AuthenticatedRequest } from "../middlewares/auth-middleware.ts";
 import { authMiddleware } from "../middlewares/auth-middleware.ts";
-import { sanitizeOnboarding } from "../lib/onboarding.ts";
 import { findOrCreateUser } from "../services/auth-service.ts";
 import {
 	presignAvatarUpload,
