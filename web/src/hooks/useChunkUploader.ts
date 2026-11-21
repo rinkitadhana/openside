@@ -139,7 +139,7 @@ class PutError extends Error {
  * PUT a blob to a presigned URL. XHR rather than fetch because fetch can't
  * report upload progress; `onProgress` gets the fraction of bytes sent (0-1).
  */
-function putWithProgress(
+export function putWithProgress(
   url: string,
   blob: Blob,
   contentType: string,

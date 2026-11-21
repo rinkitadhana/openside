@@ -52,6 +52,7 @@ import OutputCard from "./OutputCard";
 import RecordingDescription from "./RecordingDescription";
 import ProjectCard from "./ProjectCard";
 import ScreenRecordingsSection from "./ScreenRecordingsSection";
+import UploadVideoButton from "./UploadVideoButton";
 import VideoPlayer from "@/components/shared/VideoPlayer";
 import InlineTitle, {
   type InlineTitleHandle,
@@ -1413,48 +1414,51 @@ const RecordingsLibrary = () => {
           </p>
         </div>
         {!hasNoRecordings && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                aria-label={`Filter: ${activeFilterLabel}`}
-                className="flex size-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-border/50 bg-primary text-sm font-medium text-foreground transition-colors hover:bg-muted data-[state=open]:bg-muted cursor-pointer sm:w-auto sm:px-3"
+          <div className="flex shrink-0 items-center gap-2">
+            <UploadVideoButton />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={`Filter: ${activeFilterLabel}`}
+                  className="flex size-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-border/50 bg-primary text-sm font-medium text-foreground transition-colors hover:bg-muted data-[state=open]:bg-muted cursor-pointer sm:w-auto sm:px-3"
+                >
+                  <FiFilter size={14} className="text-fg-subtle" />
+                  {/* Phones: just the icon - the names are in the menu. */}
+                  <span className="hidden sm:inline">{activeFilterLabel}</span>
+                  <FiChevronDown
+                    size={14}
+                    className="hidden text-fg-subtle sm:block"
+                  />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                sideOffset={6}
+                className="w-52 rounded-xl border-border/50 bg-primary p-1"
               >
-                <FiFilter size={14} className="text-fg-subtle" />
-                {/* Phones: just the icon - the names are in the menu. */}
-                <span className="hidden sm:inline">{activeFilterLabel}</span>
-                <FiChevronDown
-                  size={14}
-                  className="hidden text-fg-subtle sm:block"
-                />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              sideOffset={6}
-              className="w-52 rounded-xl border-border/50 bg-primary p-1"
-            >
-              <DropdownMenuRadioGroup
-                value={filter}
-                onValueChange={(value) => setFilter(value as ProjectFilter)}
-              >
-                {PROJECT_FILTERS.map((item) => (
-                  <DropdownMenuRadioItem
-                    key={item.value}
-                    value={item.value}
-                    // Hide the stock radio dot; the check on the right marks it.
-                    className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-sm text-fg-muted focus:bg-muted focus:text-foreground data-[state=checked]:text-foreground [&>span:first-child]:hidden"
-                  >
-                    <item.icon size={15} />
-                    <span className="flex-1">{item.label}</span>
-                    {item.value === filter && (
-                      <FiCheck size={14} className="text-foreground" />
-                    )}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuRadioGroup
+                  value={filter}
+                  onValueChange={(value) => setFilter(value as ProjectFilter)}
+                >
+                  {PROJECT_FILTERS.map((item) => (
+                    <DropdownMenuRadioItem
+                      key={item.value}
+                      value={item.value}
+                      // Hide the stock radio dot; the check on the right marks it.
+                      className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-sm text-fg-muted focus:bg-muted focus:text-foreground data-[state=checked]:text-foreground [&>span:first-child]:hidden"
+                    >
+                      <item.icon size={15} />
+                      <span className="flex-1">{item.label}</span>
+                      {item.value === filter && (
+                        <FiCheck size={14} className="text-foreground" />
+                      )}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )}
       </div>
 
@@ -1468,17 +1472,20 @@ const RecordingsLibrary = () => {
               No recordings yet
             </h2>
             <p className="max-w-sm text-sm text-fg-muted">
-              Start a call and hit record. Your processed recordings will show
-              up here, ready to preview and download.
+              Start a call and hit record, or upload a video you already have.
+              Your recordings will show up here, ready to preview and share.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => navigate("/dashboard/home")}
-            className="h-9 cursor-pointer rounded-lg bg-brand px-4 text-sm font-medium text-white transition-opacity hover:opacity-90"
-          >
-            Start a call
-          </button>
+          <div className="flex items-center gap-2">
+            <UploadVideoButton />
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard/home")}
+              className="h-9 cursor-pointer rounded-lg bg-brand px-4 text-sm font-medium text-white transition-opacity hover:opacity-90"
+            >
+              Start a call
+            </button>
+          </div>
         </div>
       )}
 

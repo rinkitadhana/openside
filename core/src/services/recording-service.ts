@@ -2496,6 +2496,59 @@ export async function startScreenRecordingSession(
 	});
 }
 
+/**
+ * An uploaded video file (not a live capture). Created already STOPPED with
+ * its one VIDEO track, so the regular screen pipeline takes over: the client
+ * uploads the file in chunks through the screen segment endpoints, marks the
+ * track complete, and finalization encodes it into the take's `screen` output.
+ * Nothing is metered while the file uploads - finalization bills the video's
+ * real length (reconcileRecordedSeconds).
+ */
+export async function startScreenUploadSession(data: {
+	userId: string;
+	spaceRecordingSessionId: string;
+	title: string;
+	container: string;
+	width?: number | null;
+	height?: number | null;
+}) {
+	const { userId, spaceRecordingSessionId, title, container } = data;
+
+	const selfHosted = await isSelfHostActive(userId);
+	const entitlements = await assertCanRecord(userId, selfHosted);
+	const now = new Date();
+
+	return await prisma.recordingSession.create({
+		data: {
+			source: "SCREEN_RECORDER",
+			userId,
+			selfHosted,
+			videoResolution: entitlements.maxVideoHeight,
+			targetFps: entitlements.maxFps,
+			audioSampleRate: entitlements.maxAudioSampleRate,
+			spaceRecordingSessionId,
+			title: title.trim() || null,
+			status: "STOPPED",
+			startedAt: now,
+			stoppedAt: now,
+			lastMeteredAt: now,
+			participantRecordings: {
+				create: {
+					type: "VIDEO",
+					isScreenShare: true,
+					status: "UPLOADING",
+					container,
+					hasAudio: true,
+					hasVideo: true,
+					width: data.width ?? null,
+					height: data.height ?? null,
+				},
+			},
+		},
+		include: { participantRecordings: { select: { id: true } } },
+	});
+}
+
 export async function stopScreenRecordingSession(
 	sessionId: string,
 	userId: string,

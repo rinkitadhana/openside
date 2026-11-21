@@ -30,13 +30,16 @@ import {
 	recordSharedView,
 	setScreenSessionPaused,
 	startScreenRecordingSession,
+	startScreenUploadSession,
 	stopScreenRecordingSession,
 	updateRecordingComment,
 	updateScreenRecordingSession,
 } from "../services/recording-service";
 import { maybeFinalizeScreenSession } from "../services/screen-finalization-service";
 import {
+	MAX_UPLOAD_FILE_BYTES,
 	type TrackType,
+	UPLOAD_FILE_EXTS,
 	buildScreenSegmentKey,
 	checkSegmentUpload,
 	presignGet,
@@ -132,6 +135,106 @@ export async function startScreenSessionController(
 			success: false,
 			data: null,
 			message: "Failed to start recording!",
+		});
+	}
+}
+
+/**
+ * POST /screen/upload/start - begin an uploaded video (a file the user already
+ * has, e.g. a screen recording made elsewhere). Returns the session and its one
+ * track; the client then sends the file through the screen segment endpoints
+ * and marks the track complete, and finalization takes it from there.
+ */
+export async function startScreenUploadController(
+	req: AuthenticatedRequest,
+	res: Response,
+): Promise<void> {
+	try {
+		if (!req.user) {
+			res.status(401).json({
+				success: false,
+				data: null,
+				message: "Authentication required!",
+			});
+			return;
+		}
+
+		const { spaceRecordingSessionId, title, ext, sizeBytes, width, height } =
+			req.body;
+
+		if (
+			!spaceRecordingSessionId ||
+			typeof spaceRecordingSessionId !== "string"
+		) {
+			res.status(400).json({
+				success: false,
+				data: null,
+				message: "Recording session ID is required!",
+			});
+			return;
+		}
+		if (typeof ext !== "string" || !UPLOAD_FILE_EXTS.has(ext)) {
+			res.status(400).json({
+				success: false,
+				data: null,
+				message: "Upload an MP4, MOV, WebM or MKV video!",
+			});
+			return;
+		}
+		if (
+			typeof sizeBytes !== "number" ||
+			!Number.isInteger(sizeBytes) ||
+			sizeBytes <= 0 ||
+			sizeBytes > MAX_UPLOAD_FILE_BYTES
+		) {
+			res.status(400).json({
+				success: false,
+				data: null,
+				message: `Videos can be at most ${Math.round(MAX_UPLOAD_FILE_BYTES / 1024 ** 3)} GB!`,
+			});
+			return;
+		}
+
+		const toDimension = (value: unknown): number | null =>
+			typeof value === "number" && Number.isFinite(value) && value > 0
+				? Math.round(value)
+				: null;
+
+		const user = await findOrCreateUser(req.user);
+		const resolvedTitle =
+			typeof title === "string" && title.trim()
+				? title.trim().slice(0, 120)
+				: `${user.name?.trim() || "User"}'s video`;
+
+		const session = await startScreenUploadSession({
+			userId: user.id,
+			spaceRecordingSessionId,
+			title: resolvedTitle,
+			container: ext,
+			width: toDimension(width),
+			height: toDimension(height),
+		});
+		const recordingId = session.participantRecordings[0]?.id;
+
+		res.status(201).json({
+			success: true,
+			data: { session: serializeBigInt(session), recordingId },
+			message: "Upload started successfully!",
+		});
+	} catch (error: unknown) {
+		if (error instanceof Error && error.message === "USAGE_EXHAUSTED") {
+			res.status(402).json({
+				success: false,
+				data: { code: "USAGE_EXHAUSTED" },
+				message: "Recording credit used up. Upgrade to Pro to keep uploading!",
+			});
+			return;
+		}
+		console.error("[API] Failed to start upload:", error);
+		res.status(500).json({
+			success: false,
+			data: null,
+			message: "Failed to start upload!",
 		});
 	}
 }

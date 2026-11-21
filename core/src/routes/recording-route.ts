@@ -39,6 +39,7 @@ import {
 	resumeScreenSessionController,
 	shareScreenSessionController,
 	startScreenSessionController,
+	startScreenUploadController,
 	stopScreenSessionController,
 	unshareScreenSessionController,
 	updateCommentController,
@@ -56,6 +57,11 @@ router.post(
 	"/screen/session/start",
 	authMiddleware,
 	startScreenSessionController,
+);
+router.post(
+	"/screen/upload/start",
+	authMiddleware,
+	startScreenUploadController,
 );
 router.post(
 	"/screen/session/:sessionId/stop",
