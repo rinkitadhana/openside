@@ -101,7 +101,6 @@ const SEGMENT_EXTS = new Set(["webm", "mp4", "mkv", "ogg", "pcm", "mov"]);
 
 /** Video files a user can upload as a recording (sent as chunks of the file). */
 export const UPLOAD_FILE_EXTS = new Set(["mp4", "mov", "webm", "mkv"]);
-export const MAX_UPLOAD_FILE_BYTES = 5 * 1024 ** 3;
 /** A recorder's mimeType, codecs included ("video/webm;codecs=vp9,opus"). */
 const SEGMENT_CONTENT_TYPE =
 	/^(?:(?:video|audio)\/(?:webm|mp4|x-matroska|ogg)|audio\/pcm-raw|application\/octet-stream)(?:\s*;[\w\s=.,"+-]*)?$/i;

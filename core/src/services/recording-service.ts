@@ -2504,11 +2504,18 @@ export async function startScreenRecordingSession(
  * Nothing is metered while the file uploads - finalization bills the video's
  * real length (reconcileRecordedSeconds).
  */
+export class UploadTooLargeError extends Error {
+	constructor(readonly maxBytes: number) {
+		super("UPLOAD_TOO_LARGE");
+	}
+}
+
 export async function startScreenUploadSession(data: {
 	userId: string;
 	spaceRecordingSessionId: string;
 	title: string;
 	container: string;
+	sizeBytes: number;
 	width?: number | null;
 	height?: number | null;
 }) {
@@ -2516,8 +2523,11 @@ export async function startScreenUploadSession(data: {
 
 	const selfHosted = await isSelfHostActive(userId);
 	const entitlements = await assertCanRecord(userId, selfHosted);
-	// Pro and self-host only.
+	// Pro and self-host only, each with its own size cap.
 	if (!entitlements.videoUpload) throw new Error("UPLOAD_REQUIRES_PRO");
+	if (data.sizeBytes > entitlements.maxUploadBytes) {
+		throw new UploadTooLargeError(entitlements.maxUploadBytes);
+	}
 	const now = new Date();
 
 	return await prisma.recordingSession.create({

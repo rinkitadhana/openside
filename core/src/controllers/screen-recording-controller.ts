@@ -9,6 +9,7 @@ import {
 import {
 	COMMENT_AUTHOR_MAX_LENGTH,
 	COMMENT_MAX_LENGTH,
+	UploadTooLargeError,
 	createRecordingComment,
 	createScreenRecording,
 	createSegment,
@@ -37,7 +38,6 @@ import {
 } from "../services/recording-service";
 import { maybeFinalizeScreenSession } from "../services/screen-finalization-service";
 import {
-	MAX_UPLOAD_FILE_BYTES,
 	type TrackType,
 	UPLOAD_FILE_EXTS,
 	buildScreenSegmentKey,
@@ -184,13 +184,12 @@ export async function startScreenUploadController(
 		if (
 			typeof sizeBytes !== "number" ||
 			!Number.isInteger(sizeBytes) ||
-			sizeBytes <= 0 ||
-			sizeBytes > MAX_UPLOAD_FILE_BYTES
+			sizeBytes <= 0
 		) {
 			res.status(400).json({
 				success: false,
 				data: null,
-				message: `Videos can be at most ${Math.round(MAX_UPLOAD_FILE_BYTES / 1024 ** 3)} GB!`,
+				message: "Video size is required!",
 			});
 			return;
 		}
@@ -211,6 +210,7 @@ export async function startScreenUploadController(
 			spaceRecordingSessionId,
 			title: resolvedTitle,
 			container: ext,
+			sizeBytes,
 			width: toDimension(width),
 			height: toDimension(height),
 		});
@@ -222,6 +222,14 @@ export async function startScreenUploadController(
 			message: "Upload started successfully!",
 		});
 	} catch (error: unknown) {
+		if (error instanceof UploadTooLargeError) {
+			res.status(413).json({
+				success: false,
+				data: { code: "UPLOAD_TOO_LARGE", maxBytes: error.maxBytes },
+				message: `Videos can be at most ${Math.round(error.maxBytes / 1024 ** 3)} GB on your plan!`,
+			});
+			return;
+		}
 		if (error instanceof Error && error.message === "UPLOAD_REQUIRES_PRO") {
 			res.status(403).json({
 				success: false,

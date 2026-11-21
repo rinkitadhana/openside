@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FiUploadCloud, FiX } from "react-icons/fi";
 import { backdropMotion, panelMotion } from "@/hooks/usePresence";
-import { UPLOAD_ACCEPT } from "@/hooks/useVideoUpload";
+import { formatUploadLimit, UPLOAD_ACCEPT } from "@/hooks/useVideoUpload";
 import { cn } from "@/lib/utils";
 
 /**
@@ -13,6 +13,7 @@ const UploadVideoDialog = ({
   uploading,
   progress,
   fileName,
+  maxUploadBytes,
   onFile,
   onClose,
   isClosing = false,
@@ -20,6 +21,8 @@ const UploadVideoDialog = ({
   uploading: boolean;
   progress: number;
   fileName: string | null;
+  /** The plan's cap; shown under the drop zone once known. */
+  maxUploadBytes?: number;
   onFile: (file: File) => void;
   onClose: () => void;
   /** Playing the exit animation (see usePresence). */
@@ -160,7 +163,10 @@ const UploadVideoDialog = ({
                 {dragging ? "Drop to upload" : "Drag and drop a video here"}
               </p>
               <p className="text-xs text-fg-subtle">
-                MP4, MOV, WebM or MKV, up to 5 GB
+                MP4, MOV, WebM or MKV
+                {maxUploadBytes
+                  ? `, up to ${formatUploadLimit(maxUploadBytes)}`
+                  : ""}
               </p>
             </div>
           )}

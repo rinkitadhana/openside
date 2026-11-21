@@ -43,6 +43,8 @@ export interface Entitlements {
 	multitrack: boolean;
 	/** Upload an existing video file as a recording (share link, comments). */
 	videoUpload: boolean;
+	/** Largest video file that can be uploaded, in bytes (0 = no uploads). */
+	maxUploadBytes: number;
 	/** Hours before recordings are auto-deleted (null = keep forever). */
 	retentionHours: number | null;
 	/** Max concurrent participants (incl. host) allowed in a Space the user hosts
@@ -60,6 +62,10 @@ const PRO_RETENTION_HOURS = 30 * 24;
  *  unlimited (null) - only the LiveKit room cap applies there. */
 const DEMO_MAX_PARTICIPANTS = 2;
 const PRO_MAX_PARTICIPANTS = 5;
+/** Upload size caps. Pro is lower: every upload is encoded and stored on our
+ *  infra. Self-host files land in the user's own bucket. */
+const PRO_MAX_UPLOAD_BYTES = 2 * 1024 ** 3;
+const SELFHOST_MAX_UPLOAD_BYTES = 5 * 1024 ** 3;
 /** Warn the client when this little metered credit remains. */
 export const LOW_CREDIT_WARNING_SECONDS = 2 * 60;
 
@@ -110,6 +116,7 @@ function buildEntitlements(
 			maxAudioSampleRate: 48000,
 			multitrack: true,
 			videoUpload: true,
+			maxUploadBytes: SELFHOST_MAX_UPLOAD_BYTES,
 			retentionHours: null,
 			maxParticipants: null,
 		};
@@ -128,6 +135,7 @@ function buildEntitlements(
 			maxAudioSampleRate: 48000,
 			multitrack: true,
 			videoUpload: true,
+			maxUploadBytes: PRO_MAX_UPLOAD_BYTES,
 			retentionHours: PRO_RETENTION_HOURS,
 			maxParticipants: PRO_MAX_PARTICIPANTS,
 		};
@@ -145,6 +153,7 @@ function buildEntitlements(
 		maxAudioSampleRate: 44100,
 		multitrack: false,
 		videoUpload: false,
+		maxUploadBytes: 0,
 		retentionHours: DEMO_RETENTION_HOURS,
 		maxParticipants: DEMO_MAX_PARTICIPANTS,
 	};

@@ -29,7 +29,10 @@ const comparisonRows: { label: string; values: (ReactNode | boolean)[] }[] = [
   { label: "Separate participant tracks", values: [true, true, true] },
   { label: "Screen recorder", values: [true, true, true] },
   { label: "Cloud backup", values: [false, true, true] },
-  { label: "Upload videos", values: [false, true, true] },
+  {
+    label: "Upload videos",
+    values: [false, "Up to 2 GB each", "Up to 5 GB each"],
+  },
   {
     label: "Setup",
     values: [
@@ -104,13 +107,14 @@ const PricingPage = () => (
     <SectionDivider />
     <Section id="compare">
       <SectionHeading eyebrow="Compare" title="Compare plans side by side." />
-      <div
-        className="mt-10 overflow-x-auto rounded-2xl border border-border"
-      >
+      <div className="mt-10 overflow-x-auto rounded-2xl border border-border">
         <table className="w-full min-w-[36rem] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-border bg-primary">
-              <th scope="col" className="px-5 py-4 font-medium text-foreground/60">
+              <th
+                scope="col"
+                className="px-5 py-4 font-medium text-foreground/60"
+              >
                 Plan
               </th>
               {PLAN_NAMES.map((name) => (
@@ -148,7 +152,10 @@ const PricingPage = () => (
       </div>
     </Section>
     <SectionDivider />
-    <FaqSection items={pricingFaqs} title="Questions about plans and billing." />
+    <FaqSection
+      items={pricingFaqs}
+      title="Questions about plans and billing."
+    />
   </MarketingLayout>
 );
 

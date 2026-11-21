@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FiUpload } from "react-icons/fi";
 import useVideoUpload from "@/hooks/useVideoUpload";
 import { usePresence } from "@/hooks/usePresence";
-import { useUsage } from "@/hooks/useUsage";
+import { useEntitlements, useUsage } from "@/hooks/useUsage";
 import PricingModal from "@/components/Dashboard/PricingModal";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,8 @@ const UploadVideoButton = ({
   const { upload, state, progress } = useVideoUpload();
   const uploading = state === "uploading";
   const { data: usage } = useUsage();
+  const { data: entitlements } = useEntitlements();
+  const maxUploadBytes = entitlements?.maxUploadBytes || undefined;
   const locked = usage?.plan === "demo";
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pricingOpen, setPricingOpen] = useState(false);
@@ -46,7 +48,7 @@ const UploadVideoButton = ({
   const handleFile = async (file: File) => {
     setFileName(file.name);
     try {
-      const sessionId = await upload(file);
+      const sessionId = await upload(file, maxUploadBytes);
       setDialogOpen(false);
       toast.success("Video uploaded - it'll be ready in a moment.");
       navigate(`/dashboard/project/screen/${sessionId}`);
@@ -121,6 +123,7 @@ const UploadVideoButton = ({
           uploading={uploading}
           progress={progress}
           fileName={fileName}
+          maxUploadBytes={maxUploadBytes}
           onFile={(file) => void handleFile(file)}
           onClose={() => setDialogOpen(false)}
           isClosing={dialog.isClosing}

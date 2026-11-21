@@ -33,6 +33,8 @@ interface Entitlements {
   multitrack: boolean;
   /** Upload an existing video as a recording (Pro and self-host). */
   videoUpload: boolean;
+  /** Largest uploadable video in bytes (Pro 2 GB, self-host 5 GB, 0 = none). */
+  maxUploadBytes: number;
   retentionHours: number | null;
 }
 

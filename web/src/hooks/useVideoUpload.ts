@@ -19,7 +19,9 @@ import { putWithProgress } from "./useChunkUploader";
 
 /** Under the server's 100 MB per-segment cap. */
 const CHUNK_BYTES = 32 * 1024 * 1024;
-export const MAX_UPLOAD_BYTES = 5 * 1024 ** 3;
+/** "2 GB" - for the plan's upload cap (see entitlements.maxUploadBytes). */
+export const formatUploadLimit = (bytes: number) =>
+  `${Math.round(bytes / 1024 ** 3)} GB`;
 export const UPLOAD_ACCEPT =
   "video/mp4,video/quicktime,video/webm,video/x-matroska,.mp4,.mov,.webm,.mkv";
 const EXTS = new Set(["mp4", "mov", "webm", "mkv"]);
@@ -105,7 +107,9 @@ export default function useVideoUpload() {
 
   /** Resolves with the new recording's session id. */
   const upload = useCallback(
-    async (file: File): Promise<string> => {
+    /** `maxBytes`: the plan's cap, checked here first so a too-big file fails
+     *  instantly; the server enforces it again. Omit if not known yet. */
+    async (file: File, maxBytes?: number): Promise<string> => {
       setState("uploading");
       setProgress(0);
       setError(null);
@@ -115,8 +119,10 @@ export default function useVideoUpload() {
           throw new UploadError("Upload an MP4, MOV, WebM or MKV video.");
         }
         if (file.size <= 0) throw new UploadError("That file is empty.");
-        if (file.size > MAX_UPLOAD_BYTES) {
-          throw new UploadError("Videos can be at most 5 GB.");
+        if (maxBytes && file.size > maxBytes) {
+          throw new UploadError(
+            `Videos can be at most ${formatUploadLimit(maxBytes)} on your plan.`,
+          );
         }
 
         const size = await readVideoSize(file);
