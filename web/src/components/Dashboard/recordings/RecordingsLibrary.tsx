@@ -1415,15 +1415,15 @@ const RecordingsLibrary = () => {
         </div>
         {!hasNoRecordings && (
           <div className="flex shrink-0 items-center gap-2">
-            <UploadVideoButton />
+            <UploadVideoButton variant="brand" />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
                   aria-label={`Filter: ${activeFilterLabel}`}
-                  className="flex size-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-border/50 bg-primary text-sm font-medium text-foreground transition-colors hover:bg-muted data-[state=open]:bg-muted cursor-pointer sm:w-auto sm:px-3"
+                  className="flex size-9 shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-muted text-sm font-medium text-foreground transition-opacity hover:opacity-80 data-[state=open]:opacity-80 cursor-pointer sm:w-auto sm:px-3"
                 >
-                  <FiFilter size={14} className="text-fg-subtle" />
+                  <FiFilter size={14} />
                   {/* Phones: just the icon - the names are in the menu. */}
                   <span className="hidden sm:inline">{activeFilterLabel}</span>
                   <FiChevronDown
