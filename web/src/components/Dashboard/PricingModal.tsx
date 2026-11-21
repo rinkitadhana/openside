@@ -48,6 +48,7 @@ const plans: {
       "30-day recording retention",
       "No watermark",
       "Cloud backup",
+      "Upload videos",
     ],
     featured: true,
   },
@@ -64,6 +65,7 @@ const plans: {
       "Unlimited retention",
       "No watermark",
       "Cloud backup",
+      "Upload videos",
     ],
   },
 ];

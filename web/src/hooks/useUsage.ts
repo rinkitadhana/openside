@@ -31,6 +31,8 @@ interface Entitlements {
   maxFps: number;
   maxAudioSampleRate: number;
   multitrack: boolean;
+  /** Upload an existing video as a recording (Pro and self-host). */
+  videoUpload: boolean;
   retentionHours: number | null;
 }
 

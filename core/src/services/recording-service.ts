@@ -2516,6 +2516,8 @@ export async function startScreenUploadSession(data: {
 
 	const selfHosted = await isSelfHostActive(userId);
 	const entitlements = await assertCanRecord(userId, selfHosted);
+	// Pro and self-host only.
+	if (!entitlements.videoUpload) throw new Error("UPLOAD_REQUIRES_PRO");
 	const now = new Date();
 
 	return await prisma.recordingSession.create({

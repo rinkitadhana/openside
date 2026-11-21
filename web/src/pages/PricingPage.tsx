@@ -29,6 +29,7 @@ const comparisonRows: { label: string; values: (ReactNode | boolean)[] }[] = [
   { label: "Separate participant tracks", values: [true, true, true] },
   { label: "Screen recorder", values: [true, true, true] },
   { label: "Cloud backup", values: [false, true, true] },
+  { label: "Upload videos", values: [false, true, true] },
   {
     label: "Setup",
     values: [
@@ -48,7 +49,7 @@ const pricingFaqs = [
   {
     question: "What does Pro include?",
     answer:
-      "Pro is $8.99 a month and runs on our managed infrastructure. You get up to 4K video, 48kHz audio, 20 hours of recording per month, up to 5 participants, 30-day retention, cloud backup, and no watermark.",
+      "Pro is $8.99 a month and runs on our managed infrastructure. You get up to 4K video, 48kHz audio, 20 hours of recording per month, up to 5 participants, 30-day retention, cloud backup, video uploads with share links and comments, and no watermark.",
   },
   {
     question: "How is self-hosting free?",

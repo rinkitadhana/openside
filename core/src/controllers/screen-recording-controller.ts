@@ -222,6 +222,14 @@ export async function startScreenUploadController(
 			message: "Upload started successfully!",
 		});
 	} catch (error: unknown) {
+		if (error instanceof Error && error.message === "UPLOAD_REQUIRES_PRO") {
+			res.status(403).json({
+				success: false,
+				data: { code: "UPLOAD_REQUIRES_PRO" },
+				message: "Uploading videos is on Pro and self-host. Upgrade to upload!",
+			});
+			return;
+		}
 		if (error instanceof Error && error.message === "USAGE_EXHAUSTED") {
 			res.status(402).json({
 				success: false,

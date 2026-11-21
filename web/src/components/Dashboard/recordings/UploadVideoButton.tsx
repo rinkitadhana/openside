@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiUpload } from "react-icons/fi";
+import { Crown } from "lucide-react";
 import useVideoUpload from "@/hooks/useVideoUpload";
 import { usePresence } from "@/hooks/usePresence";
+import { useUsage } from "@/hooks/useUsage";
+import PricingModal from "@/components/Dashboard/PricingModal";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import UploadVideoDialog from "./UploadVideoDialog";
@@ -10,6 +13,8 @@ import UploadVideoDialog from "./UploadVideoDialog";
 /**
  * Opens the upload dialog (browse or drag and drop), uploads the video as a
  * screen recording, then opens its project page (share link, comments).
+ * Pro and self-host only: free (demo) users get the plan picker instead. The
+ * server enforces this too (UPLOAD_REQUIRES_PRO).
  */
 const UploadVideoButton = ({
   variant = "outline",
@@ -19,7 +24,10 @@ const UploadVideoButton = ({
   const navigate = useNavigate();
   const { upload, state, progress } = useVideoUpload();
   const uploading = state === "uploading";
+  const { data: usage } = useUsage();
+  const locked = usage?.plan === "demo";
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [pricingOpen, setPricingOpen] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const dialog = usePresence(dialogOpen);
 
@@ -54,8 +62,15 @@ const UploadVideoButton = ({
     <>
       <button
         type="button"
-        onClick={() => setDialogOpen(true)}
-        aria-label={uploading ? "Uploading video" : "Upload video"}
+        onClick={() => (locked ? setPricingOpen(true) : setDialogOpen(true))}
+        aria-label={
+          uploading
+            ? "Uploading video"
+            : locked
+              ? "Upload video (Pro)"
+              : "Upload video"
+        }
+        title={locked ? "Uploading videos is on Pro and self-host" : undefined}
         className={cn(
           "relative flex size-9 shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-md text-sm font-medium transition-opacity hover:opacity-80 sm:w-auto sm:px-3",
           variant === "brand"
@@ -84,6 +99,12 @@ const UploadVideoButton = ({
             ? `Uploading ${Math.floor(progress * 100)}%`
             : "Upload video"}
         </span>
+        {locked && (
+          <Crown
+            size={12}
+            className="relative hidden fill-current text-amber-400 sm:block"
+          />
+        )}
       </button>
 
       {dialog.rendered && (
@@ -96,6 +117,8 @@ const UploadVideoButton = ({
           isClosing={dialog.isClosing}
         />
       )}
+
+      <PricingModal open={pricingOpen} onClose={() => setPricingOpen(false)} />
     </>
   );
 };

@@ -6,8 +6,8 @@
  *
  * Plans:
  *  - DEMO      free. 15 min lifetime recording credit, watermark, no cloud
- *              backup, 720p / 24fps / 44.1kHz, 2 participants, files
- *              auto-delete after 48h.
+ *              backup, no video upload, 720p / 24fps / 44.1kHz,
+ *              2 participants, files auto-delete after 48h.
  *  - SELF_HOST free. User's own LiveKit + R2 keys (Settings). No limits, no
  *              watermark, never metered. Derived: DEMO/PRO user with an
  *              enabled, validated SelfHostConfig.
@@ -41,6 +41,8 @@ export interface Entitlements {
 	maxFps: number;
 	maxAudioSampleRate: number;
 	multitrack: boolean;
+	/** Upload an existing video file as a recording (share link, comments). */
+	videoUpload: boolean;
 	/** Hours before recordings are auto-deleted (null = keep forever). */
 	retentionHours: number | null;
 	/** Max concurrent participants (incl. host) allowed in a Space the user hosts
@@ -107,6 +109,7 @@ function buildEntitlements(
 			maxFps: 60,
 			maxAudioSampleRate: 48000,
 			multitrack: true,
+			videoUpload: true,
 			retentionHours: null,
 			maxParticipants: null,
 		};
@@ -124,6 +127,7 @@ function buildEntitlements(
 			maxFps: 60,
 			maxAudioSampleRate: 48000,
 			multitrack: true,
+			videoUpload: true,
 			retentionHours: PRO_RETENTION_HOURS,
 			maxParticipants: PRO_MAX_PARTICIPANTS,
 		};
@@ -140,6 +144,7 @@ function buildEntitlements(
 		maxFps: DEMO_FPS,
 		maxAudioSampleRate: 44100,
 		multitrack: false,
+		videoUpload: false,
 		retentionHours: DEMO_RETENTION_HOURS,
 		maxParticipants: DEMO_MAX_PARTICIPANTS,
 	};
