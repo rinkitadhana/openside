@@ -280,7 +280,13 @@ const ScreenRecordingProvider = ({ children }: { children: ReactNode }) => {
     setIsOpen(true);
     const starts: Promise<void>[] = [];
     if (layoutRef.current !== "screen" && !isCameraEnabled) {
-      starts.push(toggleCamera().catch(() => undefined));
+      // No camera permission on a screen take: drop the bubble so the user
+      // can still record their screen.
+      starts.push(
+        toggleCamera().catch(() => {
+          if (layoutRef.current === "screen-camera") setLayout("screen");
+        }),
+      );
     }
     if (!isMicrophoneEnabled) {
       starts.push(toggleMicrophone().catch(() => undefined));
@@ -289,7 +295,13 @@ const ScreenRecordingProvider = ({ children }: { children: ReactNode }) => {
       setIsStartingMedia(true);
       void Promise.all(starts).finally(() => setIsStartingMedia(false));
     }
-  }, [isCameraEnabled, isMicrophoneEnabled, toggleCamera, toggleMicrophone]);
+  }, [
+    isCameraEnabled,
+    isMicrophoneEnabled,
+    toggleCamera,
+    toggleMicrophone,
+    setLayout,
+  ]);
 
   const closeRecorder = useCallback(() => {
     if (isActive) return;
@@ -308,16 +320,22 @@ const ScreenRecordingProvider = ({ children }: { children: ReactNode }) => {
     // Bring up every source the layout records. The screen picker is the
     // natural "what do you want to record?" step, so it opens on Start.
     const needsScreen = layoutRef.current !== "camera";
-    const needsCamera = layoutRef.current !== "screen";
+    let needsCamera = layoutRef.current !== "screen";
     const live = getStreams();
     if (needsCamera && !live.camera) {
       try {
         await toggleCamera();
       } catch {
-        toast.error(
-          "Couldn't turn on the camera - check the browser's camera permission.",
-        );
-        return;
+        // The camera is only required for a camera-only take; a screen take
+        // just loses its bubble.
+        if (layoutRef.current === "camera") {
+          toast.error(
+            "Couldn't turn on the camera - check the browser's camera permission.",
+          );
+          return;
+        }
+        setLayout("screen");
+        needsCamera = false;
       }
     }
     if (needsScreen && !live.screen) {
@@ -333,7 +351,14 @@ const ScreenRecordingProvider = ({ children }: { children: ReactNode }) => {
     if (needsScreen && !streams.combined) return;
     if (needsCamera && !streams.camera) return;
     manager.toggleRecording();
-  }, [manager, getStreams, toggleCamera, toggleScreenShare, buildStreams]);
+  }, [
+    manager,
+    getStreams,
+    toggleCamera,
+    toggleScreenShare,
+    buildStreams,
+    setLayout,
+  ]);
 
   const stopRecording = useCallback(() => {
     if (isCapturing || manager.recordingState === "countdown") {
