@@ -43,6 +43,20 @@ interface PreJoinScreenProps {
   onSpaceFull?: () => void;
 }
 
+/** A device permission's state, or null where the browser can't say. */
+const queryPermission = async (
+  name: "camera" | "microphone",
+): Promise<PermissionState | null> => {
+  try {
+    const status = await navigator.permissions.query({
+      name: name as PermissionName,
+    });
+    return status.state;
+  } catch {
+    return null;
+  }
+};
+
 const PreJoinScreen = ({
   onJoinCall,
   roomId,
@@ -197,12 +211,30 @@ const PreJoinScreen = ({
         resizeMode: "none",
       } as MediaTrackConstraints;
 
+      // A kind the user already blocked fails the combined request outright,
+      // which would also take down the kind they DID allow. Ask only for what
+      // isn't blocked, so a blocked camera still leaves the mic (and v.v.).
+      const [cameraState, micState] = await Promise.all([
+        queryPermission("camera"),
+        queryPermission("microphone"),
+      ]);
+      const cameraBlocked = cameraState === "denied";
+      const micBlocked = micState === "denied";
+      if (cameraBlocked && micBlocked) {
+        throw new DOMException(
+          "Camera and microphone blocked",
+          "NotAllowedError",
+        );
+      }
+
       let mediaStream: MediaStream;
       try {
         mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: videoConstraints,
-          audio: audioConstraints,
+          video: cameraBlocked ? false : videoConstraints,
+          audio: micBlocked ? false : audioConstraints,
         });
+        if (cameraBlocked && isCurrent()) setVideoEnabled(false);
+        if (micBlocked && isCurrent()) setAudioEnabled(false);
       } catch (combinedError) {
         const errorName =
           combinedError instanceof Error ? combinedError.name : "";
@@ -211,8 +243,8 @@ const PreJoinScreen = ({
         // with browser-chosen devices instead of hard-failing the whole preview.
         if (errorName === "OverconstrainedError" && (audioId || videoId)) {
           mediaStream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true,
+            video: !cameraBlocked,
+            audio: !micBlocked,
           });
         } else if (errorName === "NotFoundError") {
           // A machine missing one kind (commonly: desktop with a mic but no
